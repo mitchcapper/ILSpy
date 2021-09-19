@@ -82,7 +82,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 
 		public string TargetLabel {
-			get { return targetBlock != null ? targetBlock.Label : CecilExtensions.OffsetToString(TargetILOffset); }
+			get { return targetBlock != null ? targetBlock.Label : DnlibExtensions.OffsetToString(TargetILOffset); }
 		}
 
 		/// <summary>

@@ -18,8 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
 using System.Text;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
@@ -59,16 +57,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Only load the public API into the type system.
 		/// </summary>
 		OnlyPublicAPI = 8,
-		/// <summary>
-		/// Do not cache accessed entities.
-		/// In a normal type system (without this option), every type or member definition has exactly one ITypeDefinition/IMember
-		/// instance. This instance is kept alive until the whole type system can be garbage-collected.
-		/// When this option is specified, the type system avoids these caches.
-		/// This reduces the memory usage in many cases, but increases the number of allocations.
-		/// Also, some code in the decompiler expects to be able to compare type/member definitions by reference equality,
-		/// and thus will fail with uncached type systems.
-		/// </summary>
-		Uncached = 0x10,
 		/// <summary>
 		/// If this option is active, [DecimalConstantAttribute] is removed and constant values are transformed into simple decimal literals.
 		/// </summary>
@@ -218,12 +206,14 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public IModule GetOrAddModule(ModuleDef module)
 		{
-			if (dnlibModules.TryGetValue(module, out var tsMod))
-				return tsMod;
-			tsMod = new PEFile(module).WithOptions(options).Resolve(resolveContext);
-			modules.Add(tsMod);
-			referencedModules.Add(tsMod);
-			return dnlibModules[module] = tsMod;
+			lock (dnlibModules) {
+				if (dnlibModules.TryGetValue(module, out var tsMod))
+					return tsMod;
+				tsMod = new PEFile(module).WithOptions(options).Resolve(resolveContext);
+				modules.Add(tsMod);
+				referencedModules.Add(tsMod);
+				return dnlibModules[module] = tsMod;
+			}
 		}
 
 		public StringBuilder SharedStringBuilder { get; }

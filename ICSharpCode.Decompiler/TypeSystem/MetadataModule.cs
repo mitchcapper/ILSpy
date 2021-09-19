@@ -46,6 +46,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		private readonly Dictionary<MethodDef, MetadataMethod> methodDefDict;
 		private readonly Dictionary<PropertyDef, MetadataProperty> propertyDefDict;
 		private readonly Dictionary<EventDef, MetadataEvent> eventDefDict;
+		internal readonly Dictionary<TypeRef, IType> typeRefDict;
 
 		internal MetadataModule(ICompilation compilation, PEFile peFile, TypeSystemOptions options)
 		{
@@ -71,13 +72,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			this.rootNamespace = new MetadataNamespace(this, null, string.Empty,
 				NamespaceDefinition.GetRootNamespace(compilation.NameComparer, metadata.Types));
 
-			if (!options.HasFlag(TypeSystemOptions.Uncached)) {
-				typeDefDict = new Dictionary<TypeDef, MetadataTypeDefinition>();
-				fieldDefDict = new Dictionary<FieldDef, MetadataField>();
-				methodDefDict = new Dictionary<MethodDef, MetadataMethod>();
-				propertyDefDict = new Dictionary<PropertyDef, MetadataProperty>();
-				eventDefDict = new Dictionary<EventDef, MetadataEvent>();
-			}
+			typeDefDict = new Dictionary<TypeDef, MetadataTypeDefinition>();
+			fieldDefDict = new Dictionary<FieldDef, MetadataField>();
+			methodDefDict = new Dictionary<MethodDef, MetadataMethod>();
+			propertyDefDict = new Dictionary<PropertyDef, MetadataProperty>();
+			eventDefDict = new Dictionary<EventDef, MetadataEvent>();
+			typeRefDict = new Dictionary<TypeRef, IType>();
 		}
 
 		public TypeSystemOptions TypeSystemOptions => options;
@@ -364,68 +364,28 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		IMethod ResolveMethodReference(MemberRef memberRef, GenericContext context,
 			IReadOnlyList<IType> methodTypeArguments = null, bool expandVarArgs = true)
 		{
-			Debug.Assert(memberRef.IsMethodRef);
 			IReadOnlyList<IType> classTypeArguments = null;
 			IMethod method;
 			GenericContext vaRAgCtx;
 			if (memberRef.Class is MethodDef methodDef) {
-				method = ResolveMethodDefinition(methodDef, expandVarArgs: false);
+				method = GetDefinition(methodDef);
 				vaRAgCtx = context;
-			} else {
+			}
+			else {
 				var declaringType = ResolveDeclaringType(memberRef.DeclaringType, context);
-				var declaringTypeDefinition = declaringType.GetDefinition();
+
 				if (declaringType.TypeArguments.Count > 0) {
 					classTypeArguments = declaringType.TypeArguments;
 				}
 
-				// Note: declaringType might be parameterized, but the signature is for the original method definition.
-				// We'll have to search the member directly on declaringTypeDefinition.
-				string name = memberRef.Name;
+				var declaringTypeDefinition = declaringType.GetDefinition();
 				vaRAgCtx = new GenericContext(declaringTypeDefinition?.TypeParameters);
-				var returnType = memberRef.MethodSig.RetType.DecodeSignature(this, vaRAgCtx);
-				if (declaringTypeDefinition != null) {
-					// Find the set of overloads to search:
-					IEnumerable<IMethod> methods;
-					if (name == ".ctor") {
-						methods = declaringTypeDefinition.GetConstructors();
-					} else if (name == ".cctor") {
-						methods = declaringTypeDefinition.Methods.Where(m => m.IsConstructor && m.IsStatic);
-					} else {
-						methods = declaringTypeDefinition.GetMethods(m => m.Name == name, GetMemberOptions.IgnoreInheritedMembers)
-														 .Concat(declaringTypeDefinition.GetAccessors(m => m.Name == name,
-															 GetMemberOptions.IgnoreInheritedMembers));
-					}
 
-					// Determine the expected parameters from the signature:
-					ImmutableArray<IType> parameterTypes;
-					if (memberRef.CallingConvention == CallingConvention.VarArg) {
-						parameterTypes = memberRef.MethodSig.Params.Select(x => x.DecodeSignature(this, vaRAgCtx))
-												  .Concat(new[] { SpecialType.ArgList })
-												  .ToImmutableArray();
-					} else {
-						parameterTypes = memberRef.MethodSig.Params.Select(x => x.DecodeSignature(this, vaRAgCtx))
-												  .ToImmutableArray();
-					}
-
-					// Search for the matching method:
-					method = null;
-					foreach (var m in methods) {
-						if (m.TypeParameters.Count != ((dnlib.DotNet.IMethod)memberRef).NumberOfGenericParameters)
-							continue;
-						if (CompareSignatures(m.Parameters, parameterTypes) && CompareTypes(m.ReturnType, returnType)) {
-							method = m;
-							break;
-						}
-					}
+				var resolved = memberRef.ResolveMethod();
+				if (resolved is not null && Compilation.GetOrAddModule(resolved.Module) is MetadataModule mod) {
+					method = mod.GetDefinition(resolved);
 				} else {
-					method = null;
-				}
-
-				if (method == null) {
-					var param = memberRef.MethodSig.Params.Select(x => x.DecodeSignature(this, vaRAgCtx))
-										 .ToList();
-					method = CreateFakeMethod(declaringType, name, !memberRef.HasThis, returnType,
-						((dnlib.DotNet.IMethod)memberRef).NumberOfGenericParameters, param);
+					method = CreateFakeMethod(declaringType, memberRef, vaRAgCtx);
 				}
 			}
 
@@ -443,49 +403,25 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return method;
 		}
 
-		static readonly NormalizeTypeVisitor normalizeTypeVisitor = new NormalizeTypeVisitor {
-			ReplaceClassTypeParametersWithDummy = true,
-			ReplaceMethodTypeParametersWithDummy = true,
-		};
-
-		static bool CompareTypes(IType a, IType b)
-		{
-			IType type1 = a.AcceptVisitor(normalizeTypeVisitor);
-			IType type2 = b.AcceptVisitor(normalizeTypeVisitor);
-			return type1.Equals(type2);
-		}
-
-		static bool CompareSignatures(IReadOnlyList<IParameter> parameters, ImmutableArray<IType> parameterTypes)
-		{
-			if (parameterTypes.Length != parameters.Count)
-				return false;
-			for (int i = 0; i < parameterTypes.Length; i++) {
-				if (!CompareTypes(parameterTypes[i], parameters[i].Type))
-					return false;
-			}
-
-			return true;
-		}
-
 		/// <summary>
 		/// Create a dummy IMethod from the specified MethodReference
 		/// </summary>
-		IMethod CreateFakeMethod(IType declaringType, string name, bool isStatic, IType retType, int numOfGeneric,
-			List<IType> param)
+		IMethod CreateFakeMethod(IType declaringType, MemberRef memberRef, GenericContext context)
 		{
 			SymbolKind symbolKind = SymbolKind.Method;
+			var name = memberRef.Name;
 			if (name == ".ctor" || name == ".cctor")
 				symbolKind = SymbolKind.Constructor;
 			var m = new FakeMethod(Compilation, symbolKind);
 			m.DeclaringType = declaringType;
 			m.Name = name;
-			m.ReturnType = retType;
-			m.IsStatic = isStatic;
+			m.IsStatic = !memberRef.HasThis;
+			m.ReturnType = memberRef.MethodSig.RetType.DecodeSignature(this, context);
 
 			TypeParameterSubstitution substitution = null;
-			if (numOfGeneric > 0) {
+			if (memberRef.MethodSig.GenParamCount > 0) {
 				var typeParameters = new List<ITypeParameter>();
-				for (int i = 0; i < numOfGeneric; i++) {
+				for (int i = 0; i < memberRef.MethodSig.GenParamCount; i++) {
 					typeParameters.Add(new DefaultTypeParameter(m, i));
 				}
 
@@ -496,8 +432,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 
 			var parameters = new List<IParameter>();
-			for (int i = 0; i < param.Count; i++) {
-				var type = param[i];
+			foreach (var t in memberRef.MethodSig.Params.Select(x => x.DecodeSignature(this, context))) {
+				var type = t;
 				if (substitution != null) {
 					// replace the dummy method type parameters with the owned instances we just created
 					type = type.AcceptVisitor(substitution);
@@ -556,28 +492,35 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		IField ResolveFieldReference(MemberRef memberRef, GenericContext context)
 		{
 			var declaringType = ResolveDeclaringType(memberRef.DeclaringType, context);
-			var declaringTypeDefinition = declaringType.GetDefinition();
-			string name = memberRef.Name;
-			// field signature is for the definition, not the generic instance
-			var signature = memberRef.FieldSig.Type.DecodeSignature(this,
-				new GenericContext(declaringTypeDefinition?.TypeParameters));
-			// 'f' in the predicate is also the definition, even if declaringType is a ParameterizedType
-			var field = declaringType.GetFields(f => f.Name == name && CompareTypes(f.ReturnType, signature),
-				GetMemberOptions.IgnoreInheritedMembers).FirstOrDefault();
-			if (field == null) {
-				// If it's a field in a generic type, we need to substitute the type arguments:
-				if (declaringType.TypeArguments.Count > 0) {
-					signature = signature.AcceptVisitor(declaringType.GetSubstitution());
+
+			IField tsField;
+			var resolved = memberRef.ResolveField();
+			if (resolved is not null && Compilation.GetOrAddModule(resolved.Module) is MetadataModule mod) {
+				tsField = mod.GetDefinition(resolved);
+			} else {
+				var declaringTypeDefinition = declaringType.GetDefinition();
+
+				var decodedSig = memberRef.FieldSig.Type.DecodeSignature(this,
+					new GenericContext(declaringTypeDefinition?.TypeParameters));
+
+				bool isVolatile = false;
+				if (decodedSig is ModifiedType modifier && modifier.Modifier.Name == "IsVolatile" &&
+					modifier.Modifier.Namespace == "System.Runtime.CompilerServices") {
+					isVolatile = true;
+					decodedSig = modifier.ElementType;
 				}
 
-				field = new FakeField(Compilation) {
-					ReturnType = signature,
-					Name = name,
+				tsField = new FakeField(Compilation) {
+					ReturnType = decodedSig,
+					Name = memberRef.Name,
 					DeclaringType = declaringType,
+					IsVolatile = isVolatile
 				};
 			}
 
-			return field;
+			if (declaringType.TypeArguments.Count > 0)
+				tsField = tsField.Specialize(declaringType.GetSubstitution());
+			return tsField;
 		}
 
 		#endregion

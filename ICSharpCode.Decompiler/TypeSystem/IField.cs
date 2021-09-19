@@ -16,8 +16,6 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using dnlib.DotNet;
-
 namespace ICSharpCode.Decompiler.TypeSystem
 {
 	/// <summary>
@@ -39,5 +37,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Gets whether this field is volatile.
 		/// </summary>
 		bool IsVolatile { get; }
+
+		new IField Specialize(TypeParameterSubstitution substitution);
 	}
 }

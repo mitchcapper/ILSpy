@@ -245,8 +245,6 @@ namespace ICSharpCode.Decompiler.CSharp
 			this.module = typeSystem.MainModule;
 			this.metadata = module.metadata;
 			StringBuilder = new StringBuilder();
-			if (module.TypeSystemOptions.HasFlag(TypeSystemOptions.Uncached))
-				throw new ArgumentException("Cannot use an uncached type system in the decompiler.");
 		}
 
 		#region MemberIsHidden
@@ -414,13 +412,6 @@ namespace ICSharpCode.Decompiler.CSharp
 			GenericGrammarAmbiguityVisitor.ResolveAmbiguities(rootNode);
 		}
 
-		string SyntaxTreeToString(SyntaxTree syntaxTree)
-		{
-			StringWriter w = new StringWriter();
-			syntaxTree.AcceptVisitor(new CSharpOutputVisitor(w, settings.CSharpFormattingOptions));
-			return w.ToString();
-		}
-
 		/// <summary>
 		/// Decompile assembly and module attributes.
 		/// </summary>
@@ -467,14 +458,6 @@ namespace ICSharpCode.Decompiler.CSharp
 			DoDecompileAssemblyAttributes(decompileRun, decompilationContext, syntaxTree);
 			RunTransforms(syntaxTree, decompileRun, decompilationContext);
 			return syntaxTree;
-		}
-
-		/// <summary>
-		/// Decompile assembly and module attributes.
-		/// </summary>
-		public string DecompileModuleAndAssemblyAttributesToString()
-		{
-			return SyntaxTreeToString(DecompileModuleAndAssemblyAttributes());
 		}
 
 		void DoDecompileAssemblyAttributes(DecompileRun decompileRun, ITypeResolveContext decompilationContext, SyntaxTree syntaxTree)
@@ -533,37 +516,6 @@ namespace ICSharpCode.Decompiler.CSharp
 				var typeDecl = DoDecompile(typeDef, decompileRun, decompilationContext.WithCurrentTypeDefinition(typeDef));
 				groupNode.AddChild(typeDecl, SyntaxTree.MemberRole);
 			}
-		}
-
-		/// <summary>
-		/// Decompiles the whole module into a single syntax tree.
-		/// </summary>
-		public SyntaxTree DecompileWholeModuleAsSingleFile()
-		{
-			return DecompileWholeModuleAsSingleFile(false);
-		}
-
-		/// <summary>
-		/// Decompiles the whole module into a single syntax tree.
-		/// </summary>
-		/// <param name="sortTypes">If true, top-level-types are emitted sorted by namespace/name.
-		/// If false, types are emitted in metadata order.</param>
-		public SyntaxTree DecompileWholeModuleAsSingleFile(bool sortTypes)
-		{
-			var decompilationContext = new SimpleTypeResolveContext(typeSystem.MainModule);
-			var decompileRun = new DecompileRun(settings) {
-				CancellationToken = CancellationToken
-			};
-			syntaxTree = new SyntaxTree();
-			RequiredNamespaceCollector.CollectNamespaces(module, decompileRun.Namespaces);
-			DoDecompileModuleAndAssemblyAttributes(decompileRun, decompilationContext, syntaxTree);
-			IEnumerable<TypeDef> typeDefs = metadata.Types;
-			if (sortTypes) {
-				typeDefs = typeDefs.OrderBy(td => (td.Namespace.String, td.Name.String));
-			}
-			DoDecompileTypes(typeDefs, decompileRun, decompilationContext, syntaxTree);
-			RunTransforms(syntaxTree, decompileRun, decompilationContext);
-			return syntaxTree;
 		}
 
 		/// <summary>
@@ -730,15 +682,6 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				return null;
 			}
-		}
-
-
-		/// <summary>
-		/// Decompiles the whole module into a single string.
-		/// </summary>
-		public string DecompileWholeModuleAsString()
-		{
-			return SyntaxTreeToString(DecompileWholeModuleAsSingleFile());
 		}
 
 		/// <summary>

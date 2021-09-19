@@ -26,10 +26,7 @@ using dnSpy.Contracts.Decompiler;
 
 namespace ICSharpCode.Decompiler
 {
-	/// <summary>
-	/// Cecil helper methods.
-	/// </summary>
-	public static class CecilExtensions
+	public static class DnlibExtensions
 	{
 		/// <summary>
 		/// Gets the (exclusive) end offset of this instruction.

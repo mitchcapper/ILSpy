@@ -55,6 +55,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		IMethod[] methods;
 		List<IType> directBaseTypes;
 		string defaultMemberName;
+		private string reflectionName;
 
 		internal MetadataTypeDefinition(MetadataModule module, TypeDef handle)
 		{
@@ -130,8 +131,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				foreach (TypeDef h in nestedTypeCollection) {
 					nestedTypeList.Add(module.GetDefinition(h));
 				}
-				if ((module.TypeSystemOptions & TypeSystemOptions.Uncached) != 0)
-					return nestedTypeList;
 				return LazyInit.GetOrSet(ref this.nestedTypes, nestedTypeList.ToArray());
 			}
 		}
@@ -143,8 +142,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				if (members != null)
 					return members;
 				members = this.Fields.Concat<IMember>(this.Methods).Concat(this.Properties).Concat(this.Events).ToArray();
-				if ((module.TypeSystemOptions & TypeSystemOptions.Uncached) != 0)
-					return members;
 				return LazyInit.GetOrSet(ref this.members, members);
 			}
 		}
@@ -162,8 +159,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 						fieldList.Add(module.GetDefinition(field));
 					}
 				}
-				if ((module.TypeSystemOptions & TypeSystemOptions.Uncached) != 0)
-					return fieldList;
 				return LazyInit.GetOrSet(ref this.fields, fieldList.ToArray());
 			}
 		}
@@ -182,8 +177,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 						propertyList.Add(module.GetDefinition(property));
 					}
 				}
-				if ((module.TypeSystemOptions & TypeSystemOptions.Uncached) != 0)
-					return propertyList;
 				return LazyInit.GetOrSet(ref this.properties, propertyList.ToArray());
 			}
 		}
@@ -203,8 +196,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 						eventList.Add(module.GetDefinition(ev));
 					}
 				}
-				if ((module.TypeSystemOptions & TypeSystemOptions.Uncached) != 0)
-					return eventList;
 				return LazyInit.GetOrSet(ref this.events, eventList.ToArray());
 			}
 		}
@@ -224,8 +215,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				if (this.Kind == TypeKind.Struct || this.Kind == TypeKind.Enum) {
 					methodsList.Add(FakeMethod.CreateDummyConstructor(Compilation, this, IsAbstract ? Accessibility.Protected : Accessibility.Public));
 				}
-				if ((module.TypeSystemOptions & TypeSystemOptions.Uncached) != 0)
-					return methodsList;
 				return LazyInit.GetOrSet(ref this.methods, methodsList.ToArray());
 			}
 		}
@@ -416,8 +405,20 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 
-		public string ReflectionName => fullTypeName.ReflectionName;
-		public string Namespace => fullTypeName.TopLevelTypeName.Namespace;
+		public string ReflectionName {
+			get {
+				string reflName = LazyInit.VolatileRead(ref this.reflectionName);
+				if (reflName != null)
+					return reflName;
+
+				var sb = module.Compilation.SharedStringBuilder;
+				sb.Length = 0;
+				reflName = FullNameFactory.FullName(handle, true, null, sb);
+
+				return LazyInit.GetOrSet(ref this.reflectionName, reflName);
+			}
+		}
+		public string Namespace => handle.Namespace;
 
 		ITypeDefinition IType.GetDefinition() => this;
 		TypeParameterSubstitution IType.GetSubstitution() => TypeParameterSubstitution.Identity;

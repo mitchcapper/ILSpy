@@ -146,7 +146,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		IField ReadAndDecodeFieldReference()
 		{
-			var fieldReference = (dnlib.DotNet.IField)ReadAndDecodeMetadataToken();
+			var fieldReference = ReadAndDecodeMetadataToken();
 			var f = module.ResolveEntity(fieldReference, genericContext) as IField;
 			if (f == null)
 				throw new BadImageFormatException("Invalid field token");

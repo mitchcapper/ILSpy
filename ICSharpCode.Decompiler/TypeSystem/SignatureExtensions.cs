@@ -75,19 +75,27 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return module.GetDefinition(def);
 			}
 			if (typeDefOrRef is TypeRef typeRef) {
-				Console.WriteLine("Resolving TypeRef: {0}", typeRef);
-				var resolved = typeRef.Resolve();
-				if (resolved != null && module.Compilation.GetOrAddModule(resolved.Module) is MetadataModule mod) {
-					return mod.GetDefinition(resolved);
-				}
-				Console.WriteLine("Failed");
+				lock (module.typeRefDict) {
+					if (module.typeRefDict.TryGetValue(typeRef, out var tsType))
+						return tsType;
 
-				bool? isReferenceType;
-				if (isVT != ThreeState.Unknown)
-					isReferenceType = isVT == ThreeState.False;
-				else
-					isReferenceType = null;
-				return new UnknownType(typeDefOrRef.GetFullTypeName(), isReferenceType);
+					Console.WriteLine("Resolving TypeRef: {0}", typeRef);
+					var resolved = typeRef.Resolve();
+					if (resolved != null && module.Compilation.GetOrAddModule(resolved.Module) is MetadataModule mod) {
+						tsType = mod.GetDefinition(resolved);
+					}
+					else {
+						Console.WriteLine("Failed");
+						bool? isReferenceType;
+						if (isVT != ThreeState.Unknown)
+							isReferenceType = isVT == ThreeState.False;
+						else
+							isReferenceType = null;
+						tsType = new UnknownType(typeDefOrRef.GetFullTypeName(), isReferenceType);
+					}
+
+					return module.typeRefDict[typeRef] = tsType;
+				}
 			}
 
 			throw new InvalidOperationException();

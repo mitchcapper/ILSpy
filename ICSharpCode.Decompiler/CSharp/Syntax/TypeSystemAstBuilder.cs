@@ -557,29 +557,24 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 
 			int pos = namespaceName.LastIndexOf('.');
-			if (pos < 0)
-			{
-				if (IsValidNamespace(namespaceName, out nrr))
-				{
+			if (pos < 0) {
+				if (IsValidNamespace(namespaceName, out nrr)) {
 					AstType ns;
-					if (requiresGlobalPrefix)
-					{
+					if (requiresGlobalPrefix) {
 						ns = new MemberType {
 							Target = MakeGlobal(),
 							IsDoubleColon = true,
 							MemberName = namespaceName
 						};
 					}
-					else
-					{
+					else {
 						ns = MakeSimpleType(namespaceName);
 					}
 					if (AddResolveResultAnnotations && nrr != null)
 						ns.AddAnnotation(nrr);
 					return ns;
 				}
-				else
-				{
+				else {
 					var ns = new MemberType {
 						Target = MakeGlobal(),
 						IsDoubleColon = true,

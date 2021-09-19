@@ -104,7 +104,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 
 		bool IField.IsReadOnly => false;
-		bool IField.IsVolatile => false;
+		public bool IsVolatile { get; set; }
 
 		bool IVariable.IsConst => false;
 		object IVariable.GetConstantValue(bool throwOnInvalidMetadata) => null;
@@ -113,6 +113,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public override SymbolKind SymbolKind => SymbolKind.Field;
 
 		public override IMember Specialize(TypeParameterSubstitution substitution)
+		{
+			return SpecializedField.Create(this, substitution);
+		}
+
+		IField IField.Specialize(TypeParameterSubstitution substitution)
 		{
 			return SpecializedField.Create(this, substitution);
 		}

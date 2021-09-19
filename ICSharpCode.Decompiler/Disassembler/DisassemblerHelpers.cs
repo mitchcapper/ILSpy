@@ -68,7 +68,7 @@ namespace ICSharpCode.Decompiler.Disassembler {
 			if (data == null)
 				data = BoxedTextColor.Label;
 			var r = instruction == null ? null : method == null ? (object)instruction : new InstructionReference(method, instruction);
-			writer.Write(CecilExtensions.OffsetToString(instruction.GetOffset()), r, DecompilerReferenceFlags.None, data);
+			writer.Write(DnlibExtensions.OffsetToString(instruction.GetOffset()), r, DecompilerReferenceFlags.None, data);
 		}
 
 		public static void WriteTo(this ExceptionHandler exceptionHandler, IDecompilerOutput writer, MethodDef method)
@@ -181,7 +181,7 @@ namespace ICSharpCode.Decompiler.Disassembler {
 				writer.Write(" ", BoxedTextColor.Text);
 			}
 			startLocation = writer.NextPosition;
-			writer.Write(CecilExtensions.OffsetToString(instruction.GetOffset()), new InstructionReference(method, instruction), DecompilerReferenceFlags.Definition, BoxedTextColor.Label);
+			writer.Write(DnlibExtensions.OffsetToString(instruction.GetOffset()), new InstructionReference(method, instruction), DecompilerReferenceFlags.Definition, BoxedTextColor.Label);
 			writer.Write(":", BoxedTextColor.Punctuation);
 			writer.Write(" ", BoxedTextColor.Text);
 			writer.Write(instruction.OpCode.Name, instruction.OpCode, DecompilerReferenceFlags.None, BoxedTextColor.OpCode);
@@ -602,7 +602,7 @@ namespace ICSharpCode.Decompiler.Disassembler {
 					if (isValueType != ThreeState.Unknown)
 						isVT = isValueType == ThreeState.True;
 					else
-						isVT = CecilExtensions.IsValueType(type);
+						isVT = DnlibExtensions.IsValueType(type);
 					writer.Write(isVT ? "valuetype" : "class", BoxedTextColor.Keyword);
 					writer.Write(" ", BoxedTextColor.Text);
 				}

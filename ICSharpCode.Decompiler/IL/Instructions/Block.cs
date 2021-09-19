@@ -203,7 +203,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// Gets the name of this block.
 		/// </summary>
 		public string Label {
-			get { return CecilExtensions.OffsetToString(this.StartILOffset); }
+			get { return DnlibExtensions.OffsetToString(this.StartILOffset); }
 		}
 
 		public override void WriteTo(IDecompilerOutput output, ILAstWritingOptions options)

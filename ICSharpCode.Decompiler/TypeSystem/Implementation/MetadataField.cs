@@ -221,14 +221,19 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return 0x11dda32b ^ module.PEFile.GetHashCode() ^ handle.GetHashCode();
 		}
 
+		public IField Specialize(TypeParameterSubstitution substitution)
+		{
+			return SpecializedField.Create(this, substitution);
+		}
+
 		bool IMember.Equals(IMember obj, TypeVisitor typeNormalization)
 		{
 			return Equals(obj);
 		}
 
-		public IMember Specialize(TypeParameterSubstitution substitution)
+		IMember IMember.Specialize(TypeParameterSubstitution substitution)
 		{
-			return SpecializedField.Create(this, substitution);
+			return Specialize(substitution);
 		}
 	}
 }

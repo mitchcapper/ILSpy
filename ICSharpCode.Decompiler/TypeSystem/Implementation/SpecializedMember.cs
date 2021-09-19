@@ -21,7 +21,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
-using System.Threading;
 using dnlib.DotNet;
 using ICSharpCode.Decompiler.Util;
 
@@ -33,7 +32,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	public abstract class SpecializedMember : IMember
 	{
 		protected readonly IMember baseMember;
-		TypeParameterSubstitution substitution;
+		protected TypeParameterSubstitution substitution;
 
 		IType declaringType;
 		IType returnType;
