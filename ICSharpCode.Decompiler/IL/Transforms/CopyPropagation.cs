@@ -131,7 +131,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			ILVariable[] uninlinedArgs = new ILVariable[copiedExpr.Children.Count];
 			for (int j = 0; j < uninlinedArgs.Length; j++) {
 				var arg = copiedExpr.Children[j];
-				var type = context.TypeSystem.FindType(arg.ResultType.ToKnownTypeCode());
+				var type = context.TypeSystem.FindType(arg.ResultType);
 				uninlinedArgs[j] = new ILVariable(VariableKind.StackSlot, type, arg.ResultType) {
 					Name = "C_" + arg.StartILOffset,
 					HasGeneratedName = true,

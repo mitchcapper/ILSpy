@@ -1460,8 +1460,10 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			if (stackType == StackType.I && settings.NativeIntegers) {
 				return sign == Sign.Unsigned ? SpecialType.NUInt : SpecialType.NInt;
-			} else {
-				return compilation.FindType(stackType.ToKnownTypeCode(sign));
+			}
+			else
+			{
+				return compilation.FindType(stackType, sign);
 			}
 		}
 
@@ -1483,7 +1485,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					stackType = StackType.I8;
 				}
 			}
-			return compilation.FindType(stackType.ToKnownTypeCode(sign));
+			return compilation.FindType(stackType, sign);
 		}
 
 		/// <summary>
@@ -3183,9 +3185,13 @@ namespace ICSharpCode.Decompiler.CSharp
 				IType targetType;
 				if (fallback.Expression is ThrowExpression && fallback.Type.Equals(SpecialType.NoType)) {
 					targetType = NullableType.GetUnderlyingType(value.Type);
-				} else if (!value.Type.Equals(SpecialType.NullType) && !fallback.Type.Equals(SpecialType.NullType) && !value.Type.Equals(fallback.Type)) {
-					targetType = compilation.FindType(inst.UnderlyingResultType.ToKnownTypeCode());
-				} else {
+				}
+				else if (!value.Type.Equals(SpecialType.NullType) && !fallback.Type.Equals(SpecialType.NullType) && !value.Type.Equals(fallback.Type))
+				{
+					targetType = compilation.FindType(inst.UnderlyingResultType);
+				}
+				else
+				{
 					targetType = value.Type.Equals(SpecialType.NullType) ? fallback.Type : value.Type;
 				}
 				if (inst.Kind != NullCoalescingKind.Ref) {
@@ -3319,8 +3325,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			IType resultType;
 			if (context.TypeHint.Kind != TypeKind.Unknown && context.TypeHint.GetStackType() == inst.ResultType) {
 				resultType = context.TypeHint;
-			} else {
-				resultType = compilation.FindType(inst.ResultType.ToKnownTypeCode());
+			}
+			else
+			{
+				resultType = compilation.FindType(inst.ResultType);
 			}
 
 			foreach (var section in inst.Sections) {

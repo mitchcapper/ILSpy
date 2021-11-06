@@ -1,14 +1,14 @@
 ﻿// Copyright (c) 2014 Daniel Grunwald
-// 
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
 // without restriction, including without limitation the rights to use, copy, modify, merge,
 // publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
 // to whom the Software is furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in all copies or
 // substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
 // INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
 // PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using ICSharpCode.Decompiler.IL.Patterns;
+using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 
@@ -44,19 +45,19 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		InAsyncAwait
 	}
-	
+
 	/// <summary>
 	/// Represents a decoded IL instruction
 	/// </summary>
 	public abstract partial class ILInstruction
 	{
 		public readonly OpCode OpCode;
-		
+
 		protected ILInstruction(OpCode opCode)
 		{
 			this.OpCode = opCode;
 		}
-		
+
 		protected void ValidateChild(ILInstruction inst)
 		{
 			if (inst == null)
@@ -65,7 +66,7 @@ namespace ICSharpCode.Decompiler.IL
 			// If a call to ReplaceWith() triggers the "ILAst must form a tree" assertion,
 			// make sure to read the remarks on the ReplaceWith() method.
 		}
-		
+
 		[Conditional("DEBUG")]
 		internal virtual void CheckInvariant(ILPhase phase)
 		{
@@ -80,7 +81,7 @@ namespace ICSharpCode.Decompiler.IL
 			}
 			Debug.Assert((this.DirectFlags & ~this.Flags) == 0, "All DirectFlags must also appear in this.Flags");
 		}
-		
+
 		/// <summary>
 		/// Gets whether this node is a descendant of <paramref name="possibleAncestor"/>.
 		/// Also returns true if <c>this</c>==<paramref name="possibleAncestor"/>.
@@ -178,21 +179,21 @@ namespace ICSharpCode.Decompiler.IL
 			}
 			return level;
 		}
-		
+
 		/// <summary>
 		/// Gets the stack type of the value produced by this instruction.
 		/// </summary>
 		public abstract StackType ResultType { get; }
-		
+
 		/* Not sure if it's a good idea to offer this on all instructions --
 		 *   e.g. ldloc for a local of type `int?` would return StackType.O (because it's not a lifted operation),
 		 *   even though the underlying type is int = StackType.I4.
 		/// <summary>
 		/// Gets the underlying result type of the value produced by this instruction.
-		/// 
+		///
 		/// If this is a lifted operation, the ResultType will be `StackType.O` (because Nullable{T} is a struct),
 		/// and UnderlyingResultType will be result type of the corresponding non-lifted operation.
-		/// 
+		///
 		/// If this is not a lifted operation, the underlying result type is equal to the result type.
 		/// </summary>
 		public virtual StackType UnderlyingResultType { get => ResultType; }
@@ -234,11 +235,11 @@ namespace ICSharpCode.Decompiler.IL
 			}
 #endif
 		}
-		
+
 		const InstructionFlags invalidFlags = (InstructionFlags)(-1);
-		
+
 		InstructionFlags flags = invalidFlags;
-		
+
 		/// <summary>
 		/// Gets the flags describing the behavior of this instruction.
 		/// This property computes the flags on-demand and caches them
@@ -265,7 +266,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return (this.Flags & flags) != 0;
 		}
-		
+
 		/// <summary>
 		/// Returns whether the instruction (without considering child instructions) has at least one of the specified flags.
 		/// </summary>
@@ -273,20 +274,20 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return (this.DirectFlags & flags) != 0;
 		}
-		
+
 		protected void InvalidateFlags()
 		{
 			for (ILInstruction inst = this; inst != null && inst.flags != invalidFlags; inst = inst.parent)
 				inst.flags = invalidFlags;
 		}
-		
+
 		protected abstract InstructionFlags ComputeFlags();
-		
+
 		/// <summary>
 		/// Gets the flags for this instruction only, without considering the child instructions.
 		/// </summary>
 		public abstract InstructionFlags DirectFlags { get; }
-		
+
 		/// <summary>
 		/// Gets the ILRange for this instruction alone, ignoring the operands.
 		/// </summary>
@@ -361,22 +362,22 @@ namespace ICSharpCode.Decompiler.IL
 			}
 			return output.ToString();
 		}
-		
+
 		/// <summary>
 		/// Calls the Visit*-method on the visitor corresponding to the concrete type of this instruction.
 		/// </summary>
 		public abstract void AcceptVisitor(ILVisitor visitor);
-		
+
 		/// <summary>
 		/// Calls the Visit*-method on the visitor corresponding to the concrete type of this instruction.
 		/// </summary>
 		public abstract T AcceptVisitor<T>(ILVisitor<T> visitor);
-		
+
 		/// <summary>
 		/// Calls the Visit*-method on the visitor corresponding to the concrete type of this instruction.
 		/// </summary>
 		public abstract T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context);
-		
+
 		/// <summary>
 		/// Gets the child nodes of this instruction.
 		/// </summary>
@@ -389,57 +390,57 @@ namespace ICSharpCode.Decompiler.IL
 				return new ChildrenCollection(this);
 			}
 		}
-		
+
 		protected abstract int GetChildCount();
 		protected abstract ILInstruction GetChild(int index);
 		protected abstract void SetChild(int index, ILInstruction value);
 		protected abstract SlotInfo GetChildSlot(int index);
-		
+
 		#region ChildrenCollection + ChildrenEnumerator
 		public readonly struct ChildrenCollection : IReadOnlyList<ILInstruction>
 		{
 			readonly ILInstruction inst;
-			
+
 			internal ChildrenCollection(ILInstruction inst)
 			{
 				Debug.Assert(inst != null);
 				this.inst = inst;
 			}
-			
+
 			public int Count {
 				get { return inst.GetChildCount(); }
 			}
-			
+
 			public ILInstruction this[int index] {
 				get { return inst.GetChild(index); }
 				set { inst.SetChild(index, value); }
 			}
-			
+
 			public ChildrenEnumerator GetEnumerator()
 			{
 				return new ChildrenEnumerator(inst);
 			}
-			
+
 			IEnumerator<ILInstruction> IEnumerable<ILInstruction>.GetEnumerator()
 			{
 				return GetEnumerator();
 			}
-			
+
 			System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
 			{
 				return GetEnumerator();
 			}
 		}
-		
+
 		#if DEBUG
 		int activeEnumerators;
-		
+
 		[Conditional("DEBUG")]
 		internal void StartEnumerator()
 		{
 			activeEnumerators++;
 		}
-		
+
 		[Conditional("DEBUG")]
 		internal void StopEnumerator()
 		{
@@ -447,7 +448,7 @@ namespace ICSharpCode.Decompiler.IL
 			activeEnumerators--;
 		}
 		#endif
-		
+
 		[Conditional("DEBUG")]
 		internal void AssertNoEnumerators()
 		{
@@ -455,7 +456,7 @@ namespace ICSharpCode.Decompiler.IL
 			Debug.Assert(activeEnumerators == 0);
 			#endif
 		}
-		
+
 		/// <summary>
 		/// Enumerator over the children of an ILInstruction.
 		/// Warning: even though this is a struct, it is invalid to copy:
@@ -466,7 +467,7 @@ namespace ICSharpCode.Decompiler.IL
 			ILInstruction inst;
 			readonly int end;
 			int pos;
-			
+
 			internal ChildrenEnumerator(ILInstruction inst)
 			{
 				Debug.Assert(inst != null);
@@ -477,7 +478,7 @@ namespace ICSharpCode.Decompiler.IL
 				inst.StartEnumerator();
 				#endif
 			}
-			
+
 			public ILInstruction Current {
 				get {
 					return inst.GetChild(pos);
@@ -498,11 +499,11 @@ namespace ICSharpCode.Decompiler.IL
 				}
 				#endif
 			}
-			
+
 			object System.Collections.IEnumerator.Current {
 				get { return this.Current; }
 			}
-			
+
 			void System.Collections.IEnumerator.Reset()
 			{
 				pos = -1;
@@ -516,13 +517,13 @@ namespace ICSharpCode.Decompiler.IL
 		/// <remarks>
 		/// It is temporarily possible for a node to be used in multiple places in the ILAst,
 		/// this method only replaces this node at its primary position (see remarks on <see cref="Parent"/>).
-		/// 
+		///
 		/// This means you cannot use ReplaceWith() to wrap an instruction in another node.
 		/// For example, <c>node.ReplaceWith(new BitNot(node))</c> will first call the BitNot constructor,
 		/// which sets <c>node.Parent</c> to the BitNot instance.
 		/// The ReplaceWith() call then attempts to set <c>BitNot.Argument</c> to the BitNot instance,
 		/// which creates a cyclic ILAst. Meanwhile, node's original parent remains unmodified.
-		/// 
+		///
 		/// The solution in this case is to avoid using <c>ReplaceWith</c>.
 		/// If the parent node is unknown, the following trick can be used:
 		/// <code>
@@ -538,7 +539,7 @@ namespace ICSharpCode.Decompiler.IL
 				return;
 			parent.SetChild(ChildIndex, replacement);
 		}
-		
+
 		/// <summary>
 		/// Returns all descendants of the ILInstruction in post-order.
 		/// (including the ILInstruction itself)
@@ -583,7 +584,7 @@ namespace ICSharpCode.Decompiler.IL
 				yield return this;
 			}
 		}
-		
+
 		/// <summary>
 		/// Gets the ancestors of this node (including the node itself as first element).
 		/// </summary>
@@ -602,14 +603,14 @@ namespace ICSharpCode.Decompiler.IL
 		/// or possibly even more (re-arrangement with stale positions).
 		/// </summary>
 		byte refCount;
-		
+
 		internal void AddRef()
 		{
 			if (refCount++ == 0) {
 				Connected();
 			}
 		}
-		
+
 		internal void ReleaseRef()
 		{
 			Debug.Assert(refCount > 0);
@@ -617,7 +618,7 @@ namespace ICSharpCode.Decompiler.IL
 				Disconnected();
 			}
 		}
-		
+
 		/// <summary>
 		/// Gets whether this ILInstruction is connected to the root node of the ILAst.
 		/// </summary>
@@ -629,7 +630,7 @@ namespace ICSharpCode.Decompiler.IL
 		protected internal bool IsConnected {
 			get { return refCount > 0; }
 		}
-		
+
 		/// <summary>
 		/// Called after the ILInstruction was connected to the root node of the ILAst.
 		/// </summary>
@@ -638,7 +639,7 @@ namespace ICSharpCode.Decompiler.IL
 			foreach (var child in Children)
 				child.AddRef();
 		}
-		
+
 		/// <summary>
 		/// Called after the ILInstruction was disconnected from the root node of the ILAst.
 		/// </summary>
@@ -647,9 +648,9 @@ namespace ICSharpCode.Decompiler.IL
 			foreach (var child in Children)
 				child.ReleaseRef();
 		}
-		
+
 		ILInstruction parent;
-		
+
 		/// <summary>
 		/// Gets the parent of this ILInstruction.
 		/// </summary>
@@ -660,24 +661,24 @@ namespace ICSharpCode.Decompiler.IL
 		/// a node is stored in a slot.
 		/// The node's occurrence in that slot is termed the "primary position" of the node,
 		/// and all other (older) uses of the nodes are termed "stale positions".
-		/// 
+		///
 		/// A consistent ILAst must not contain any stale positions.
 		/// Debug builds of ILSpy check the ILAst for consistency after every IL transform.
-		/// 
+		///
 		/// If a slot containing a node is overwritten with another node, the <c>Parent</c>
 		/// and <c>ChildIndex</c> of the old node are not modified.
 		/// This allows overwriting stale positions to restore consistency of the ILAst.
-		/// 
+		///
 		/// If a "primary position" is overwritten, the <c>Parent</c> of the old node also remains unmodified.
 		/// This makes the old node an "orphaned node".
 		/// Orphaned nodes may later be added back to the ILAst (or can just be garbage-collected).
-		/// 
+		///
 		/// Note that is it is possible (though unusual) for a stale position to reference an orphaned node.
 		/// </remarks>
 		public ILInstruction Parent {
 			get { return parent; }
 		}
-		
+
 		/// <summary>
 		/// Gets the index of this node in the <c>Parent.Children</c> collection.
 		/// </summary>
@@ -686,7 +687,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// this property returns the index of the primary position of this node (see remarks on <see cref="Parent"/>).
 		/// </remarks>
 		public int ChildIndex { get; internal set; } = -1;
-		
+
 		/// <summary>
 		/// Gets information about the slot in which this instruction is stored.
 		/// (i.e., the relation of this instruction to its parent instruction)
@@ -694,7 +695,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// <remarks>
 		/// It is temporarily possible for a node to be used in multiple places in the ILAst,
 		/// this property returns the slot of the primary position of this node (see remarks on <see cref="Parent"/>).
-		/// 
+		///
 		/// Precondition: this node must not be orphaned.
 		/// </remarks>
 		public SlotInfo SlotInfo {
@@ -705,7 +706,7 @@ namespace ICSharpCode.Decompiler.IL
 				return parent.GetChildSlot(this.ChildIndex);
 			}
 		}
-		
+
 		/// <summary>
 		/// Replaces a child of this ILInstruction.
 		/// </summary>
@@ -736,7 +737,7 @@ namespace ICSharpCode.Decompiler.IL
 					oldValue.ReleaseRef();
 			}
 		}
-		
+
 		/// <summary>
 		/// Called when a new child is added to a InstructionCollection.
 		/// </summary>
@@ -750,7 +751,7 @@ namespace ICSharpCode.Decompiler.IL
 			if (refCount > 0)
 				newChild.AddRef();
 		}
-		
+
 		/// <summary>
 		/// Called when a child is removed from a InstructionCollection.
 		/// </summary>
@@ -759,7 +760,7 @@ namespace ICSharpCode.Decompiler.IL
 			if (refCount > 0)
 				oldChild.ReleaseRef();
 		}
-		
+
 		/// <summary>
 		/// Called when a series of add/remove operations on the InstructionCollection is complete.
 		/// </summary>
@@ -768,7 +769,7 @@ namespace ICSharpCode.Decompiler.IL
 			InvalidateFlags();
 			MakeDirty();
 		}
-		
+
 		/// <summary>
 		/// Creates a deep clone of the ILInstruction.
 		/// </summary>
@@ -778,7 +779,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// multiple positions will be cloned once per position).
 		/// </remarks>
 		public abstract ILInstruction Clone();
-		
+
 		/// <summary>
 		/// Creates a shallow clone of the ILInstruction.
 		/// </summary>
@@ -797,7 +798,7 @@ namespace ICSharpCode.Decompiler.IL
 			#endif
 			return inst;
 		}
-		
+
 		/// <summary>
 		/// Attempts to match the specified node against the pattern.
 		/// </summary>
@@ -814,7 +815,7 @@ namespace ICSharpCode.Decompiler.IL
 			match.Success = PerformMatch(node, ref match);
 			return match;
 		}
-		
+
 		/// <summary>
 		/// Attempts matching this instruction against the other instruction.
 		/// </summary>
@@ -825,7 +826,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// If the method returns false, the match object may remain in a partially-updated state and
 		/// needs to be restored before it can be reused.</returns>
 		protected internal abstract bool PerformMatch(ILInstruction other, ref Match match);
-		
+
 		/// <summary>
 		/// Attempts matching this instruction against a list of other instructions (or a part of said list).
 		/// </summary>
@@ -854,13 +855,13 @@ namespace ICSharpCode.Decompiler.IL
 		///   The instruction is replaced with a load of a new temporary variable;
 		///   and the instruction is moved to a store to said variable at block-level.
 		///   Returns the new variable.
-		/// 
+		///
 		/// If extraction is not possible, the ILAst is left unmodified and the function returns null.
 		/// May return null if extraction is not possible.
 		/// </summary>
-		public ILVariable Extract()
+		public ILVariable Extract(ILTransformContext context)
 		{
-			return Transforms.ExtractionContext.Extract(this);
+			return Transforms.ExtractionContext.Extract(this, context);
 		}
 
 		/// <summary>
@@ -893,17 +894,17 @@ namespace ICSharpCode.Decompiler.IL
 			return GetChildSlot(childIndex).CanInlineInto;
 		}
 	}
-	
+
 	public interface IInstructionWithTypeOperand
 	{
 		IType Type { get; }
 	}
-	
+
 	public interface IInstructionWithFieldOperand
 	{
 		IField Field { get; }
 	}
-	
+
 	public interface IInstructionWithMethodOperand
 	{
 		IMethod Method { get; }
@@ -920,7 +921,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>
 		/// If the instruction is lifted and returns a nullable result,
 		/// gets the underlying result type.
-		/// 
+		///
 		/// Note that not all lifted instructions return a nullable result:
 		/// C# comparisons always return a bool!
 		/// </summary>
