@@ -1530,15 +1530,18 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			Debug.Assert(decompilationContext.CurrentMember == ev);
 			try {
+				bool adderHasBody = ev.CanAdd && ev.AddAccessor.HasBody;
+				bool removerHasBody = ev.CanRemove && ev.RemoveAccessor.HasBody;
 				var typeSystemAstBuilder = CreateAstBuilder(decompileRun.Settings);
-				typeSystemAstBuilder.UseCustomEvents = ev.DeclaringTypeDefinition.Kind != TypeKind.Interface;
+				typeSystemAstBuilder.UseCustomEvents = ev.DeclaringTypeDefinition.Kind != TypeKind.Interface
+					|| ev.IsExplicitInterfaceImplementation
+					|| adderHasBody
+					|| removerHasBody;
 				var eventDecl = typeSystemAstBuilder.ConvertEntity(ev);
 				if (ev.IsExplicitInterfaceImplementation) {
 					int lastDot = ev.Name.LastIndexOf('.');
 					eventDecl.Name = ev.Name.Substring(lastDot + 1);
 				}
-				bool adderHasBody = ev.CanAdd && ev.AddAccessor.HasBody;
-				bool removerHasBody = ev.CanRemove && ev.RemoveAccessor.HasBody;
 				if (adderHasBody)
 				{
 					DecompileBody(ev.AddAccessor, ((CustomEventDeclaration)eventDecl).AddAccessor, decompileRun, decompilationContext);
