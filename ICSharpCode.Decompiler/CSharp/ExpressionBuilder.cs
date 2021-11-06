@@ -307,7 +307,13 @@ namespace ICSharpCode.Decompiler.CSharp
 					targetCasted = true;
 					target = target.ConvertTo(field.DeclaringType, this);
 					targetResolveResult = target.ResolveResult;
-				} else {
+				}
+				else
+				{
+					// the field reference is still ambiguous, however, mrr might refer to a different member,
+					// e.g., in the case of auto events, their backing fields have the same name.
+					// "this.Event" is ambiguous, but should refer to the field, not the event.
+					mrr = null;
 					break;
 				}
 			}
