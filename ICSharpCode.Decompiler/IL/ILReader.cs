@@ -111,10 +111,10 @@ namespace ICSharpCode.Decompiler.IL
 			this.methodReturnStackType = method.ReturnType.GetStackType();
 			InitParameterVariables();
 			this.localVariables = body.Variables.SelectArray(CreateILVariable);
-			if (body.InitLocals) {
-				foreach (var v in localVariables) {
-					v.HasInitialValue = true;
-				}
+			foreach (var v in localVariables)
+			{
+				v.InitialValueIsInitialized = body.InitLocals;
+				v.UsesInitialValue = true;
 			}
 			this.mainContainer = new BlockContainer(expectedResultType: methodReturnStackType);
 			this.instructionBuilder = new List<ILInstruction>();

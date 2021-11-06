@@ -242,18 +242,21 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				var representative = unionFind.Find(inst);
 				ILVariable v;
-				if (!newVariables.TryGetValue(representative, out v)) {
+				if (!newVariables.TryGetValue(representative, out v))
+				{
 					v = new ILVariable(inst.Variable.Kind, inst.Variable.Type, inst.Variable.StackType, inst.Variable.Index);
 					v.Name = inst.Variable.Name;
 					v.HasGeneratedName = inst.Variable.HasGeneratedName;
 					v.StateMachineField = inst.Variable.StateMachineField;
-					v.HasInitialValue = false; // we'll set HasInitialValue when we encounter an uninit load
+					v.InitialValueIsInitialized = inst.Variable.InitialValueIsInitialized;
+					v.UsesInitialValue = false; // we'll set UsesInitialValue when we encounter an uninit load
 					v.RemoveIfRedundant = inst.Variable.RemoveIfRedundant;
 					newVariables.Add(representative, v);
 					inst.Variable.Function.Variables.Add(v);
 				}
-				if (inst.Variable.HasInitialValue && uninitVariableUsage.TryGetValue(inst.Variable, out var uninitLoad) && uninitLoad == inst) {
-					v.HasInitialValue = true;
+				if (inst.Variable.UsesInitialValue && uninitVariableUsage.TryGetValue(inst.Variable, out var uninitLoad) && uninitLoad == inst)
+				{
+					v.UsesInitialValue = true;
 				}
 				return v;
 			}

@@ -68,6 +68,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		}
 
+		enum VariableInitKind
+		{
+			None,
+			NeedsDefaultValue,
+			NeedsSkipInit
+		}
+
 		[DebuggerDisplay("VariableToDeclare(Name={Name})")]
 		class VariableToDeclare
 		{
@@ -78,7 +85,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			/// <summary>
 			/// Whether the variable needs to be default-initialized.
 			/// </summary>
-			public bool DefaultInitialization;
+			public VariableInitKind DefaultInitialization;
 
 			/// <summary>
 			/// Integer value that can be used to compare to VariableToDeclare instances
@@ -104,10 +111,24 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			public bool RemovedDueToCollision => ReplacementDueToCollision != null;
 			public bool DeclaredInDeconstruction;
 
-			public VariableToDeclare(ILVariable variable, bool defaultInitialization, InsertionPoint insertionPoint, IdentifierExpression firstUse, int sourceOrder)
+			public VariableToDeclare(ILVariable variable, InsertionPoint insertionPoint, IdentifierExpression firstUse, int sourceOrder)
 			{
 				this.ILVariable = variable;
-				this.DefaultInitialization = defaultInitialization;
+				if (variable.UsesInitialValue)
+				{
+					if (variable.InitialValueIsInitialized)
+					{
+						this.DefaultInitialization = VariableInitKind.NeedsDefaultValue;
+					}
+					else
+					{
+						this.DefaultInitialization = VariableInitKind.NeedsSkipInit;
+					}
+				}
+				else
+				{
+					this.DefaultInitialization = VariableInitKind.None;
+				}
 				this.InsertionPoint = insertionPoint;
 				this.FirstUse = firstUse;
 				this.SourceOrder = sourceOrder;
@@ -278,7 +299,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 							newPoint = scopeTracking[startIndex + 1].InsertionPoint;
 						} else {
 							newPoint = new InsertionPoint { level = nodeLevel, nextNode = identExpr };
-							if (variable.HasInitialValue) {
+							if (variable.UsesInitialValue)
+							{
 								// Uninitialized variables are logically initialized at the beginning of the function
 								// Because it's possible that the variable has a loop-carried dependency,
 								// declare it outside of any loops.
@@ -296,9 +318,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						}
 						if (variableDict.TryGetValue(variable, out VariableToDeclare v)) {
 							v.InsertionPoint = FindCommonParent(v.InsertionPoint, newPoint);
-						} else {
-							v = new VariableToDeclare(variable, variable.HasInitialValue,
-								newPoint, identExpr, sourceOrder: variableDict.Count);
+						}
+						else
+						{
+							v = new VariableToDeclare(variable, newPoint,
+								identExpr, sourceOrder: variableDict.Count);
 							variableDict.Add(variable, v);
 						}
 					}
@@ -562,16 +586,69 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					// Insert a separate declaration statement.
 					Expression initializer = null;
 					AstType type = context.TypeSystemAstBuilder.ConvertType(v.Type);
-					if (v.DefaultInitialization) {
+					if (v.DefaultInitialization == VariableInitKind.NeedsDefaultValue)
+					{
 						initializer = new DefaultValueExpression(type.Clone());
 					}
 					var vds = new VariableDeclarationStatement(type, v.Name, initializer);
 					vds.Variables.Single().AddAnnotation(new ILVariableResolveResult(ilVariable));
 					Debug.Assert(v.InsertionPoint.nextNode.Role == BlockStatement.StatementRole);
-					v.InsertionPoint.nextNode.Parent.InsertChildBefore(
-						v.InsertionPoint.nextNode,
-						vds,
-						BlockStatement.StatementRole);
+					if (v.DefaultInitialization == VariableInitKind.NeedsSkipInit)
+					{
+						AstType unsafeType = context.TypeSystemAstBuilder.ConvertType(
+							context.TypeSystem.FindType(KnownTypeCode.Unsafe));
+						if (context.Settings.OutVariables)
+						{
+							var outVarDecl = new OutVarDeclarationExpression(type.Clone(), v.Name);
+							outVarDecl.Variable.AddAnnotation(new ILVariableResolveResult(ilVariable));
+							v.InsertionPoint.nextNode.Parent.InsertChildBefore(
+								v.InsertionPoint.nextNode,
+								new ExpressionStatement {
+									Expression = new InvocationExpression {
+										Target = new MemberReferenceExpression {
+											Target = new TypeReferenceExpression(unsafeType),
+											MemberName = "SkipInit"
+										},
+										Arguments = {
+											outVarDecl
+										}
+									}
+								},
+								BlockStatement.StatementRole);
+						}
+						else
+						{
+							v.InsertionPoint.nextNode.Parent.InsertChildBefore(
+								v.InsertionPoint.nextNode,
+								vds,
+								BlockStatement.StatementRole);
+							v.InsertionPoint.nextNode.Parent.InsertChildBefore(
+								v.InsertionPoint.nextNode,
+								new ExpressionStatement {
+									Expression = new InvocationExpression {
+										Target = new MemberReferenceExpression {
+											Target = new TypeReferenceExpression(unsafeType),
+											MemberName = "SkipInit"
+										},
+										Arguments = {
+											new DirectionExpression(
+												FieldDirection.Out,
+												new IdentifierExpression(v.Name)
+													.WithRR(new ILVariableResolveResult(ilVariable))
+											)
+										}
+									}
+								},
+								BlockStatement.StatementRole);
+						}
+					}
+					else
+					{
+						v.InsertionPoint.nextNode.Parent.InsertChildBefore(
+							v.InsertionPoint.nextNode,
+							vds,
+							BlockStatement.StatementRole);
+					}
 				}
 			}
 			// perform replacements at end, so that we don't replace a node while it is still referenced by a VariableToDeclare
@@ -587,7 +664,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				return false;
 			if (!context.Settings.OutVariables)
 				return false;
-			if (v.DefaultInitialization)
+			if (v.DefaultInitialization != VariableInitKind.None)
 				return false;
 			for (AstNode node = v.FirstUse; node != null; node = node.Parent) {
 				if (node.Role == Roles.EmbeddedStatement) {
