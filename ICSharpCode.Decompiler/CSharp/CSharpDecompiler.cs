@@ -1215,7 +1215,22 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (method.SymbolKind == SymbolKind.Method && !method.IsExplicitInterfaceImplementation && methodDefinition.IsVirtual == methodDefinition.IsNewSlot) {
 				SetNewModifier(methodDecl);
 			}
+			if (IsCovariantReturnOverride(method))
+			{
+				RemoveAttribute(methodDecl, KnownAttribute.PreserveBaseOverrides);
+				methodDecl.Modifiers &= ~(Modifiers.New | Modifiers.Virtual);
+				methodDecl.Modifiers |= Modifiers.Override;
+			}
 			return methodDecl;
+		}
+
+		private bool IsCovariantReturnOverride(IEntity entity)
+		{
+			if (!settings.CovariantReturns)
+				return false;
+			if (!entity.HasAttribute(KnownAttribute.PreserveBaseOverrides))
+				return false;
+			return true;
 		}
 
 		internal static bool IsWindowsFormsInitializeComponentMethod(ICSharpCode.Decompiler.TypeSystem.IMethod method)
@@ -1470,7 +1485,15 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				var accessor = (MethodDef)(property.Getter ?? property.Setter).MetadataToken;
 				if (!accessor.HasOverrides && accessor.IsVirtual == accessor.IsNewSlot)
+				{
 					SetNewModifier(propertyDecl);
+				}
+				if (IsCovariantReturnOverride(property.Getter))
+				{
+					RemoveAttribute(getter, KnownAttribute.PreserveBaseOverrides);
+					propertyDecl.Modifiers &= ~(Modifiers.New | Modifiers.Virtual);
+					propertyDecl.Modifiers |= Modifiers.Override;
+				}
 				return propertyDecl;
 			} catch (Exception innerException) when (!(innerException is OperationCanceledException || innerException is DecompilerException)) {
 				throw new DecompilerException(property.MetadataToken, innerException);
