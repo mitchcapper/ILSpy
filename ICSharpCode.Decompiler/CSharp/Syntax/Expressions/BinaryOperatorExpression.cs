@@ -35,27 +35,28 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class BinaryOperatorExpression : Expression
 	{
-		public readonly static TokenRole BitwiseAndRole = new TokenRole ("&");
-		public readonly static TokenRole BitwiseOrRole = new TokenRole ("|");
-		public readonly static TokenRole ConditionalAndRole = new TokenRole ("&&");
-		public readonly static TokenRole ConditionalOrRole = new TokenRole ("||");
-		public readonly static TokenRole ExclusiveOrRole = new TokenRole ("^");
-		public readonly static TokenRole GreaterThanRole = new TokenRole (">");
-		public readonly static TokenRole GreaterThanOrEqualRole = new TokenRole (">=");
-		public readonly static TokenRole EqualityRole = new TokenRole ("==");
-		public readonly static TokenRole InEqualityRole = new TokenRole ("!=");
-		public readonly static TokenRole LessThanRole = new TokenRole ("<");
-		public readonly static TokenRole LessThanOrEqualRole = new TokenRole ("<=");
-		public readonly static TokenRole AddRole = new TokenRole ("+");
-		public readonly static TokenRole SubtractRole = new TokenRole ("-");
-		public readonly static TokenRole MultiplyRole = new TokenRole ("*");
-		public readonly static TokenRole DivideRole = new TokenRole ("/");
-		public readonly static TokenRole ModulusRole = new TokenRole ("%");
-		public readonly static TokenRole ShiftLeftRole = new TokenRole ("<<");
-		public readonly static TokenRole ShiftRightRole = new TokenRole (">>");
-		public readonly static TokenRole NullCoalescingRole = new TokenRole ("??");
-		public readonly static TokenRole RangeRole = new TokenRole ("..");
-		
+		public readonly static TokenRole BitwiseAndRole = new TokenRole("&");
+		public readonly static TokenRole BitwiseOrRole = new TokenRole("|");
+		public readonly static TokenRole ConditionalAndRole = new TokenRole("&&");
+		public readonly static TokenRole ConditionalOrRole = new TokenRole("||");
+		public readonly static TokenRole ExclusiveOrRole = new TokenRole("^");
+		public readonly static TokenRole GreaterThanRole = new TokenRole(">");
+		public readonly static TokenRole GreaterThanOrEqualRole = new TokenRole(">=");
+		public readonly static TokenRole EqualityRole = new TokenRole("==");
+		public readonly static TokenRole InEqualityRole = new TokenRole("!=");
+		public readonly static TokenRole LessThanRole = new TokenRole("<");
+		public readonly static TokenRole LessThanOrEqualRole = new TokenRole("<=");
+		public readonly static TokenRole AddRole = new TokenRole("+");
+		public readonly static TokenRole SubtractRole = new TokenRole("-");
+		public readonly static TokenRole MultiplyRole = new TokenRole("*");
+		public readonly static TokenRole DivideRole = new TokenRole("/");
+		public readonly static TokenRole ModulusRole = new TokenRole("%");
+		public readonly static TokenRole ShiftLeftRole = new TokenRole("<<");
+		public readonly static TokenRole ShiftRightRole = new TokenRole(">>");
+		public readonly static TokenRole NullCoalescingRole = new TokenRole("??");
+		public readonly static TokenRole RangeRole = new TokenRole("..");
+		public readonly static TokenRole IsKeywordRole = IsExpression.IsKeywordRole;
+
 		public readonly static Role<Expression> LeftRole = new Role<Expression>("Left", Expression.Null);
 		public readonly static Role<Expression> RightRole = new Role<Expression>("Right", Expression.Null);
 		
@@ -154,6 +155,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					return NullCoalescingRole;
 				case BinaryOperatorType.Range:
 					return RangeRole;
+				case BinaryOperatorType.IsPattern:
+					return IsKeywordRole;
 				default:
 					throw new NotSupportedException("Invalid value for BinaryOperatorType");
 			}
@@ -263,6 +266,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		NullCoalescing,
 		/// <summary>left .. right</summary>
 		/// <remarks>left and right are optional = may be Expression.Null</remarks>
-		Range
+		Range,
+
+		/// <summary>left is right</summary>
+		/// <remarks>right must be a pattern</remarks>
+		IsPattern,
 	}
 }
