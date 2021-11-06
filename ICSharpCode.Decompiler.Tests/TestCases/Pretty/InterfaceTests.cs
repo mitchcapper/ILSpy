@@ -39,6 +39,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			void Method();
 
 #if CS80
+			static IA()
+			{
+
+			}
+			
 			void DefaultMethod()
 			{
 				Method();
