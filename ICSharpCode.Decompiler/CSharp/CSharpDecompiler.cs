@@ -84,6 +84,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				new SplitVariables(),
 				new ILInlining(),
 				new InlineReturnTransform(), // must run before DetectPinnedRegions
+				new RemoveInfeasiblePathTransform(),
 				new DetectPinnedRegions(), // must run after inlining but before non-critical control flow transforms
 				new YieldReturnDecompiler(), // must run after inlining but before loop detection
 				new AsyncAwaitDecompiler(),  // must run after inlining but before loop detection
@@ -91,10 +92,10 @@ namespace ICSharpCode.Decompiler.CSharp
 				new DetectExitPoints(),
 				new LdLocaDupInitObjTransform(),
 				new EarlyExpressionTransforms(),
+				new SplitVariables(), // split variables once again, because the stobj(ldloca V, ...) may open up new replacements
 				// RemoveDeadVariableInit must run after EarlyExpressionTransforms so that stobj(ldloca V, ...)
 				// is already collapsed into stloc(V, ...).
 				new RemoveDeadVariableInit(),
-				new SplitVariables(), // split variables once again, because the stobj(ldloca V, ...) may open up new replacements
 				new ControlFlowSimplification(), //split variables may enable new branch to leave inlining
 				new DynamicCallSiteTransform(),
 				new SwitchDetection(),
@@ -114,6 +115,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				},
 				// re-run DetectExitPoints after loop detection
 				new DetectExitPoints(),
+				new PatternMatchingTransform(), // must run after LoopDetection and before ConditionDetection
 				new BlockILTransform { // per-block transforms
 					PostOrderTransforms = {
 						new ConditionDetection(),
@@ -917,7 +919,31 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (recordDecompiler?.PrimaryConstructor != null)
 				{
 					foreach (var p in recordDecompiler.PrimaryConstructor.Parameters)
-						typeDecl.PrimaryConstructorParameters.Add(typeSystemAstBuilder.ConvertParameter(p));
+					{
+						ParameterDeclaration pd = typeSystemAstBuilder.ConvertParameter(p);
+						(IProperty prop, ICSharpCode.Decompiler.TypeSystem.IField field) = recordDecompiler.GetPropertyInfoByPrimaryConstructorParameter(p);
+						Syntax.Attribute[] attributes = prop.GetAttributes().Select(attr => typeSystemAstBuilder.ConvertAttribute(attr)).ToArray();
+						if (attributes.Length > 0)
+						{
+							var section = new AttributeSection {
+								AttributeTarget = "property"
+							};
+							section.Attributes.AddRange(attributes);
+							pd.Attributes.Add(section);
+						}
+						attributes = field.GetAttributes()
+							.Where(a => !PatternStatementTransform.attributeTypesToRemoveFromAutoProperties.Contains(a.AttributeType.FullName))
+							.Select(attr => typeSystemAstBuilder.ConvertAttribute(attr)).ToArray();
+						if (attributes.Length > 0)
+						{
+							var section = new AttributeSection {
+								AttributeTarget = "field"
+							};
+							section.Attributes.AddRange(attributes);
+							pd.Attributes.Add(section);
+						}
+						typeDecl.PrimaryConstructorParameters.Add(pd);
+					}
 				}
 
 				foreach (var type in typeDef.NestedTypes)
@@ -1084,7 +1110,22 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (method.SymbolKind == SymbolKind.Method && !method.IsExplicitInterfaceImplementation && methodDefinition.IsVirtual == methodDefinition.IsNewSlot) {
 				SetNewModifier(methodDecl);
 			}
+			if (IsCovariantReturnOverride(method))
+			{
+				RemoveAttribute(methodDecl, KnownAttribute.PreserveBaseOverrides);
+				methodDecl.Modifiers &= ~(Modifiers.New | Modifiers.Virtual);
+				methodDecl.Modifiers |= Modifiers.Override;
+			}
 			return methodDecl;
+		}
+
+		private bool IsCovariantReturnOverride(IEntity entity)
+		{
+			if (!settings.CovariantReturns)
+				return false;
+			if (!entity.HasAttribute(KnownAttribute.PreserveBaseOverrides))
+				return false;
+			return true;
 		}
 
 		internal static bool IsWindowsFormsInitializeComponentMethod(ICSharpCode.Decompiler.TypeSystem.IMethod method)
@@ -1339,7 +1380,15 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				var accessor = (MethodDef)(property.Getter ?? property.Setter).MetadataToken;
 				if (!accessor.HasOverrides && accessor.IsVirtual == accessor.IsNewSlot)
+				{
 					SetNewModifier(propertyDecl);
+				}
+				if (getterHasBody && IsCovariantReturnOverride(property.Getter))
+				{
+					RemoveAttribute(getter, KnownAttribute.PreserveBaseOverrides);
+					propertyDecl.Modifiers &= ~(Modifiers.New | Modifiers.Virtual);
+					propertyDecl.Modifiers |= Modifiers.Override;
+				}
 				return propertyDecl;
 			} catch (Exception innerException) when (!(innerException is OperationCanceledException || innerException is DecompilerException)) {
 				throw new DecompilerException(property.MetadataToken, innerException);
@@ -1350,15 +1399,18 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			Debug.Assert(decompilationContext.CurrentMember == ev);
 			try {
+				bool adderHasBody = ev.CanAdd && ev.AddAccessor.HasBody;
+				bool removerHasBody = ev.CanRemove && ev.RemoveAccessor.HasBody;
 				var typeSystemAstBuilder = CreateAstBuilder(decompileRun.Settings);
-				typeSystemAstBuilder.UseCustomEvents = ev.DeclaringTypeDefinition.Kind != TypeKind.Interface;
+				typeSystemAstBuilder.UseCustomEvents = ev.DeclaringTypeDefinition.Kind != TypeKind.Interface
+					|| ev.IsExplicitInterfaceImplementation
+					|| adderHasBody
+					|| removerHasBody;
 				var eventDecl = typeSystemAstBuilder.ConvertEntity(ev);
 				if (ev.IsExplicitInterfaceImplementation) {
 					int lastDot = ev.Name.LastIndexOf('.');
 					eventDecl.Name = ev.Name.Substring(lastDot + 1);
 				}
-				bool adderHasBody = ev.CanAdd && ev.AddAccessor.HasBody;
-				bool removerHasBody = ev.CanRemove && ev.RemoveAccessor.HasBody;
 				if (adderHasBody)
 				{
 					DecompileBody(ev.AddAccessor, ((CustomEventDeclaration)eventDecl).AddAccessor, decompileRun, decompilationContext);

@@ -301,6 +301,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public void PatternMatching([ValueSource(nameof(roslyn2OrNewerOptions))] CompilerOptions cscOptions)
+		{
+			RunForLibrary(cscOptions: cscOptions);
+		}
+
+		[Test]
 		public void InitializerTests([ValueSource(nameof(defaultOptions))] CompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions);
@@ -476,7 +482,7 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void Issue1080([ValueSource(nameof(roslynOnlyOptions))] CompilerOptions cscOptions)
 		{
-			RunForLibrary(cscOptions: cscOptions);
+			RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings(CSharp.LanguageVersion.CSharp6));
 		}
 
 		[Test]
@@ -565,6 +571,12 @@ namespace ICSharpCode.Decompiler.Tests
 
 		[Test]
 		public void CS9_ExtensionGetEnumerator([ValueSource(nameof(dotnetCoreOnlyOptions))] CompilerOptions cscOptions)
+		{
+			RunForLibrary(cscOptions: cscOptions | CompilerOptions.Preview);
+		}
+
+		[Test]
+		public void CovariantReturns([ValueSource(nameof(dotnetCoreOnlyOptions))] CompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions | CompilerOptions.Preview);
 		}

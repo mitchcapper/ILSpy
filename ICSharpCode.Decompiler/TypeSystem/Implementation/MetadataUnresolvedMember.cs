@@ -171,7 +171,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				if (t is not null)
 					return t;
 
-				t = dnlibRef.FieldSig.Type.DecodeSignature(module, new GenericContext(DeclaringType?.GetDefinition()?.TypeParameters));
+				t = dnlibRef.MethodSig.RetType.DecodeSignature(module, new GenericContext(DeclaringType?.GetDefinition()?.TypeParameters));
 
 				if (t is ModifiedType modifier && modifier.Modifier.Name == "IsExternalInit" &&
 					modifier.Modifier.Namespace == "System.Runtime.CompilerServices") {

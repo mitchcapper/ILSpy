@@ -891,7 +891,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			"System.Runtime.CompilerServices.MethodImplAttribute"
 		};
 
-		static readonly string[] attributeTypesToRemoveFromAutoProperties = new[] {
+		internal static readonly string[] attributeTypesToRemoveFromAutoProperties = new[] {
 			"System.Runtime.CompilerServices.CompilerGeneratedAttribute",
 			"System.Diagnostics.DebuggerBrowsableAttribute"
 		};
@@ -947,7 +947,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (!ev.PrivateImplementationType.IsNull)
 				return null;
 			const Modifiers withoutBody = Modifiers.Abstract | Modifiers.Extern;
-			if ((ev.Modifiers & withoutBody) == 0 && ev.GetSymbol() is IEvent symbol && symbol.DeclaringType.Kind != TypeKind.Interface)
+			if ((ev.Modifiers & withoutBody) == 0 && ev.GetSymbol() is IEvent symbol)
 			{
 				if (!CheckAutomaticEventV4AggressivelyInlined(ev) && !CheckAutomaticEventV4(ev) && !CheckAutomaticEventV2(ev) && !CheckAutomaticEventV4MCS(ev))
 					return null;

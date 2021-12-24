@@ -308,7 +308,13 @@ namespace ICSharpCode.Decompiler.CSharp
 					targetCasted = true;
 					target = target.ConvertTo(field.DeclaringType, this);
 					targetResolveResult = target.ResolveResult;
-				} else {
+				}
+				else
+				{
+					// the field reference is still ambiguous, however, mrr might refer to a different member,
+					// e.g., in the case of auto events, their backing fields have the same name.
+					// "this.Event" is ambiguous, but should refer to the field, not the event.
+					mrr = null;
 					break;
 				}
 			}
@@ -1487,8 +1493,10 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			if (stackType == StackType.I && settings.NativeIntegers) {
 				return sign == Sign.Unsigned ? SpecialType.NUInt : SpecialType.NInt;
-			} else {
-				return compilation.FindType(stackType.ToKnownTypeCode(sign));
+			}
+			else
+			{
+				return compilation.FindType(stackType, sign);
 			}
 		}
 
@@ -1510,7 +1518,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					stackType = StackType.I8;
 				}
 			}
-			return compilation.FindType(stackType.ToKnownTypeCode(sign));
+			return compilation.FindType(stackType, sign);
 		}
 
 		/// <summary>
@@ -2199,9 +2207,9 @@ namespace ICSharpCode.Decompiler.CSharp
 				var body = statementBuilder.ConvertAsBlock(container);
 				var comment = new Comment(" Could not convert BlockContainer to single expression");
 				body.InsertChildAfter(null, comment, Roles.Comment);
-				// set ILVariable.HasInitialValue for any variables being used inside the container
+				// set ILVariable.UsesInitialValue for any variables being used inside the container
 				foreach (var stloc in container.Descendants.OfType<StLoc>())
-					stloc.Variable.HasInitialValue = true;
+					stloc.Variable.UsesInitialValue = true;
 				var ame = new AnonymousMethodExpression { Body = body };
 				var systemFuncType = compilation.FindType(typeof(Func<>));
 				var blockReturnType = InferReturnType(body);
@@ -3210,9 +3218,13 @@ namespace ICSharpCode.Decompiler.CSharp
 				IType targetType;
 				if (fallback.Expression is ThrowExpression && fallback.Type.Equals(SpecialType.NoType)) {
 					targetType = NullableType.GetUnderlyingType(value.Type);
-				} else if (!value.Type.Equals(SpecialType.NullType) && !fallback.Type.Equals(SpecialType.NullType) && !value.Type.Equals(fallback.Type)) {
-					targetType = compilation.FindType(inst.UnderlyingResultType.ToKnownTypeCode());
-				} else {
+				}
+				else if (!value.Type.Equals(SpecialType.NullType) && !fallback.Type.Equals(SpecialType.NullType) && !value.Type.Equals(fallback.Type))
+				{
+					targetType = compilation.FindType(inst.UnderlyingResultType);
+				}
+				else
+				{
 					targetType = value.Type.Equals(SpecialType.NullType) ? fallback.Type : value.Type;
 				}
 				if (inst.Kind != NullCoalescingKind.Ref) {
@@ -3346,8 +3358,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			IType resultType;
 			if (context.TypeHint.Kind != TypeKind.Unknown && context.TypeHint.GetStackType() == inst.ResultType) {
 				resultType = context.TypeHint;
-			} else {
-				resultType = compilation.FindType(inst.ResultType.ToKnownTypeCode());
+			}
+			else
+			{
+				resultType = compilation.FindType(inst.ResultType);
 			}
 
 			foreach (var section in inst.Sections) {
@@ -3907,6 +3921,48 @@ namespace ICSharpCode.Decompiler.CSharp
 					target.ReplaceWith(inits[initPos].Value);
 					initPos++;
 				}
+			}
+		}
+
+		protected internal override TranslatedExpression VisitMatchInstruction(MatchInstruction inst, TranslationContext context)
+		{
+			var left = Translate(inst.TestedOperand);
+			var right = TranslatePattern(inst);
+
+			return new BinaryOperatorExpression(left, BinaryOperatorType.IsPattern, right)
+				.WithRR(new ResolveResult(compilation.FindType(KnownTypeCode.Boolean)))
+				.WithILInstruction(inst);
+		}
+
+		ExpressionWithILInstruction TranslatePattern(ILInstruction pattern)
+		{
+			switch (pattern)
+			{
+				case MatchInstruction matchInstruction:
+					if (!matchInstruction.CheckType)
+						throw new NotImplementedException();
+					if (matchInstruction.IsDeconstructCall)
+						throw new NotImplementedException();
+					if (matchInstruction.IsDeconstructTuple)
+						throw new NotImplementedException();
+					if (matchInstruction.SubPatterns.Any())
+						throw new NotImplementedException();
+					if (matchInstruction.HasDesignator)
+					{
+						SingleVariableDesignation designator = new SingleVariableDesignation { Identifier = matchInstruction.Variable.Name };
+						designator.AddAnnotation(new ILVariableResolveResult(matchInstruction.Variable));
+						return new DeclarationExpression {
+							Type = ConvertType(matchInstruction.Variable.Type),
+							Designation = designator
+						}.WithILInstruction(matchInstruction);
+					}
+					else
+					{
+						return new TypeReferenceExpression(ConvertType(matchInstruction.Variable.Type))
+							.WithILInstruction(matchInstruction);
+					}
+				default:
+					throw new NotImplementedException();
 			}
 		}
 

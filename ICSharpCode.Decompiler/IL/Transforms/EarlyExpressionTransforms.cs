@@ -39,6 +39,60 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
+		protected internal override void VisitComp(Comp inst)
+		{
+			base.VisitComp(inst);
+			FixComparisonKindLdNull(inst, context);
+		}
+
+		internal static void FixComparisonKindLdNull(Comp inst, ILTransformContext context)
+		{
+			if (inst.IsLifted)
+			{
+				return;
+			}
+			if (inst.Right.MatchLdNull())
+			{
+				if (inst.Kind == ComparisonKind.GreaterThan)
+				{
+					context.Step("comp(left > ldnull)  => comp(left != ldnull)", inst);
+					inst.Kind = ComparisonKind.Inequality;
+				}
+				else if (inst.Kind == ComparisonKind.LessThanOrEqual)
+				{
+					context.Step("comp(left <= ldnull) => comp(left == ldnull)", inst);
+					inst.Kind = ComparisonKind.Equality;
+				}
+			}
+			else if (inst.Left.MatchLdNull())
+			{
+				if (inst.Kind == ComparisonKind.LessThan)
+				{
+					context.Step("comp(ldnull < right)  => comp(ldnull != right)", inst);
+					inst.Kind = ComparisonKind.Inequality;
+				}
+				else if (inst.Kind == ComparisonKind.GreaterThanOrEqual)
+				{
+					context.Step("comp(ldnull >= right) => comp(ldnull == right)", inst);
+					inst.Kind = ComparisonKind.Equality;
+				}
+			}
+
+			if (inst.Right.MatchLdNull() && inst.Left.MatchBox(out var arg, out var type) && type.Kind == TypeKind.TypeParameter)
+			{
+				if (inst.Kind == ComparisonKind.Equality)
+				{
+					context.Step("comp(box T(..) == ldnull) -> comp(.. == ldnull)", inst);
+					inst.Left = arg;
+				}
+				if (inst.Kind == ComparisonKind.Inequality)
+				{
+					context.Step("comp(box T(..) != ldnull) -> comp(.. != ldnull)", inst);
+					inst.Left = arg;
+				}
+			}
+		}
+
 		protected internal override void VisitStObj(StObj inst)
 		{
 			base.VisitStObj(inst);
@@ -54,7 +108,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				&& !inst.IsVolatile)
 			{
 				context.Step($"stobj(ldloca {v.Name}, ...) => stloc {v.Name}(...)", inst);
-				inst.ReplaceWith(new StLoc(v, inst.Value).WithILRange(inst));
+				ILInstruction replacement = new StLoc(v, inst.Value).WithILRange(inst);
+				if (v.StackType == StackType.Unknown && inst.Type.Kind != TypeKind.Unknown
+					&& inst.SlotInfo != Block.InstructionSlot)
+				{
+					replacement = new Conv(replacement, inst.Type.ToPrimitiveType(),
+						checkForOverflow: false, Sign.None);
+				}
+				inst.ReplaceWith(replacement);
 				return true;
 			}
 			return false;
@@ -75,7 +136,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				&& !inst.IsVolatile)
 			{
 				context.Step($"ldobj(ldloca {v.Name}) => ldloc {v.Name}", inst);
-				inst.ReplaceWith(new LdLoc(v).WithILRange(inst));
+				ILInstruction replacement = new LdLoc(v).WithILRange(inst);
+				if (v.StackType == StackType.Unknown && inst.Type.Kind != TypeKind.Unknown)
+				{
+					replacement = new Conv(replacement, inst.Type.ToPrimitiveType(),
+						checkForOverflow: false, Sign.None);
+				}
+				inst.ReplaceWith(replacement);
 				return true;
 			}
 			return false;

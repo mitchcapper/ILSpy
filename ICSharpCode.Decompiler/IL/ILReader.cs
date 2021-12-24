@@ -112,10 +112,10 @@ namespace ICSharpCode.Decompiler.IL
 			this.methodReturnStackType = method.ReturnType.GetStackType();
 			InitParameterVariables();
 			this.localVariables = body.Variables.SelectArray(CreateILVariable);
-			if (body.InitLocals) {
-				foreach (var v in localVariables) {
-					v.HasInitialValue = true;
-				}
+			foreach (var v in localVariables)
+			{
+				v.InitialValueIsInitialized = body.InitLocals;
+				v.UsesInitialValue = true;
 			}
 			this.mainContainer = new BlockContainer(expectedResultType: methodReturnStackType);
 			this.instructionBuilder = new List<ILInstruction>();
@@ -1020,7 +1020,7 @@ namespace ICSharpCode.Decompiler.IL
 		ILInstruction Push(ILInstruction inst)
 		{
 			Debug.Assert(inst.ResultType != StackType.Void);
-			IType type = compilation.FindType(inst.ResultType.ToKnownTypeCode());
+			IType type = compilation.FindType(inst.ResultType);
 			var v = new ILVariable(VariableKind.StackSlot, type, inst.ResultType);
 			v.HasGeneratedName = true;
 			currentStack = currentStack.Push(v);
