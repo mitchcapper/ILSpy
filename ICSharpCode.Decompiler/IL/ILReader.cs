@@ -196,15 +196,7 @@ namespace ICSharpCode.Decompiler.IL
 			IType parameterType;
 			bool isRefReadOnly;
 			if (p.IsHiddenThisParameter) {
-				ITypeDefinition def = module.ResolveType(methodDef.DeclaringType, genericContext).GetDefinition();
-				if (def != null && def.TypeParameterCount > 0) {
-					parameterType = new ParameterizedType(def, def.TypeArguments);
-					if (def.IsReferenceType == false) {
-						parameterType = new ByReferenceType(parameterType);
-					}
-				} else {
-					parameterType = module.ResolveType(p.Type, genericContext);
-				}
+				parameterType = module.ResolveType(p.Type, genericContext);
 				isRefReadOnly = method.ThisIsRefReadOnly;
 			} else {
 				var param = method.Parameters[p.MethodSigIndex];
@@ -212,12 +204,6 @@ namespace ICSharpCode.Decompiler.IL
 				isRefReadOnly = param.IsIn;
 			}
 
-			Debug.Assert(!parameterType.IsUnbound());
-			if (parameterType.IsUnbound()) {
-				// parameter types should not be unbound, the only known cause for these is a Cecil bug:
-				Debug.Assert(p.Index < 0); // cecil bug occurs only for "this"
-				parameterType = new ParameterizedType(parameterType.GetDefinition(), parameterType.TypeArguments);
-			}
 			var ilVar = new ILVariable(VariableKind.Parameter, parameterType, p.MethodSigIndex == -2 ? -1 : p.MethodSigIndex);
 			ilVar.IsRefReadOnly = isRefReadOnly;
 			Debug.Assert(ilVar.StoreCount == 1); // count the initial store when the method is called with an argument

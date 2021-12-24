@@ -58,6 +58,17 @@ namespace ICSharpCode.Decompiler
 				return (MethodDef)method;
 		}
 
+		public static TypeSig GetTypeSig(this IType type)
+		{
+			if (type is TypeSig typeSig)
+				return typeSig;
+			if (type is TypeSpec typeSpec)
+				return typeSpec.TypeSig;
+			if (type is ITypeDefOrRef typeDefOrRef)
+				return typeDefOrRef.ToTypeSig();
+			return null;
+		}
+
 		public static bool IsCompilerGeneratedOrIsInCompilerGeneratedClass(this MethodDef method)
 		{
 			if (method.IsCompilerGenerated())

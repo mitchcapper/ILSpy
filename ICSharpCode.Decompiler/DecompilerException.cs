@@ -26,31 +26,34 @@ using System.Security;
 using System.Text;
 using dnlib.DotNet;
 using ICSharpCode.Decompiler.TypeSystem;
+using IField = dnlib.DotNet.IField;
+using IMethod = dnlib.DotNet.IMethod;
 
 namespace ICSharpCode.Decompiler
 {
 	/// <summary>
 	/// Description of DecompilerException.
 	/// </summary>
-	public class DecompilerException : Exception, ISerializable
+	public class DecompilerException : Exception
 	{
-		public dnlib.DotNet.IAssembly AssemblyName => DecompiledEntity.Module.Assembly;
+		public IMDTokenProvider DecompiledEntity { get; }
 
-		public string FileName => DecompiledEntity.Module.Location;
-
-		public FullTypeName DecompiledType => new FullTypeName(DecompiledEntity.DeclaringType.ReflectionFullName);
-
-		public IMemberDef DecompiledEntity { get; }
-
-		public DecompilerException(IMemberDef decompiledEntity, Exception innerException, string message = null)
+		public DecompilerException(IDnlibDef decompiledEntity, Exception innerException, string message = null)
 			: base((message ?? "Error decompiling " + decompiledEntity?.FullName) + Environment.NewLine, innerException)
 		{
 			this.DecompiledEntity = decompiledEntity;
 		}
 
-		// This constructor is needed for serialization.
-		protected DecompilerException(SerializationInfo info, StreamingContext context) : base(info, context)
+		public DecompilerException(IField decompiledEntity, Exception innerException, string message = null)
+			: base((message ?? "Error decompiling " + decompiledEntity?.FullName) + Environment.NewLine, innerException)
 		{
+			this.DecompiledEntity = decompiledEntity;
+		}
+
+		public DecompilerException(IMethod decompiledEntity, Exception innerException, string message = null)
+			: base((message ?? "Error decompiling " + decompiledEntity?.FullName) + Environment.NewLine, innerException)
+		{
+			this.DecompiledEntity = decompiledEntity;
 		}
 
 		public override string StackTrace => GetStackTrace(this);

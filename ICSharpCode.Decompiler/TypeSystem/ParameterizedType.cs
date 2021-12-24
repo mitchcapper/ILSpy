@@ -37,6 +37,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	[Serializable]
 	public sealed class ParameterizedType : IType
 	{
+		private readonly dnlib.DotNet.IType dnlibType;
 		readonly IType genericType;
 		readonly IType[] typeArguments;
 
@@ -46,6 +47,31 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				throw new ArgumentNullException("genericType");
 			if (typeArguments == null)
 				throw new ArgumentNullException("typeArguments");
+			this.genericType = genericType;
+			this.typeArguments = typeArguments.ToArray(); // copy input array to ensure it isn't modified
+			if (this.typeArguments.Length == 0)
+				throw new ArgumentException("Cannot use ParameterizedType with 0 type arguments.");
+			if (genericType.TypeParameterCount != this.typeArguments.Length)
+				throw new ArgumentException("Number of type arguments must match the type definition's number of type parameters");
+			ICompilationProvider gp = genericType as ICompilationProvider;
+			for (int i = 0; i < this.typeArguments.Length; i++) {
+				if (this.typeArguments[i] == null)
+					throw new ArgumentNullException("typeArguments[" + i + "]");
+				ICompilationProvider p = this.typeArguments[i] as ICompilationProvider;
+				if (p != null && gp != null && p.Compilation != gp.Compilation)
+					throw new InvalidOperationException("Cannot parameterize a type with type arguments from a different compilation.");
+			}
+		}
+
+		public ParameterizedType(dnlib.DotNet.IType dnlibType, IType genericType, IEnumerable<IType> typeArguments)
+		{
+			if (dnlibType == null)
+				throw new ArgumentNullException("dnlibType");
+			if (genericType == null)
+				throw new ArgumentNullException("genericType");
+			if (typeArguments == null)
+				throw new ArgumentNullException("typeArguments");
+			this.dnlibType = dnlibType;
 			this.genericType = genericType;
 			this.typeArguments = typeArguments.ToArray(); // copy input array to ensure it isn't modified
 			if (this.typeArguments.Length == 0)
@@ -72,6 +98,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			this.genericType = genericType;
 			this.typeArguments = typeArguments;
 		}
+
+		public dnlib.DotNet.IType MetadataToken => dnlibType;
 
 		public TypeKind Kind {
 			get { return genericType.Kind; }

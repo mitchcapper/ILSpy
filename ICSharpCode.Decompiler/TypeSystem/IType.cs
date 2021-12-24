@@ -210,7 +210,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </para>
 		/// </remarks>
 		IEnumerable<IMethod> GetConstructors(Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.IgnoreInheritedMembers);
-		
+
 		/// <summary>
 		/// Gets all methods that can be called on this type.
 		/// </summary>
@@ -237,7 +237,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </para>
 		/// </remarks>
 		IEnumerable<IMethod> GetMethods(Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.None);
-		
+
 		/// <summary>
 		/// Gets all generic methods that can be called on this type with the specified type arguments.
 		/// </summary>
@@ -258,7 +258,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </para>
 		/// </remarks>
 		IEnumerable<IMethod> GetMethods(IReadOnlyList<IType> typeArguments, Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.None);
-		
+
 		/// <summary>
 		/// Gets all properties that can be called on this type.
 		/// </summary>
@@ -270,7 +270,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// and the appropriate <see cref="Implementation.SpecializedProperty"/> will be returned.
 		/// </remarks>
 		IEnumerable<IProperty> GetProperties(Predicate<IProperty> filter = null, GetMemberOptions options = GetMemberOptions.None);
-		
+
 		/// <summary>
 		/// Gets all fields that can be accessed on this type.
 		/// </summary>
@@ -282,7 +282,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// and the appropriate <see cref="Implementation.SpecializedField"/> will be returned.
 		/// </remarks>
 		IEnumerable<IField> GetFields(Predicate<IField> filter = null, GetMemberOptions options = GetMemberOptions.None);
-		
+
 		/// <summary>
 		/// Gets all events that can be accessed on this type.
 		/// </summary>
@@ -294,7 +294,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// and the appropriate <see cref="Implementation.SpecializedEvent"/> will be returned.
 		/// </remarks>
 		IEnumerable<IEvent> GetEvents(Predicate<IEvent> filter = null, GetMemberOptions options = GetMemberOptions.None);
-		
+
 		/// <summary>
 		/// Gets all members that can be called on this type.
 		/// </summary>
@@ -313,7 +313,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </para>
 		/// </remarks>
 		IEnumerable<IMember> GetMembers(Predicate<IMember> filter = null, GetMemberOptions options = GetMemberOptions.None);
-		
+
 		/// <summary>
 		/// Gets all accessors belonging to properties or events on this type.
 		/// </summary>
@@ -324,6 +324,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Accessors are not returned by GetMembers() or GetMethods().
 		/// </remarks>
 		IEnumerable<IMethod> GetAccessors(Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.None);
+
+		dnlib.DotNet.IType MetadataToken { get; }
 	}
 
 	[Flags]

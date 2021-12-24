@@ -46,8 +46,7 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 
 			// In current model (no child scopes), it makes sense to freeze the parent as well
 			// to ensure the whole lookup chain is immutable.
-			if (parent != null)
-				parent.Freeze();
+			parent?.Freeze();
 
 			base.FreezeInternal();
 		}
@@ -154,7 +153,7 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 			CacheManager cache = compilation.CacheManager;
 			ResolvedUsingScope resolved = cache.GetShared(this) as ResolvedUsingScope;
 			if (resolved == null) {
-				var csContext = new CSharpTypeResolveContext(compilation.MainModule, parent != null ? parent.Resolve(compilation) : null);
+				var csContext = new CSharpTypeResolveContext(compilation.MainModule, parent?.Resolve(compilation));
 				resolved = (ResolvedUsingScope)cache.GetOrAddShared(this, new ResolvedUsingScope(csContext, this));
 			}
 			return resolved;

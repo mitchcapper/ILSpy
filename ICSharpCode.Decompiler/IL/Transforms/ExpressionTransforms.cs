@@ -399,8 +399,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		bool MatchesElementCount(ILInstruction sizeInBytesInstr, IType elementType, ILInstruction elementCountInstr2)
 		{
-			var pointerType = new PointerType(elementType);
-			var elementCountInstr = PointerArithmeticOffset.Detect(sizeInBytesInstr, pointerType.ElementType, checkForOverflow: true, unwrapZeroExtension: true);
+			var elementCountInstr = PointerArithmeticOffset.Detect(sizeInBytesInstr, elementType, checkForOverflow: true, unwrapZeroExtension: true);
 			if (elementCountInstr == null || !elementCountInstr.UnwrapConv(ConversionKind.ZeroExtend).Match(elementCountInstr2).Success)
 				return false;
 			return true;

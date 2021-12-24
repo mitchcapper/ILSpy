@@ -138,7 +138,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 
-		public IMemberDef MetadataToken => baseMethod.MetadataToken;
+		IMDTokenProvider IEntity.MetadataToken => baseMethod.MetadataToken;
+		public dnlib.DotNet.IMethod MetadataToken => baseMethod.MetadataToken;
 		public SymbolKind SymbolKind => baseMethod.SymbolKind;
 		public ITypeDefinition DeclaringTypeDefinition => baseMethod.DeclaringTypeDefinition;
 		public IType DeclaringType => baseMethod.DeclaringType;

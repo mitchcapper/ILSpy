@@ -82,12 +82,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return expr;
 			return dir.Expression.Detach();
 		}
-
-		public static T WithAnnotation<T>(this T node, object annotation) where T : AstNode
-		{
-			if (annotation != null)
-				node.AddAnnotation(annotation);
-			return node;
-		}
 	}
 }

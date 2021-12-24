@@ -116,7 +116,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				return null;
 			}
 
-			public dnlib.DotNet.IMemberDef MetadataToken => null;
+			public dnlib.DotNet.IMDTokenProvider MetadataToken => null;
 
 			ITypeDefinition IEntity.DeclaringTypeDefinition {
 				get { return null; }

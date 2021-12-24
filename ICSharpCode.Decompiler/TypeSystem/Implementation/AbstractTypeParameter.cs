@@ -26,6 +26,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
 	public abstract class AbstractTypeParameter : ITypeParameter, ICompilationProvider
 	{
+		public dnlib.DotNet.IType MetadataToken => null;
 		readonly ICompilation compilation;
 		readonly SymbolKind ownerType;
 		readonly IEntity owner;

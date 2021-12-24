@@ -25,6 +25,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 		}
 
+		public PinnedType(dnlib.DotNet.IType dnlibType, IType elementType)
+			: base(dnlibType, elementType)
+		{
+		}
+
 		public override string NameSuffix => " pinned";
 
 		public override bool? IsReferenceType => elementType.IsReferenceType;

@@ -549,10 +549,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			{
 				return td;
 			}
-			else
-			{
-				return new ParameterizedType(td, td.TypeArguments);
-			}
+
+			return new ParameterizedType(td.MetadataToken, td, td.TypeArguments);
 		}
 	}
 }

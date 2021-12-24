@@ -997,7 +997,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					bool success;
 					IType[] result = InferTypeArgumentsFromBounds(
 						candidateDef.TypeParameters,
-						new ParameterizedType(candidateDef, candidateDef.TypeParameters),
+						new ParameterizedType(candidateDef.MetadataToken, candidateDef, candidateDef.TypeParameters),
 						lowerBounds, upperBounds,
 						out success);
 					if (success) {

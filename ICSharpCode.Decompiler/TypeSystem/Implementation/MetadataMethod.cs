@@ -133,7 +133,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return owner;
 		}
 
-		public dnlib.DotNet.IMemberDef MetadataToken => handle;
+		IMDTokenProvider IEntity.MetadataToken => handle;
+
+		public dnlib.DotNet.IMethod MetadataToken => handle;
 
 		public override string ToString()
 		{

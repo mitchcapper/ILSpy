@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
+// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -268,6 +268,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return astType;
 			} else if (type is TupleType tuple) {
 				var astType = new TupleAstType();
+				//TODO: specify assembly
 				foreach (var (etype, ename) in tuple.ElementTypes.Zip(tuple.ElementNames)) {
 					astType.Elements.Add(new TupleTypeElement {
 						Type = ConvertType(etype),
@@ -408,7 +409,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			if (UseKeywordsForBuiltinTypes && typeDef != null) {
 				string keyword = KnownTypeReference.GetCSharpNameByTypeCode(typeDef.KnownTypeCode);
 				if (keyword != null) {
-					return new PrimitiveType(keyword);
+					return new PrimitiveType(keyword).WithAnnotation(typeDef.MetadataToken);
 				}
 			}
 
@@ -422,7 +423,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 						foreach (var pair in usingScope.UsingAliases) {
 							if (pair.Value is TypeResolveResult) {
 								if (TypeMatches(pair.Value.Type, typeDef, typeArguments))
-									return MakeSimpleType(pair.Key);
+									return MakeSimpleType(pair.Key).WithAnnotation(pair.Value.Type.MetadataToken);
 							}
 						}
 					}
@@ -443,6 +444,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					if (!trr.IsError && TypeMatches(trr.Type, typeDef, typeArguments)) {
 						// We can use the short type name
 						SimpleType shortResult = MakeSimpleType(typeDef.Name);
+						shortResult.WithAnnotation(typeDef.MetadataToken);
 						AddTypeArguments(shortResult, typeDef.TypeParameters, typeArguments, outerTypeParameterCount, typeDef.TypeParameterCount);
 						return shortResult;
 					}
@@ -450,7 +452,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 
 			if (AlwaysUseShortTypeNames || (typeDef == null && genericType.DeclaringType == null)) {
-				var shortResult = MakeSimpleType(genericType.Name);
+				var shortResult = MakeSimpleType(genericType.Name).WithAnnotation(genericType.MetadataToken);
 				AddTypeArguments(shortResult, genericType.TypeParameters, typeArguments, outerTypeParameterCount, genericType.TypeParameterCount);
 				return shortResult;
 			}
@@ -472,6 +474,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				}
 			}
 			result.MemberName = genericType.Name;
+			result.WithAnnotation(genericType.MetadataToken);
 			AddTypeArguments(result, genericType.TypeParameters, typeArguments, outerTypeParameterCount, genericType.TypeParameterCount);
 			return result;
 		}
@@ -546,7 +549,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 						foreach (var pair in usingScope.UsingAliases) {
 							nrr = pair.Value as NamespaceResolveResult;
 							if (nrr != null && nrr.NamespaceName == namespaceName) {
-								var ns = MakeSimpleType(pair.Key);
+								var ns = MakeSimpleType(pair.Key).WithAnnotation(BoxedTextColor.Namespace);
 								if (AddResolveResultAnnotations)
 									ns.AddAnnotation(nrr);
 								return ns;
@@ -570,6 +573,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					else {
 						ns = MakeSimpleType(namespaceName);
 					}
+					ns.AddAnnotation(BoxedTextColor.Namespace);
 					if (AddResolveResultAnnotations && nrr != null)
 						ns.AddAnnotation(nrr);
 					return ns;
@@ -595,6 +599,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					Target = parentNS,
 					MemberName = localNamespace
 				};
+				ns.AddAnnotation(BoxedTextColor.Namespace);
 				nrr = null;
 				if (AddResolveResultAnnotations && parentNRR != null) {
 					var newNamespace = parentNRR.Namespace.GetChildNamespace(localNamespace);
@@ -1857,6 +1862,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				decl.Attributes.AddRange(ConvertAttributes(method.GetReturnTypeAttributes(), "return"));
 			}
 			if (AddResolveResultAnnotations) {
+				if (method.MetadataToken is not null)
+					decl.AddAnnotation(method.MetadataToken);
 				decl.AddAnnotation(new MemberResolveResult(null, method));
 			}
 			decl.ReturnType = ConvertType(method.ReturnType);

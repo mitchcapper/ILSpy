@@ -143,8 +143,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 								QueryExpression query = new QueryExpression();
 								query.Clauses.Add(MakeFromClause(parameter, mre.Target.Detach()));
 								query.Clauses.Add(new QueryGroupClause {
-									Projection = new IdentifierExpression(parameter.Name).WithAnnotation(BoxedTextColor.Parameter)
-										.CopyAnnotationsFrom(parameter),
+									Projection = IdentifierExpression.Create(parameter.Name, BoxedTextColor.Parameter).CopyAnnotationsFrom(parameter),
 									Key = keySelector.Detach()
 								});
 								return query;

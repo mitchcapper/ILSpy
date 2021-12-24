@@ -184,6 +184,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 		}
 
+		public override dnlib.DotNet.IType MetadataToken => null;
+
 		public override TypeKind Kind => TypeKind.Tuple;
 		public override bool? IsReferenceType => UnderlyingType.IsReferenceType;
 		public override int TypeParameterCount => 0;
@@ -347,11 +349,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public ImmutableArray<string> ElementNames { get; }
 
 		public IModuleReference ValueTupleAssembly { get; }
-
-		public TupleTypeReference(ImmutableArray<ITypeReference> elementTypes)
-		{
-			this.ElementTypes = elementTypes;
-		}
 
 		public TupleTypeReference(ImmutableArray<ITypeReference> elementTypes,
 			ImmutableArray<string> elementNames = default(ImmutableArray<string>),

@@ -17,7 +17,7 @@ namespace ICSharpCode.Decompiler
 		public DecompilerSettings Settings { get; }
 		public Dictionary<ITypeDefinition, RecordDecompiler> RecordDecompilers { get; } = new Dictionary<ITypeDefinition, RecordDecompiler>();
 
-		Lazy<CSharp.TypeSystem.UsingScope> usingScope => new Lazy<CSharp.TypeSystem.UsingScope>(() => CreateUsingScope(Namespaces));
+		private Lazy<CSharp.TypeSystem.UsingScope> usingScope => new Lazy<CSharp.TypeSystem.UsingScope>(() => CreateUsingScope(Namespaces));
 		public CSharp.TypeSystem.UsingScope UsingScope => usingScope.Value;
 
 		public DecompileRun(DecompilerSettings settings)

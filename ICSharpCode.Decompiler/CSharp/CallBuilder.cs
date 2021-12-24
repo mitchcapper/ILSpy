@@ -306,7 +306,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 
 			if (method.Name == "Invoke" && method.DeclaringType.Kind == TypeKind.Delegate && !IsNullConditional(target)) {
-				return new InvocationExpression(target, argumentList.GetArgumentExpressions())
+				return new InvocationExpression(target, argumentList.GetArgumentExpressions()).WithAnnotation(method.MetadataToken)
 					.WithRR(new CSharpInvocationResolveResult(target.ResolveResult, method,
 						argumentList.GetArgumentResolveResults(), isExpandedForm: argumentList.IsExpandedForm, isDelegateInvocation: true));
 			}
@@ -413,13 +413,13 @@ namespace ICSharpCode.Decompiler.CSharp
 					typeArgumentList = ((MemberReferenceExpression)targetExpr).TypeArguments;
 				}
 			} else {
-				targetExpr = new IdentifierExpression(methodName);
+				targetExpr = new IdentifierExpression { IdentifierToken = Identifier.Create(methodName).WithAnnotation(method.MetadataToken) };
 				typeArgumentList = ((IdentifierExpression)targetExpr).TypeArguments;
 			}
 
 			if ((transform & CallTransformation.RequireTypeArguments) != 0 && (!settings.AnonymousTypes || !method.TypeArguments.Any(a => a.ContainsAnonymousType())))
 				typeArgumentList.AddRange(method.TypeArguments.Select(expressionBuilder.ConvertType));
-			return new InvocationExpression(targetExpr, argumentList.GetArgumentExpressions())
+			return new InvocationExpression(targetExpr, argumentList.GetArgumentExpressions()).WithAnnotation(foundMethod.MetadataToken)
 				.WithRR(new CSharpInvocationResolveResult(target.ResolveResult, foundMethod,
 					argumentList.GetArgumentResolveResultsDirect(), isExpandedForm: argumentList.IsExpandedForm));
 		}
@@ -597,7 +597,9 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			int next;
 			TokenKind kind = TokenKind.String;
-			StringBuilder sb = new StringBuilder();
+
+			StringBuilder sb = typeSystem.SharedStringBuilder;
+			sb.Length = 0;
 
 			while ((next = Next()) > -1) {
 				switch ((char)next) {
@@ -1262,7 +1264,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						.WithoutILInstruction().WithRR(rr);
 				} else {
 					return new IdentifierExpression(method.AccessorOwner.Name)
-						.WithoutILInstruction().WithRR(rr);
+						   .WithoutILInstruction().WithRR(rr);
 				}
 			}
 		}
@@ -1329,7 +1331,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				return new ObjectCreateExpression(
 					expressionBuilder.ConvertType(method.DeclaringType),
 					argumentList.GetArgumentExpressions()
-				).WithRR(new CSharpInvocationResolveResult(
+				).WithAnnotation(method.MetadataToken).WithRR(new CSharpInvocationResolveResult(
 					target, method, argumentList.GetArgumentResolveResults().ToArray(),
 					isExpandedForm: argumentList.IsExpandedForm, argumentToParameterMap: argumentList.ArgumentToParameterMap
 				));

@@ -12,6 +12,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.baseType = baseType;
 		}
 
+		dnlib.DotNet.IType IType.MetadataToken => baseType.MetadataToken;
+
 		TypeKind IType.Kind => baseType.Kind;
 
 		bool? IType.IsReferenceType => baseType.IsReferenceType;

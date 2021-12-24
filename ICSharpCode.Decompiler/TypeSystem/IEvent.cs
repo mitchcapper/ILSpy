@@ -29,5 +29,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		IMethod AddAccessor { get; }
 		IMethod RemoveAccessor { get; }
 		IMethod InvokeAccessor { get; }
+
+		new EventDef MetadataToken { get; }
 	}
 }

@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using ICSharpCode.Decompiler.TypeSystem;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading;
 using dnSpy.Contracts.Decompiler;
 using dnSpy.Contracts.Text;
 

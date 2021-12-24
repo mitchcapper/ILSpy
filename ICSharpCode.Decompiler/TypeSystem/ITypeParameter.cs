@@ -1,14 +1,14 @@
 ﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
-// 
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
 // without restriction, including without limitation the rights to use, copy, modify, merge,
 // publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
 // to whom the Software is furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in all copies or
 // substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
 // INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
 // PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
@@ -25,7 +25,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	/// <summary>
 	/// Type parameter of a generic class/method.
 	/// </summary>
-	public interface ITypeParameter : IType, ISymbol
+	public interface ITypeParameter : IType, INamedElement, ISymbol
 	{
 		/// <summary>
 		/// Get the type of this type parameter's owner.
@@ -43,12 +43,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// ITypeParameter instance is used both on Outer`1 and Outer`1+Inner.
 		/// </remarks>
 		IEntity Owner { get; }
-		
+
 		/// <summary>
 		/// Gets the index of the type parameter in the type parameter list of the owning method/class.
 		/// </summary>
 		int Index { get; }
-		
+
 		/// <summary>
 		/// Gets the name of the type parameter.
 		/// </summary>
@@ -58,32 +58,32 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Gets the attributes declared on this type parameter.
 		/// </summary>
 		IEnumerable<IAttribute> GetAttributes();
-		
+
 		/// <summary>
 		/// Gets the variance of this type parameter.
 		/// </summary>
 		VarianceModifier Variance { get; }
-		
+
 		/// <summary>
 		/// Gets the effective base class of this type parameter.
 		/// </summary>
 		IType EffectiveBaseClass { get; }
-		
+
 		/// <summary>
 		/// Gets the effective interface set of this type parameter.
 		/// </summary>
 		IReadOnlyCollection<IType> EffectiveInterfaceSet { get; }
-		
+
 		/// <summary>
 		/// Gets if the type parameter has the 'new()' constraint.
 		/// </summary>
 		bool HasDefaultConstructorConstraint { get; }
-		
+
 		/// <summary>
 		/// Gets if the type parameter has the 'class' constraint.
 		/// </summary>
 		bool HasReferenceTypeConstraint { get; }
-		
+
 		/// <summary>
 		/// Gets if the type parameter has the 'struct' or 'unmanaged' constraint.
 		/// </summary>
@@ -96,7 +96,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		/// <summary>
 		/// Nullability of the reference type constraint. (e.g. "where T : class?").
-		/// 
+		///
 		/// Note that the nullability of a use of the type parameter may differ from this.
 		/// E.g. "T? GetNull&lt;T&gt;() where T : class => null;"
 		/// </summary>
@@ -117,7 +117,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			this.Attributes = attributes ?? EmptyList<IAttribute>.Instance;
 		}
 	}
-	
+
 	/// <summary>
 	/// Represents the variance of a type parameter.
 	/// </summary>

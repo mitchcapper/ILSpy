@@ -84,7 +84,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		bool IMember.IsOverride => underlyingMethod.IsOverride;
 		bool IMember.IsOverridable => underlyingMethod.IsOverridable;
 		TypeParameterSubstitution IMember.Substitution => underlyingMethod.Substitution;
-		dnlib.DotNet.IMemberDef IEntity.MetadataToken => underlyingMethod.MetadataToken;
+		dnlib.DotNet.IMDTokenProvider IEntity.MetadataToken => underlyingMethod.MetadataToken;
+		public dnlib.DotNet.IMethod MetadataToken => underlyingMethod.MetadataToken;
 		public string Name => underlyingMethod.Name;
 		IType IEntity.DeclaringType => underlyingMethod.DeclaringType;
 		ITypeDefinition IEntity.DeclaringTypeDefinition => underlyingMethod.DeclaringTypeDefinition;

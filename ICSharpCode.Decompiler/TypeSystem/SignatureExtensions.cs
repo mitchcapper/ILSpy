@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using dnlib.DotNet;
+using dnSpy.Contracts.Decompiler;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
 
@@ -31,18 +32,18 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					return module.Compilation.FindType(KnownTypeCode.IntPtr);
 				}
 				case GenericInstSig instSig:
-					return new ParameterizedType(instSig.GenericType.DecodeSignature(module, context),
+					return new ParameterizedType(instSig, instSig.GenericType.DecodeSignature(module, context),
 						instSig.GenericArguments.Select(x => x.DecodeSignature(module, context)));
 				case ByRefSig byRefSig:
-					return new ByReferenceType(byRefSig.Next.DecodeSignature(module, context));
+					return new ByReferenceType(byRefSig, byRefSig.Next.DecodeSignature(module, context));
 				case PinnedSig pinnedSig:
-					return new PinnedType(pinnedSig.Next.DecodeSignature(module, context));
+					return new PinnedType(pinnedSig, pinnedSig.Next.DecodeSignature(module, context));
 				case CModOptSig cModOptSig:
-					return new ModifiedType(cModOptSig.Modifier.DecodeSignature(module, context), cModOptSig.Next.DecodeSignature(module, context), false);
+					return new ModifiedType(cModOptSig, cModOptSig.Modifier.DecodeSignature(module, context), cModOptSig.Next.DecodeSignature(module, context), false);
 				case CModReqdSig cModReqdSig:
-					return new ModifiedType(cModReqdSig.Modifier.DecodeSignature(module, context), cModReqdSig.Next.DecodeSignature(module, context), true);
+					return new ModifiedType(cModReqdSig, cModReqdSig.Modifier.DecodeSignature(module, context), cModReqdSig.Next.DecodeSignature(module, context), true);
 				case PtrSig ptrSig:
-					return new PointerType(ptrSig.Next.DecodeSignature(module, context));
+					return new PointerType(ptrSig, ptrSig.Next.DecodeSignature(module, context));
 				case ArraySigBase arraySigBase:
 					return new ArrayType(module.Compilation, arraySigBase.Next.DecodeSignature(module, context), (int)arraySigBase.Rank);
 				case ClassOrValueTypeSig classOrValueTypeSig:

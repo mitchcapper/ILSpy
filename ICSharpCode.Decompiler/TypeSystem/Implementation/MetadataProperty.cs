@@ -72,7 +72,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return $"{propertyHandle.MDToken.Raw:X8} {DeclaringType?.ReflectionName}.{Name}";
 		}
 
-		public IMemberDef MetadataToken => propertyHandle;
+		IMDTokenProvider IEntity.MetadataToken => propertyHandle;
+		public PropertyDef MetadataToken => propertyHandle;
 		public string Name => name;
 
 

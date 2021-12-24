@@ -44,6 +44,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			AddSubstitution(substitution);
 		}
 
+		public new dnlib.DotNet.IField MetadataToken => fieldDefinition.MetadataToken;
+
 		public bool IsReadOnly {
 			get { return fieldDefinition.IsReadOnly; }
 		}

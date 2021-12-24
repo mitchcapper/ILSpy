@@ -61,7 +61,7 @@ namespace ICSharpCode.Decompiler
 
 			var definition = GetCurrentDefinition();
 			if (definition != null) {
-				dnlib.DotNet.IMemberRef cecil = SymbolToCecil(definition);
+				dnlib.DotNet.IMDTokenProvider cecil = SymbolToCecil(definition);
 				if (cecil != null) {
 					output.Write(escapedName, cecil, DecompilerReferenceFlags.Definition, data);
 					return;
@@ -70,7 +70,7 @@ namespace ICSharpCode.Decompiler
 
 			var member = GetCurrentMemberReference();
 			if (member != null) {
-				dnlib.DotNet.IMemberRef cecil = SymbolToCecil(member);
+				dnlib.DotNet.IMDTokenProvider cecil = SymbolToCecil(member);
 				if (cecil != null) {
 					output.Write(escapedName, cecil, DecompilerReferenceFlags.None, data);
 					return;
@@ -100,7 +100,7 @@ namespace ICSharpCode.Decompiler
 			output.Write(escapedName, data);
 		}
 
-		dnlib.DotNet.IMemberRef SymbolToCecil(ISymbol symbol)
+		dnlib.DotNet.IMDTokenProvider SymbolToCecil(ISymbol symbol)
 		{
 			if (symbol is IType type) {
 				return type.GetDefinition().MetadataToken;
@@ -410,16 +410,50 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
+		MethodDebugInfoBuilder currentMethodDebugInfoBuilder;
+		Stack<MethodDebugInfoBuilder> parentMethodDebugInfoBuilder = new Stack<MethodDebugInfoBuilder>();
+		List<Tuple<MethodDebugInfoBuilder, List<ILSpan>>> multiMappings;
+
 		public override void StartNode(AstNode node)
 		{
-
 			nodeStack.Push(node);
+
+			MethodDebugInfoBuilder mapping = node.Annotation<MethodDebugInfoBuilder>();
+			if (mapping != null) {
+				parentMethodDebugInfoBuilder.Push(currentMethodDebugInfoBuilder);
+				currentMethodDebugInfoBuilder = mapping;
+			}
+			// For ctor/cctor field initializers
+			var mms = node.Annotation<List<Tuple<MethodDebugInfoBuilder, List<ILSpan>>>>();
+			if (mms != null) {
+				Debug.Assert(multiMappings == null);
+				multiMappings = mms;
+			}
 		}
 
 		public override void EndNode(AstNode node)
 		{
 			if (nodeStack.Pop() != node)
 				throw new InvalidOperationException();
+
+			if (node.Annotation<MethodDebugInfoBuilder>() != null) {
+				// if (context.CalculateILSpans) {
+				// 	foreach (var ns in context.UsingNamespaces)
+				// 		currentMethodDebugInfoBuilder.Scope.Imports.Add(ImportInfo.CreateNamespace(ns));
+				// }
+				if (parentMethodDebugInfoBuilder.Peek() != currentMethodDebugInfoBuilder)
+					output.AddDebugInfo(currentMethodDebugInfoBuilder.Create());
+				currentMethodDebugInfoBuilder = parentMethodDebugInfoBuilder.Pop();
+			}
+			var mms = node.Annotation<List<Tuple<MethodDebugInfoBuilder, List<ILSpan>>>>();
+			if (mms != null) {
+				Debug.Assert(mms == multiMappings);
+				if (mms == multiMappings) {
+					foreach (var mm in mms)
+						output.AddDebugInfo(mm.Item1.Create());
+					multiMappings = null;
+				}
+			}
 		}
 
 		public static bool IsDefinition(ref AstNode node)
@@ -435,6 +469,36 @@ namespace ICSharpCode.Decompiler
 				return true;
 			}
 			return false;
+		}
+
+		class DebugState
+		{
+			public List<AstNode> Nodes = new List<AstNode>();
+			public int StartSpan;
+		}
+		readonly Stack<DebugState> debugStack = new Stack<DebugState>();
+		public override void DebugStart(AstNode node, int? start)
+		{
+			debugStack.Push(new DebugState { StartSpan = start ?? output.NextPosition });
+		}
+
+		public override void DebugHidden(AstNode hiddenNode)
+		{
+			if (hiddenNode == null || hiddenNode.IsNull)
+				return;
+			if (debugStack.Count > 0)
+				debugStack.Peek().Nodes.AddRange(hiddenNode.DescendantsAndSelf);
+		}
+
+		public override void DebugExpression(AstNode node)
+		{
+			if (debugStack.Count > 0)
+				debugStack.Peek().Nodes.Add(node);
+		}
+
+		public override void DebugEnd(AstNode node, int? end)
+		{
+			var state = debugStack.Pop();
 		}
 
 		public override int? GetLocation()

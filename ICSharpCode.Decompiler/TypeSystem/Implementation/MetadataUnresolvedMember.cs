@@ -1,42 +1,24 @@
-﻿// Copyright (c) 2018 Daniel Grunwald
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy of this
-// software and associated documentation files (the "Software"), to deal in the Software
-// without restriction, including without limitation the rights to use, copy, modify, merge,
-// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
-// to whom the Software is furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in all copies or
-// substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
-// INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
-// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
-// FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-// DEALINGS IN THE SOFTWARE.
-
-using System;
+﻿using System;
 using System.Collections.Generic;
+using dnlib.DotNet;
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
-	/// <summary>
-	/// Base class for fake members.
-	/// </summary>
-	abstract class FakeMember : IMember
+	abstract class MetadataUnresolvedMember : IMember
 	{
-		readonly ICompilation compilation;
+		protected readonly MetadataModule module;
+		protected readonly MemberRef dnlibRef;
 
-		protected FakeMember(ICompilation compilation)
+		protected MetadataUnresolvedMember(MetadataModule module, MemberRef dnlibRef)
 		{
-			this.compilation = compilation ?? throw new ArgumentNullException(nameof(compilation));
+			this.module = module ?? throw new ArgumentNullException(nameof(module));
+			this.dnlibRef = dnlibRef ?? throw new ArgumentNullException(nameof(dnlibRef));
 		}
 
 		IMember IMember.MemberDefinition => this;
 
-		public IType ReturnType { get; set; } = SpecialType.UnknownType;
+		public abstract IType ReturnType { get; }
 
 		IEnumerable<IMember> IMember.ExplicitlyImplementedInterfaceMembers => EmptyList<IMember>.Instance;
 
@@ -47,9 +29,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		bool IMember.IsOverridable => false;
 
 		TypeParameterSubstitution IMember.Substitution => TypeParameterSubstitution.Identity;
-		dnlib.DotNet.IMDTokenProvider IEntity.MetadataToken => null;
 
-		public string Name { get; set; }
+		IMDTokenProvider IEntity.MetadataToken => dnlibRef;
+
+		public string Name => dnlibRef.Name;
 
 		ITypeDefinition IEntity.DeclaringTypeDefinition => DeclaringType?.GetDefinition();
 
@@ -67,7 +50,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public abstract SymbolKind SymbolKind { get; }
 
-		ICompilation ICompilationProvider.Compilation => compilation;
+		ICompilation ICompilationProvider.Compilation => module.Compilation;
 
 		string INamedElement.FullName {
 			get {
@@ -97,11 +80,59 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public abstract IMember Specialize(TypeParameterSubstitution substitution);
 	}
 
-	class FakeMethod : FakeMember, IMethod
+	class MetadataUnresolvedField : MetadataUnresolvedMember, IField
 	{
-		readonly SymbolKind symbolKind;
+		private IType retType;
 
-		public FakeMethod(ICompilation compilation, SymbolKind symbolKind) : base(compilation)
+		public MetadataUnresolvedField(MetadataModule compilation, MemberRef dnlibRef)
+			: base(compilation, dnlibRef) { }
+
+		bool IField.IsReadOnly => false;
+		public bool IsVolatile { get; private set; }
+
+		bool IVariable.IsConst => false;
+		object IVariable.GetConstantValue(bool throwOnInvalidMetadata) => null;
+		IType IVariable.Type => ReturnType;
+
+		public override SymbolKind SymbolKind => SymbolKind.Field;
+
+		public dnlib.DotNet.IField MetadataToken => dnlibRef;
+
+		public override IType ReturnType {
+			get {
+				var t = LazyInit.VolatileRead(ref retType);
+				if (t is not null)
+					return t;
+
+				t = dnlibRef.FieldSig.Type.DecodeSignature(module, new GenericContext(DeclaringType?.GetDefinition()?.TypeParameters));
+
+				if (t is ModifiedType modifier && modifier.Modifier.Name == "IsVolatile" &&
+					modifier.Modifier.Namespace == "System.Runtime.CompilerServices") {
+					IsVolatile = true;
+					t = modifier.ElementType;
+				}
+
+				return LazyInit.GetOrSet(ref retType, t);
+			}
+		}
+
+		public override IMember Specialize(TypeParameterSubstitution substitution)
+		{
+			return SpecializedField.Create(this, substitution);
+		}
+
+		IField IField.Specialize(TypeParameterSubstitution substitution)
+		{
+			return SpecializedField.Create(this, substitution);
+		}
+	}
+
+	class MetadataUnresolvedMethod : MetadataUnresolvedMember, IMethod
+	{
+		private IType retType;
+		private readonly SymbolKind symbolKind;
+
+		public MetadataUnresolvedMethod(MetadataModule compilation, MemberRef dnlibref, SymbolKind symbolKind) : base(compilation, dnlibref)
 		{
 			this.symbolKind = symbolKind;
 		}
@@ -111,7 +142,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		IEnumerable<IAttribute> IMethod.GetReturnTypeAttributes() => EmptyList<IAttribute>.Instance;
 		bool IMethod.ReturnTypeIsRefReadOnly => false;
 		bool IMethod.ThisIsRefReadOnly => false;
-		bool IMethod.IsInitOnly => false;
+		public bool IsInitOnly { get; private set; }
 
 		public IReadOnlyList<ITypeParameter> TypeParameters { get; set; } = EmptyList<ITypeParameter>.Instance;
 
@@ -132,7 +163,25 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public IReadOnlyList<IParameter> Parameters { get; set; } = EmptyList<IParameter>.Instance;
 
-		public dnlib.DotNet.IMethod MetadataToken => null;
+		public dnlib.DotNet.IMethod MetadataToken => dnlibRef;
+
+		public override IType ReturnType {
+			get {
+				var t = LazyInit.VolatileRead(ref retType);
+				if (t is not null)
+					return t;
+
+				t = dnlibRef.FieldSig.Type.DecodeSignature(module, new GenericContext(DeclaringType?.GetDefinition()?.TypeParameters));
+
+				if (t is ModifiedType modifier && modifier.Modifier.Name == "IsExternalInit" &&
+					modifier.Modifier.Namespace == "System.Runtime.CompilerServices") {
+					IsInitOnly = true;
+					t = modifier.ElementType;
+				}
+
+				return LazyInit.GetOrSet(ref retType, t);
+			}
+		}
 
 		public override IMember Specialize(TypeParameterSubstitution substitution)
 		{
@@ -142,16 +191,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		IMethod IMethod.Specialize(TypeParameterSubstitution substitution)
 		{
 			return SpecializedMethod.Create(this, substitution);
-		}
-
-		internal static IMethod CreateDummyConstructor(ICompilation compilation, IType declaringType, Accessibility accessibility = Accessibility.Public)
-		{
-			return new FakeMethod(compilation, SymbolKind.Constructor) {
-				DeclaringType = declaringType,
-				Name = ".ctor",
-				ReturnType = compilation.FindType(KnownTypeCode.Void),
-				Accessibility = accessibility,
-			};
 		}
 	}
 }

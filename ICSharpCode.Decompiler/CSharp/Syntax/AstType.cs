@@ -138,22 +138,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		/// <summary>
 		/// Create an ITypeReference for this AstType.
-		/// Uses the context (ancestors of this node) to determine the correct <see cref="NameLookupMode"/>.
-		/// </summary>
-		/// <remarks>
-		/// The resulting type reference will read the context information from the
-		/// <see cref="ITypeResolveContext"/>:
-		/// For resolving type parameters, the CurrentTypeDefinition/CurrentMember is used.
-		/// For resolving simple names, the current namespace and usings from the CurrentUsingScope
-		/// (on CSharpTypeResolveContext only) is used.
-		/// </remarks>
-		public ITypeReference ToTypeReference(InterningProvider interningProvider = null)
-		{
-			return ToTypeReference(GetNameLookupMode(), interningProvider);
-		}
-
-		/// <summary>
-		/// Create an ITypeReference for this AstType.
 		/// </summary>
 		/// <remarks>
 		/// The resulting type reference will read the context information from the

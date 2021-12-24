@@ -17,13 +17,21 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using dnlib.DotNet;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 
 namespace ICSharpCode.Decompiler.TypeSystem
 {
 	public sealed class ByReferenceType : TypeWithElementType
 	{
-		public ByReferenceType(IType elementType) : base(elementType)
+
+		public override dnlib.DotNet.IType MetadataToken => null;
+
+		public ByReferenceType(IType elementType) : base(new ByRefSig(elementType.MetadataToken.GetTypeSig()), elementType)
+		{
+		}
+
+		public ByReferenceType(dnlib.DotNet.IType dnType, IType elementType) : base(dnType, elementType)
 		{
 		}
 
@@ -64,8 +72,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			IType e = elementType.AcceptVisitor(visitor);
 			if (e == elementType)
 				return this;
-			else
-				return new ByReferenceType(e);
+			return new ByReferenceType(e);
 		}
 	}
 

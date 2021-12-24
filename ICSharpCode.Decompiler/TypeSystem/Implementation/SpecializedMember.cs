@@ -129,7 +129,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 
-		public IMemberDef MetadataToken => baseMember.MetadataToken;
+		public IMDTokenProvider MetadataToken => baseMember.MetadataToken;
 
 		public bool IsVirtual {
 			get { return baseMember.IsVirtual; }

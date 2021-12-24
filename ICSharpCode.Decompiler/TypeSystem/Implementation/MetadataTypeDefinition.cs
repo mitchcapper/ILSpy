@@ -272,7 +272,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 
-		public IMemberDef MetadataToken => handle;
+		dnlib.DotNet.IType IType.MetadataToken => handle;
+		IMDTokenProvider IEntity.MetadataToken => handle;
+		public TypeDef MetadataToken => handle;
 
 		public FullTypeName FullTypeName => fullTypeName;
 		public string Name => fullTypeName.Name;

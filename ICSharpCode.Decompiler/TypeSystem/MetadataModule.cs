@@ -385,7 +385,41 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				if (resolved is not null && Compilation.GetOrAddModule(resolved.Module) is MetadataModule mod) {
 					method = mod.GetDefinition(resolved);
 				} else {
-					method = CreateFakeMethod(declaringType, memberRef, vaRAgCtx);
+					var symbolKind = memberRef.Name == ".ctor" || memberRef.Name == ".cctor"
+						? SymbolKind.Constructor
+						: SymbolKind.Method;
+					var unresolved = new MetadataUnresolvedMethod(this, memberRef, symbolKind) {
+						DeclaringType = declaringType,
+						IsStatic = !memberRef.HasThis
+					};
+
+					TypeParameterSubstitution substitution = null;
+					if (memberRef.MethodSig.GenParamCount > 0) {
+						var typeParameters = new List<ITypeParameter>();
+						for (int i = 0; i < memberRef.MethodSig.GenParamCount; i++) {
+							typeParameters.Add(new DefaultTypeParameter(unresolved, i));
+						}
+
+						unresolved.TypeParameters = typeParameters;
+						substitution = new TypeParameterSubstitution(declaringType.TypeArguments, typeParameters);
+					} else if (declaringType.TypeArguments.Count > 0) {
+						substitution = declaringType.GetSubstitution();
+					}
+
+					var parameters = new List<IParameter>();
+					foreach (var t in memberRef.MethodSig.Params.Select(x => x.DecodeSignature(this, context))) {
+						var type = t;
+						if (substitution != null) {
+							// replace the dummy method type parameters with the owned instances we just created
+							type = type.AcceptVisitor(substitution);
+						}
+
+						parameters.Add(new DefaultParameter(type, ""));
+					}
+
+					unresolved.Parameters = parameters;
+
+					method = unresolved;
 				}
 			}
 
@@ -401,49 +435,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 
 			return method;
-		}
-
-		/// <summary>
-		/// Create a dummy IMethod from the specified MethodReference
-		/// </summary>
-		IMethod CreateFakeMethod(IType declaringType, MemberRef memberRef, GenericContext context)
-		{
-			SymbolKind symbolKind = SymbolKind.Method;
-			var name = memberRef.Name;
-			if (name == ".ctor" || name == ".cctor")
-				symbolKind = SymbolKind.Constructor;
-			var m = new FakeMethod(Compilation, symbolKind);
-			m.DeclaringType = declaringType;
-			m.Name = name;
-			m.IsStatic = !memberRef.HasThis;
-			m.ReturnType = memberRef.MethodSig.RetType.DecodeSignature(this, context);
-
-			TypeParameterSubstitution substitution = null;
-			if (memberRef.MethodSig.GenParamCount > 0) {
-				var typeParameters = new List<ITypeParameter>();
-				for (int i = 0; i < memberRef.MethodSig.GenParamCount; i++) {
-					typeParameters.Add(new DefaultTypeParameter(m, i));
-				}
-
-				m.TypeParameters = typeParameters;
-				substitution = new TypeParameterSubstitution(declaringType.TypeArguments, typeParameters);
-			} else if (declaringType.TypeArguments.Count > 0) {
-				substitution = declaringType.GetSubstitution();
-			}
-
-			var parameters = new List<IParameter>();
-			foreach (var t in memberRef.MethodSig.Params.Select(x => x.DecodeSignature(this, context))) {
-				var type = t;
-				if (substitution != null) {
-					// replace the dummy method type parameters with the owned instances we just created
-					type = type.AcceptVisitor(substitution);
-				}
-
-				parameters.Add(new DefaultParameter(type, ""));
-			}
-
-			m.Parameters = parameters;
-			return m;
 		}
 
 		#endregion
@@ -498,23 +489,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			if (resolved is not null && Compilation.GetOrAddModule(resolved.Module) is MetadataModule mod) {
 				tsField = mod.GetDefinition(resolved);
 			} else {
-				var declaringTypeDefinition = declaringType.GetDefinition();
-
-				var decodedSig = memberRef.FieldSig.Type.DecodeSignature(this,
-					new GenericContext(declaringTypeDefinition?.TypeParameters));
-
-				bool isVolatile = false;
-				if (decodedSig is ModifiedType modifier && modifier.Modifier.Name == "IsVolatile" &&
-					modifier.Modifier.Namespace == "System.Runtime.CompilerServices") {
-					isVolatile = true;
-					decodedSig = modifier.ElementType;
-				}
-
-				tsField = new FakeField(Compilation) {
-					ReturnType = decodedSig,
-					Name = memberRef.Name,
-					DeclaringType = declaringType,
-					IsVolatile = isVolatile
+				tsField = new MetadataUnresolvedField(this, memberRef) {
+					DeclaringType = declaringType
 				};
 			}
 

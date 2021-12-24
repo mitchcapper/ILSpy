@@ -90,6 +90,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 
+		public new dnlib.DotNet.IMethod MetadataToken => methodDefinition.MetadataToken;
+
 		public IReadOnlyList<IType> TypeArguments {
 			get { return this.Substitution.MethodTypeArguments ?? EmptyList<IType>.Instance; }
 		}

@@ -39,5 +39,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		bool IsVolatile { get; }
 
 		new IField Specialize(TypeParameterSubstitution substitution);
+
+		new dnlib.DotNet.IField MetadataToken { get; }
 	}
 }

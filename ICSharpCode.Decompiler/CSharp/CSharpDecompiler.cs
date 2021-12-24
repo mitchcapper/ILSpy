@@ -244,7 +244,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			this.settings = settings;
 			this.module = typeSystem.MainModule;
 			this.metadata = module.metadata;
-			StringBuilder = new StringBuilder();
+			StringBuilder = typeSystem.SharedStringBuilder;
 		}
 
 		#region MemberIsHidden
@@ -253,7 +253,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// </summary>
 		/// <param name="member">The member. Can be a TypeDef, MethodDef or FieldDef.</param>
 		/// <param name="settings">THe settings used to determine whether code should be hidden. E.g. if async methods are not transformed, async state machines are included in the decompiled code.</param>
-		public static bool MemberIsHidden(IMemberRef member, DecompilerSettings settings)
+		public static bool MemberIsHidden(IMDTokenProvider member, DecompilerSettings settings)
 		{
 			MethodDef method = member as MethodDef;
 			if (method != null) {
@@ -413,22 +413,6 @@ namespace ICSharpCode.Decompiler.CSharp
 		}
 
 		/// <summary>
-		/// Decompile assembly and module attributes.
-		/// </summary>
-		public SyntaxTree DecompileModuleAndAssemblyAttributes()
-		{
-			var decompilationContext = new SimpleTypeResolveContext(typeSystem.MainModule);
-			var decompileRun = new DecompileRun(settings) {
-				CancellationToken = CancellationToken
-			};
-			syntaxTree = new SyntaxTree();
-			RequiredNamespaceCollector.CollectAttributeNamespaces(module, decompileRun.Namespaces);
-			DoDecompileModuleAndAssemblyAttributes(decompileRun, decompilationContext, syntaxTree);
-			RunTransforms(syntaxTree, decompileRun, decompilationContext);
-			return syntaxTree;
-		}
-
-		/// <summary>
 		/// Decompile module attributes.
 		/// </summary>
 		public SyntaxTree DecompileModule()
@@ -439,7 +423,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			};
 			syntaxTree = new SyntaxTree();
 			RequiredNamespaceCollector.CollectAttributeNamespacesOnlyModule(module, decompileRun.Namespaces);
-			DoDecompileModuleAttributes(decompileRun, decompilationContext, syntaxTree);
+			DoDecompileModuleAttributes(module.metadata, decompileRun, decompilationContext, syntaxTree);
 			RunTransforms(syntaxTree, decompileRun, decompilationContext);
 			return syntaxTree;
 		}
@@ -455,12 +439,12 @@ namespace ICSharpCode.Decompiler.CSharp
 			};
 			syntaxTree = new SyntaxTree();
 			RequiredNamespaceCollector.CollectAttributeNamespacesOnlyAssembly(module, decompileRun.Namespaces);
-			DoDecompileAssemblyAttributes(decompileRun, decompilationContext, syntaxTree);
+			DoDecompileAssemblyAttributes(module.metadata.Assembly, decompileRun, decompilationContext, syntaxTree);
 			RunTransforms(syntaxTree, decompileRun, decompilationContext);
 			return syntaxTree;
 		}
 
-		void DoDecompileAssemblyAttributes(DecompileRun decompileRun, ITypeResolveContext decompilationContext, SyntaxTree syntaxTree)
+		void DoDecompileAssemblyAttributes(AssemblyDef assemblyDef, DecompileRun decompileRun, ITypeResolveContext decompilationContext, SyntaxTree syntaxTree)
 		{
 			try {
 				foreach (var a in typeSystem.MainModule.GetAssemblyAttributes()) {
@@ -470,11 +454,11 @@ namespace ICSharpCode.Decompiler.CSharp
 					syntaxTree.AddChild(attrSection, SyntaxTree.MemberRole);
 				}
 			} catch (Exception innerException) when (!(innerException is OperationCanceledException || innerException is DecompilerException)) {
-				throw new DecompilerException(null, innerException, "Error decompiling module and assembly attributes of " + module.AssemblyName);
+				throw new DecompilerException(assemblyDef, innerException, "Error decompiling module and assembly attributes of " + module.AssemblyName);
 			}
 		}
 
-		void DoDecompileModuleAttributes(DecompileRun decompileRun, ITypeResolveContext decompilationContext, SyntaxTree syntaxTree)
+		void DoDecompileModuleAttributes(ModuleDef moduleDef, DecompileRun decompileRun, ITypeResolveContext decompilationContext, SyntaxTree syntaxTree)
 		{
 			try {
 				foreach (var a in typeSystem.MainModule.GetModuleAttributes()) {
@@ -484,14 +468,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					syntaxTree.AddChild(attrSection, SyntaxTree.MemberRole);
 				}
 			} catch (Exception innerException) when (!(innerException is OperationCanceledException || innerException is DecompilerException)) {
-				throw new DecompilerException(null, innerException, "Error decompiling module and assembly attributes of " + module.AssemblyName);
+				throw new DecompilerException(moduleDef, innerException, "Error decompiling module and assembly attributes of " + module.AssemblyName);
 			}
-		}
-
-		void DoDecompileModuleAndAssemblyAttributes(DecompileRun decompileRun, ITypeResolveContext decompilationContext, SyntaxTree syntaxTree)
-		{
-			DoDecompileAssemblyAttributes(decompileRun, decompilationContext, syntaxTree);
-			DoDecompileModuleAttributes(decompileRun, decompilationContext, syntaxTree);
 		}
 
 		void DoDecompileTypes(IEnumerable<TypeDef> types, DecompileRun decompileRun, ITypeResolveContext decompilationContext, SyntaxTree syntaxTree)
@@ -1266,7 +1244,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			try {
 				var typeSystemAstBuilder = CreateAstBuilder(decompileRun.Settings);
 				if (decompilationContext.CurrentTypeDefinition.Kind == TypeKind.Enum && field.IsConst) {
-					var enumDec = new EnumMemberDeclaration { Name = field.Name };
+					var enumDec = new EnumMemberDeclaration();
+					enumDec.WithAnnotation(field.MetadataToken);
+					enumDec.NameToken = Identifier.Create(field.Name).WithAnnotation(field.MetadataToken);
 					object constantValue = field.GetConstantValue();
 					if (constantValue != null) {
 						long initValue = (long)CSharpPrimitiveCast.Cast(TypeCode.Int64, constantValue, false);
@@ -1277,6 +1257,7 @@ namespace ICSharpCode.Decompiler.CSharp
 							primitive.Format = LiteralFormat.HexadecimalNumber;
 						}
 					}
+
 					enumDec.Attributes.AddRange(field.GetAttributes().Select(a => new AttributeSection(typeSystemAstBuilder.ConvertAttribute(a))));
 					enumDec.AddAnnotation(new MemberResolveResult(null, field));
 					return enumDec;
@@ -1337,9 +1318,9 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				FixParameterNames(propertyDecl);
 				Accessor getter, setter;
-				if (propertyDecl is PropertyDeclaration) {
-					getter = ((PropertyDeclaration)propertyDecl).Getter;
-					setter = ((PropertyDeclaration)propertyDecl).Setter;
+				if (propertyDecl is PropertyDeclaration propertyDeclaration) {
+					getter = propertyDeclaration.Getter;
+					setter = propertyDeclaration.Setter;
 				} else {
 					getter = ((IndexerDeclaration)propertyDecl).Getter;
 					setter = ((IndexerDeclaration)propertyDecl).Setter;
@@ -1347,16 +1328,13 @@ namespace ICSharpCode.Decompiler.CSharp
 
 				bool getterHasBody = property.CanGet && property.Getter.HasBody;
 				bool setterHasBody = property.CanSet && property.Setter.HasBody;
-				if (getterHasBody)
-				{
+				if (getterHasBody) {
 					DecompileBody(property.Getter, getter, decompileRun, decompilationContext);
 				}
-				if (setterHasBody)
-				{
+				if (setterHasBody) {
 					DecompileBody(property.Setter, setter, decompileRun, decompilationContext);
 				}
-				if (!getterHasBody && !setterHasBody && !property.IsAbstract && property.DeclaringType.Kind != TypeKind.Interface)
-				{
+				if (!getterHasBody && !setterHasBody && !property.IsAbstract && property.DeclaringType.Kind != TypeKind.Interface) {
 					propertyDecl.Modifiers |= Modifiers.Extern;
 				}
 				var accessor = (MethodDef)(property.Getter ?? property.Setter).MetadataToken;
@@ -1448,6 +1426,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				if (IsValueTuple(gType, out int tupleCardinality) && tupleCardinality > 1 && tupleCardinality < TupleType.RestPosition) {
 					var tupleType = new TupleAstType();
+
 					foreach (var typeArgument in gType.GenericArguments) {
 						typeIndex++;
 						tupleType.Elements.Add(new TupleTypeElement {

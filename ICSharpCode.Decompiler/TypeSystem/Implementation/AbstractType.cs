@@ -44,6 +44,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public abstract string Name { get; }
 
+		public abstract dnlib.DotNet.IType MetadataToken { get; }
+
 		public virtual string Namespace {
 			get { return string.Empty; }
 		}
@@ -100,37 +102,37 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			return EmptyList<IType>.Instance;
 		}
-		
+
 		public virtual IEnumerable<IMethod> GetMethods(Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			return EmptyList<IMethod>.Instance;
 		}
-		
+
 		public virtual IEnumerable<IMethod> GetMethods(IReadOnlyList<IType> typeArguments, Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			return EmptyList<IMethod>.Instance;
 		}
-		
+
 		public virtual IEnumerable<IMethod> GetConstructors(Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.IgnoreInheritedMembers)
 		{
 			return EmptyList<IMethod>.Instance;
 		}
-		
+
 		public virtual IEnumerable<IProperty> GetProperties(Predicate<IProperty> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			return EmptyList<IProperty>.Instance;
 		}
-		
+
 		public virtual IEnumerable<IField> GetFields(Predicate<IField> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			return EmptyList<IField>.Instance;
 		}
-		
+
 		public virtual IEnumerable<IEvent> GetEvents(Predicate<IEvent> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			return EmptyList<IEvent>.Instance;
 		}
-		
+
 		public virtual IEnumerable<IMember> GetMembers(Predicate<IMember> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			IEnumerable<IMember> members = GetMethods(filter, options);
@@ -139,7 +141,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				.Concat(GetFields(filter, options))
 				.Concat(GetEvents(filter, options));
 		}
-		
+
 		public virtual IEnumerable<IMethod> GetAccessors(Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			return EmptyList<IMethod>.Instance;

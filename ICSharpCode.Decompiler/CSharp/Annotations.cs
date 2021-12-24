@@ -43,7 +43,7 @@ namespace ICSharpCode.Decompiler.CSharp
 	/// Currently unused; we'll probably use the LdToken ILInstruction as annotation instead when LdToken support gets reimplemented.
 	/// </summary>
 	public class LdTokenAnnotation {}
-	
+
 	public static class AnnotationExtensions
 	{
 		internal static ExpressionWithILInstruction WithILInstruction(this Expression expression, ILInstruction instruction)
@@ -223,8 +223,15 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			return node;
 		}
+
+		public static T WithAnnotation<T>(this T node, object annotation) where T : AstNode
+		{
+			if (annotation != null)
+				node.AddAnnotation(annotation);
+			return node;
+		}
 	}
-	
+
 	/// <summary>
 	/// Represents a reference to a local variable.
 	/// </summary>

@@ -22,6 +22,7 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
+using dnSpy.Contracts.Text;
 using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.Transforms;
@@ -195,7 +196,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			Expression expr;
 			if (variable.Kind == VariableKind.Parameter && variable.Index < 0)
-				expr = new ThisReferenceExpression();
+				expr = new ThisReferenceExpression().WithAnnotation(currentFunction.CecilMethod.DeclaringType);
 			else
 				expr = new IdentifierExpression(variable.Name);
 			if (variable.Type.Kind == TypeKind.ByReference) {
@@ -316,13 +317,13 @@ namespace ICSharpCode.Decompiler.CSharp
 				mrr = new MemberResolveResult(target.ResolveResult, field);
 			}
 
+			Identifier id = Identifier.Create(field.Name).WithAnnotation(field.MetadataToken);
 			if (requireTarget) {
-				return new MemberReferenceExpression(target, field.Name)
-					.WithRR(mrr);
-			} else {
-				return new IdentifierExpression(field.Name)
+				return new MemberReferenceExpression { Target = target, MemberNameToken = id }.WithAnnotation(field.MetadataToken)
 					.WithRR(mrr);
 			}
+
+			return new IdentifierExpression { IdentifierToken = id }.WithAnnotation(field.MetadataToken).WithRR(mrr);
 		}
 
 		TranslatedExpression IsType(IsInst inst)
@@ -594,6 +595,32 @@ namespace ICSharpCode.Decompiler.CSharp
 			return new MemberReferenceExpression(typeofExpr, "TypeHandle")
 				.WithILInstruction(inst)
 				.WithRR(new TypeOfResolveResult(compilation.FindType(new TopLevelTypeName("System", "RuntimeTypeHandle")), inst.Type));
+		}
+
+		protected internal override TranslatedExpression VisitLdMemberToken(LdMemberToken inst, TranslationContext context)
+		{
+			var member = inst.Member;
+			if (member is IField field) {
+				var load = IdentifierExpression.Create("fieldof", BoxedTextColor.Keyword);
+
+				var type = ConvertType(field.DeclaringType);
+				var typeRef = new TypeReferenceExpression(type);
+
+				Identifier id = Identifier.Create(field.Name);
+				if (field.MetadataToken != null)
+					id.AddAnnotation(field.MetadataToken);
+				var memberRef = new MemberReferenceExpression { Target = typeRef, MemberNameToken = id }.WithAnnotation(field.MetadataToken);
+
+				var invocation = new InvocationExpression(load, memberRef).WithAnnotation(new LdTokenAnnotation());
+
+				id = Identifier.Create("FieldHandle");
+				id.AddAnnotation(BoxedTextColor.InstanceProperty);
+
+				return new MemberReferenceExpression { Target = invocation, MemberNameToken = id }.WithILInstruction(inst)
+					.WithRR(new ResolveResult(compilation.FindType(new TopLevelTypeName("System", "RuntimeFieldHandle"))));
+			}
+			else
+				return base.VisitLdMemberToken(inst, context);
 		}
 
 		protected internal override TranslatedExpression VisitBitNot(BitNot inst, TranslationContext context)
@@ -2213,7 +2240,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				{
 					var baseReferenceType = resolver.CurrentTypeDefinition.DirectBaseTypes
 						.FirstOrDefault(t => t.Kind != TypeKind.Interface);
-					return new BaseReferenceExpression()
+					return new BaseReferenceExpression().WithAnnotation((baseReferenceType ?? memberDeclaringType)?.MetadataToken)
 						.WithILInstruction(target)
 						.WithRR(new ThisResolveResult(baseReferenceType ?? memberDeclaringType, nonVirtualInvocation));
 				}
