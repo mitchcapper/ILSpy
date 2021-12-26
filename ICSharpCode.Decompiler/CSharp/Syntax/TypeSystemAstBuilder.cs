@@ -379,6 +379,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 						}
 						astType = ConvertTypeHelper(pt.GenericType, pt.TypeArguments);
 						break;
+					case ITypeParameter tp:
+						var simpleType = MakeSimpleType(tp.Name).WithAnnotation(tp.MDGenericParam);
+						simpleType.IdentifierToken.WithAnnotation(tp.MDGenericParam);
+						astType = simpleType;
+						break;
 					default:
 						switch (type.Kind) {
 							case TypeKind.Dynamic:
@@ -1065,7 +1070,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				.ToArray();
 			foreach (var (value, field) in fields) {
 				if (value == val) {
-					var mre = new MemberReferenceExpression(new TypeReferenceExpression(ConvertType(type)), field.Name);
+					var mre = new MemberReferenceExpression {
+						Target = new TypeReferenceExpression(ConvertType(type)),
+						MemberNameToken = Identifier.Create(field.Name).WithAnnotation(field.MetadataToken)
+					}.WithAnnotation(field.MetadataToken);
 					if (AddResolveResultAnnotations)
 						mre.AddAnnotation(new MemberResolveResult(mre.Target.GetResolveResult(), field));
 					return mre;
@@ -1096,7 +1104,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 						continue;	// skip None enum value
 
 					if ((fieldValue & enumValue) == fieldValue) {
-						var fieldExpression = new MemberReferenceExpression(new TypeReferenceExpression(ConvertType(type)), field.Name);
+						var fieldExpression = new MemberReferenceExpression {
+							Target = new TypeReferenceExpression(ConvertType(type)),
+							MemberNameToken = Identifier.Create(field.Name).WithAnnotation(field.MetadataToken)
+						}.WithAnnotation(field.MetadataToken);
 						if (expr == null)
 							expr = fieldExpression;
 						else
@@ -1105,7 +1116,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 						enumValue &= ~fieldValue;
 					}
 					if ((fieldValue & negatedEnumValue) == fieldValue) {
-						var fieldExpression = new MemberReferenceExpression(new TypeReferenceExpression(ConvertType(type)), field.Name);
+						var fieldExpression = new MemberReferenceExpression {
+							Target = new TypeReferenceExpression(ConvertType(type)),
+							MemberNameToken = Identifier.Create(field.Name).WithAnnotation(field.MetadataToken)
+						}.WithAnnotation(field.MetadataToken);
 						if (negatedExpr == null)
 							negatedExpr = fieldExpression;
 						else
@@ -1571,7 +1585,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			if (AddResolveResultAnnotations) {
 				decl.AddAnnotation(new TypeResolveResult(typeDefinition));
 			}
-			decl.NameToken = Identifier.Create(typeDefinition.Name == "_" ? "@_" : typeDefinition.Name).WithAnnotation(typeDefinition.MetadataToken as TypeDef);
+
+			decl.WithAnnotation(typeDefinition.MetadataToken);
+			decl.NameToken = Identifier.Create(typeDefinition.Name == "_" ? "@_" : typeDefinition.Name).WithAnnotation(typeDefinition.MetadataToken);
 
 			int outerTypeParameterCount = (typeDefinition.DeclaringTypeDefinition == null) ? 0 : typeDefinition.DeclaringTypeDefinition.TypeParameterCount;
 
@@ -1645,7 +1661,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			if (invokeMethod.ReturnTypeIsRefReadOnly && decl.ReturnType is ComposedType ct && ct.HasRefSpecifier) {
 				ct.HasReadOnlySpecifier = true;
 			}
-			decl.Name = d.Name;
+
+			decl.WithAnnotation(d.MetadataToken);
+			decl.NameToken = Identifier.Create(d.Name == "_" ? "@_" : d.Name).WithAnnotation(d.MetadataToken);
 
 			int outerTypeParameterCount = (d.DeclaringTypeDefinition == null) ? 0 : d.DeclaringTypeDefinition.TypeParameterCount;
 
@@ -1672,6 +1690,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		FieldDeclaration ConvertField(IField field)
 		{
 			FieldDeclaration decl = new FieldDeclaration();
+			decl.WithAnnotation(field.MetadataToken);
 			if (ShowModifiers) {
 				Modifiers m = GetMemberModifiers(field);
 				if (field.IsConst) {
@@ -1720,6 +1739,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			if (accessor == null)
 				return Accessor.Null;
 			Accessor decl = new Accessor();
+			decl.WithAnnotation(accessor.MetadataToken);
 			if (ShowAttributes) {
 				decl.Attributes.AddRange(ConvertAttributes(accessor.GetAttributes()));
 				decl.Attributes.AddRange(ConvertAttributes(accessor.GetReturnTypeAttributes(), "return"));
@@ -1773,7 +1793,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			if (property.ReturnTypeIsRefReadOnly && decl.ReturnType is ComposedType ct && ct.HasRefSpecifier) {
 				ct.HasReadOnlySpecifier = true;
 			}
-			decl.NameToken = Identifier.Create(property.Name).WithAnnotation(property.MetadataToken as PropertyDef);
+
+			decl.WithAnnotation(property.MetadataToken);
+			decl.NameToken = Identifier.Create(property.Name).WithAnnotation(property.MetadataToken);
+
 			decl.Getter = ConvertAccessor(property.Getter, dnlib.DotNet.MethodSemanticsAttributes.Getter, property.Accessibility, false);
 			decl.Setter = ConvertAccessor(property.Setter, dnlib.DotNet.MethodSemanticsAttributes.Setter, property.Accessibility, true);
 			decl.PrivateImplementationType = GetExplicitInterfaceType (property);
@@ -1813,6 +1836,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			foreach (IParameter p in indexer.Parameters) {
 				decl.Parameters.Add(ConvertParameter(p));
 			}
+
+			decl.WithAnnotation(indexer.MetadataToken);
+
 			decl.Getter = ConvertAccessor(indexer.Getter, dnlib.DotNet.MethodSemanticsAttributes.Getter, indexer.Accessibility, false);
 			decl.Setter = ConvertAccessor(indexer.Setter, dnlib.DotNet.MethodSemanticsAttributes.Setter, indexer.Accessibility, true);
 			decl.PrivateImplementationType = GetExplicitInterfaceType (indexer);
@@ -1824,6 +1850,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			if (this.UseCustomEvents) {
 				CustomEventDeclaration decl = new CustomEventDeclaration();
+				decl.WithAnnotation(ev.MetadataToken);
 				decl.Modifiers = GetMemberModifiers(ev);
 				if (ShowAttributes) {
 					decl.Attributes.AddRange(ConvertAttributes(ev.GetAttributes()));
@@ -1832,7 +1859,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					decl.AddAnnotation(new MemberResolveResult(null, ev));
 				}
 				decl.ReturnType = ConvertType(ev.ReturnType);
-				decl.NameToken = Identifier.Create(ev.Name).WithAnnotation(ev.MetadataToken as EventDef);
+				decl.NameToken = Identifier.Create(ev.Name).WithAnnotation(ev.MetadataToken);
 				decl.AddAccessor    = ConvertAccessor(ev.AddAccessor, dnlib.DotNet.MethodSemanticsAttributes.AddOn, ev.Accessibility, true);
 				decl.RemoveAccessor = ConvertAccessor(ev.RemoveAccessor, dnlib.DotNet.MethodSemanticsAttributes.RemoveOn, ev.Accessibility, true);
 				decl.PrivateImplementationType = GetExplicitInterfaceType (ev);
@@ -1840,6 +1867,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return decl;
 			} else {
 				EventDeclaration decl = new EventDeclaration();
+				decl.WithAnnotation(ev.MetadataToken);
 				decl.Modifiers = GetMemberModifiers(ev);
 				if (ShowAttributes) {
 					decl.Attributes.AddRange(ConvertAttributes(ev.GetAttributes()));
@@ -1862,15 +1890,15 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				decl.Attributes.AddRange(ConvertAttributes(method.GetReturnTypeAttributes(), "return"));
 			}
 			if (AddResolveResultAnnotations) {
-				if (method.MetadataToken is not null)
-					decl.AddAnnotation(method.MetadataToken);
 				decl.AddAnnotation(new MemberResolveResult(null, method));
 			}
 			decl.ReturnType = ConvertType(method.ReturnType);
 			if (method.ReturnTypeIsRefReadOnly && decl.ReturnType is ComposedType ct && ct.HasRefSpecifier) {
 				ct.HasReadOnlySpecifier = true;
 			}
-			decl.NameToken = Identifier.Create(method.Name).WithAnnotation(method.MetadataToken as MethodDef);
+
+			decl.WithAnnotation(method.MetadataToken);
+			decl.NameToken = Identifier.Create(method.Name).WithAnnotation(method.MetadataToken);
 
 			if (this.ShowTypeParameters) {
 				foreach (ITypeParameter tp in method.TypeParameters) {
@@ -1903,6 +1931,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return ConvertMethod(op);
 
 			OperatorDeclaration decl = new OperatorDeclaration();
+			decl.WithAnnotation(op.MetadataToken);
 			decl.Modifiers = GetMemberModifiers(op);
 			decl.OperatorType = opType.Value;
 			decl.ReturnType = ConvertType(op.ReturnType);
@@ -1926,11 +1955,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		ConstructorDeclaration ConvertConstructor(IMethod ctor)
 		{
 			ConstructorDeclaration decl = new ConstructorDeclaration();
+			decl.WithAnnotation(ctor);
 			decl.Modifiers = GetMemberModifiers(ctor);
 			if (ShowAttributes)
 				decl.Attributes.AddRange(ConvertAttributes(ctor.GetAttributes()));
 			if (ctor.DeclaringTypeDefinition != null) {
-				decl.NameToken = Identifier.Create(ctor.DeclaringTypeDefinition.Name).WithAnnotation(ctor.DeclaringTypeDefinition.MetadataToken as TypeDef);
+				decl.NameToken = Identifier.Create(ctor.DeclaringTypeDefinition.Name).WithAnnotation(ctor.DeclaringTypeDefinition.MetadataToken);
 			}
 			foreach (IParameter p in ctor.Parameters) {
 				decl.Parameters.Add(ConvertParameter(p));
@@ -1945,10 +1975,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		DestructorDeclaration ConvertDestructor(IMethod dtor)
 		{
 			DestructorDeclaration decl = new DestructorDeclaration();
+			decl.WithAnnotation(dtor);
 			if (ShowAttributes)
 				decl.Attributes.AddRange(ConvertAttributes(dtor.GetAttributes()));
-			if (dtor.DeclaringTypeDefinition != null)
-				decl.Name = dtor.DeclaringTypeDefinition.Name;
+			if (dtor.DeclaringTypeDefinition != null) {
+				decl.NameToken = Identifier.Create(dtor.DeclaringTypeDefinition.Name).WithAnnotation(dtor.DeclaringTypeDefinition.MetadataToken);
+			}
 			if (AddResolveResultAnnotations) {
 				decl.AddAnnotation(new MemberResolveResult(null, dtor));
 			}
@@ -2038,8 +2070,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		internal TypeParameterDeclaration ConvertTypeParameter(ITypeParameter tp)
 		{
 			TypeParameterDeclaration decl = new TypeParameterDeclaration();
+			decl.WithAnnotation(tp.MDGenericParam);
 			decl.Variance = tp.Variance;
-			decl.Name = tp.Name;
+			decl.NameToken = Identifier.Create(tp.Name).WithAnnotation(tp.MDGenericParam);
 			if (ShowAttributes)
 				decl.Attributes.AddRange(ConvertAttributes(tp.GetAttributes()));
 			return decl;
@@ -2052,6 +2085,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 			Constraint c = new Constraint();
 			c.TypeParameter = MakeSimpleType(tp.Name);
+			c.TypeParameter.WithAnnotation(tp.MDGenericParam);
+			c.TypeParameter.IdentifierToken.WithAnnotation(tp.MDGenericParam);
 			if (tp.HasReferenceTypeConstraint) {
 				if (tp.NullabilityConstraint == Nullability.Nullable) {
 					c.BaseTypes.Add(new PrimitiveType("class").MakeNullableType());

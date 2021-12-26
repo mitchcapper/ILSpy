@@ -186,7 +186,6 @@ namespace ICSharpCode.Decompiler.CSharp
 				new CombineQueryExpressions(),
 				new NormalizeBlockStatements(),
 				new FlattenSwitchBlocks(),
-				new FixNameCollisions(),
 			};
 		}
 

@@ -112,7 +112,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (!context.Settings.YieldReturn)
 				return; // abort if enumerator decompilation is disabled
 			this.context = context;
-			this.currentType = function.CecilMethod.DeclaringType;
+			this.currentType = function.DnlibMethod.DeclaringType;
 			this.enumeratorType = null;
 			this.enumeratorCtor = null;
 			this.stateField = null;

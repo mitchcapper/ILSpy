@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using dnlib.DotNet;
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.TypeSystem.Implementation
@@ -274,6 +275,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					return typeConstraints;
 				}
 			}
+
+			public override GenericParam MDGenericParam => null;
 		}
 	}
 }

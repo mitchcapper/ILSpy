@@ -196,7 +196,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			Expression expr;
 			if (variable.Kind == VariableKind.Parameter && variable.Index < 0)
-				expr = new ThisReferenceExpression().WithAnnotation(currentFunction.CecilMethod.DeclaringType);
+				expr = new ThisReferenceExpression().WithAnnotation(currentFunction.DnlibMethod.DeclaringType);
 			else
 				expr = new IdentifierExpression(variable.Name);
 			if (variable.Type.Kind == TypeKind.ByReference) {
@@ -605,28 +605,39 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		protected internal override TranslatedExpression VisitLdMemberToken(LdMemberToken inst, TranslationContext context)
 		{
-			var member = inst.Member;
-			if (member is IField field) {
-				var load = IdentifierExpression.Create("fieldof", BoxedTextColor.Keyword);
+			string loadName;
+			string handleName;
+			Expression referencedEntity;
 
-				var type = ConvertType(field.DeclaringType);
-				var typeRef = new TypeReferenceExpression(type);
-
-				Identifier id = Identifier.Create(field.Name);
-				if (field.MetadataToken != null)
-					id.AddAnnotation(field.MetadataToken);
-				var memberRef = new MemberReferenceExpression { Target = typeRef, MemberNameToken = id }.WithAnnotation(field.MetadataToken);
-
-				var invocation = new InvocationExpression(load, memberRef).WithAnnotation(new LdTokenAnnotation());
-
-				id = Identifier.Create("FieldHandle");
-				id.AddAnnotation(BoxedTextColor.InstanceProperty);
-
-				return new MemberReferenceExpression { Target = invocation, MemberNameToken = id }.WithILInstruction(inst)
-					.WithRR(new ResolveResult(compilation.FindType(new TopLevelTypeName("System", "RuntimeFieldHandle"))));
-			}
-			else
+			if (inst.Member is IField fr) {
+				loadName = "fieldof";
+				handleName = "FieldHandle";
+				referencedEntity = new MemberReferenceExpression {
+					Target = new TypeReferenceExpression(ConvertType(fr.DeclaringType)),
+					MemberNameToken = Identifier.Create(fr.Name).WithAnnotation(fr.MetadataToken)
+				}.WithAnnotation(fr.MetadataToken);
+			} else if (inst.Member is IMethod mr) {
+				loadName = "methodof";
+				handleName = "MethodHandle";
+				var inco = new InvocationExpression {
+					Target = new MemberReferenceExpression {
+						Target = new TypeReferenceExpression(ConvertType(mr.DeclaringType)),
+						MemberNameToken = Identifier.Create(mr.Name).WithAnnotation(mr.MetadataToken)
+					}
+				};
+				inco.Arguments.AddRange(mr.Parameters.Select(p => new TypeReferenceExpression(ConvertType(p.Type))));
+				inco.WithAnnotation(mr.MetadataToken);
+				referencedEntity = inco;
+			} else {
 				return base.VisitLdMemberToken(inst, context);
+			}
+
+			return new MemberReferenceExpression {
+					Target = new InvocationExpression(IdentifierExpression.Create(loadName, BoxedTextColor.Keyword),
+						referencedEntity).WithAnnotation(new LdTokenAnnotation()),
+					MemberNameToken = Identifier.Create(handleName).WithAnnotation(BoxedTextColor.InstanceProperty)
+				}.WithILInstruction(inst)
+				 .WithRR(new ResolveResult(compilation.FindType(new TopLevelTypeName("System", $"Runtime{handleName}"))));
 		}
 
 		protected internal override TranslatedExpression VisitBitNot(BitNot inst, TranslationContext context)

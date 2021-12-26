@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using dnlib.DotNet;
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.TypeSystem
@@ -103,6 +104,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		Nullability NullabilityConstraint { get; }
 
 		IReadOnlyList<TypeConstraint> TypeConstraints { get; }
+
+		GenericParam MDGenericParam { get; }
 	}
 
 	public readonly struct TypeConstraint

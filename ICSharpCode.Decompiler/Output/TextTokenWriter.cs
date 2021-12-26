@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using dnlib.DotNet;
 using dnSpy.Contracts.Decompiler;
 using dnSpy.Contracts.Text;
 using ICSharpCode.Decompiler.CSharp;
@@ -27,8 +28,8 @@ using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Semantics;
-using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
+using IMethod = ICSharpCode.Decompiler.TypeSystem.IMethod;
 using PrimitiveType = ICSharpCode.Decompiler.CSharp.Syntax.PrimitiveType;
 
 namespace ICSharpCode.Decompiler
@@ -59,22 +60,16 @@ namespace ICSharpCode.Decompiler
 				escapedName = "@" + escapedName;
 			}
 
-			var definition = GetCurrentDefinition();
+			var definition = GetCurrentDefinition(identifier);
 			if (definition != null) {
-				dnlib.DotNet.IMDTokenProvider cecil = SymbolToCecil(definition);
-				if (cecil != null) {
-					output.Write(escapedName, cecil, DecompilerReferenceFlags.Definition, data);
-					return;
-				}
+				output.Write(escapedName, definition, DecompilerReferenceFlags.Definition, data);
+				return;
 			}
 
 			var member = GetCurrentMemberReference();
 			if (member != null) {
-				dnlib.DotNet.IMDTokenProvider cecil = SymbolToCecil(member);
-				if (cecil != null) {
-					output.Write(escapedName, cecil, DecompilerReferenceFlags.None, data);
-					return;
-				}
+				output.Write(escapedName, member, DecompilerReferenceFlags.None, data);
+				return;
 			}
 
 			object memberRef = identifier.Annotation<NamespaceReference>();
@@ -100,45 +95,40 @@ namespace ICSharpCode.Decompiler
 			output.Write(escapedName, data);
 		}
 
-		dnlib.DotNet.IMDTokenProvider SymbolToCecil(ISymbol symbol)
-		{
-			if (symbol is IType type) {
-				return type.GetDefinition().MetadataToken;
-			}
-			if (symbol is IMember member) {
-				return member.MetadataToken;
-			}
-			return null;
-		}
-
-		ISymbol GetCurrentMemberReference()
+		IMemberRef GetCurrentMemberReference()
 		{
 			AstNode node = nodeStack.Peek();
-			var symbol = node.GetSymbol();
-			if (symbol == null && node.Role == Roles.TargetExpression && node.Parent is InvocationExpression) {
-				symbol = node.Parent.GetSymbol();
+			IMemberRef memberRef = node.Annotation<IMemberRef>();
+			if (node is IndexerDeclaration)
+				memberRef = null;
+			if ((node is SimpleType || node is MemberType) && node.Parent is ObjectCreateExpression) {
+				var td = (memberRef as dnlib.DotNet.IType).Resolve();
+				if (td == null || !td.IsDelegate)
+					memberRef = node.Parent.Annotation<IMemberRef>() ?? memberRef;
 			}
-			if (symbol != null && node.Role == Roles.Type && node.Parent is ObjectCreateExpression) {
-				symbol = node.Parent.GetSymbol();
+			if (memberRef == null && node.Role == Roles.TargetExpression && (node.Parent is InvocationExpression || node.Parent is ObjectCreateExpression)) {
+				memberRef = node.Parent.Annotation<IMemberRef>();
 			}
-
-			if (node is IdentifierExpression && node.Role == Roles.TargetExpression && node.Parent is InvocationExpression && symbol is IMember member) {
-				var declaringType = member.DeclaringType;
-				if (declaringType != null && declaringType.Kind == TypeKind.Delegate)
+			if (node is IdentifierExpression && node.Role == Roles.TargetExpression && node.Parent is InvocationExpression && memberRef != null) {
+				var declaringType = memberRef.DeclaringType.Resolve();
+				if (declaringType != null && declaringType.IsDelegate)
 					return null;
 			}
-			return FilterMember(symbol);
+			return FilterMemberReference(memberRef);
 		}
 
-		ISymbol FilterMember(ISymbol symbol)
+		IMemberRef FilterMemberReference(IMemberRef memberRef)
 		{
-			if (symbol == null)
+			if (memberRef == null)
 				return null;
 
-			if (symbol is LocalFunctionMethod)
-				return null;
+			//context.Settings.AutomaticEvents &&
+			if ( memberRef is FieldDef) {
+				var field = (FieldDef)memberRef;
+				return field.DeclaringType.FindEvent(field.Name) ?? memberRef;
+			}
 
-			return symbol;
+			return memberRef;
 		}
 
 		object GetCurrentLocalReference()
@@ -208,16 +198,25 @@ namespace ICSharpCode.Decompiler
 			return null;
 		}
 
-		ISymbol GetCurrentDefinition()
+		object GetCurrentDefinition(Identifier identifier)
 		{
-			if (nodeStack == null || nodeStack.Count == 0)
-				return null;
+			if (nodeStack != null && nodeStack.Count != 0) {
+				var data = GetDefinition(nodeStack.Peek());
+				if (data != null)
+					return data;
+			}
+			return GetDefinition(identifier);
+		}
 
-			var node = nodeStack.Peek();
-			if (node is Identifier)
+		object GetDefinition(AstNode node)
+		{
+			if (node is Identifier) {
 				node = node.Parent;
-			if (IsDefinition(ref node))
-				return node.GetSymbol();
+				if (node is VariableInitializer)
+					node = node.Parent;		// get FieldDeclaration / EventDeclaration
+			}
+			if (IsDefinition(node))
+				return node.Annotation<IMemberRef>();
 
 			return null;
 		}
@@ -229,28 +228,21 @@ namespace ICSharpCode.Decompiler
 
 		void WriteKeyword(string keyword)
 		{
+			IMemberRef memberRef = GetCurrentMemberReference();
 			var node = nodeStack.Peek();
-
-			var memberRef = GetCurrentMemberReference();
 			if (node is IndexerDeclaration)
-				memberRef = node.GetSymbol();
-			if (keyword != "async" && memberRef != null && memberRef is IMember member && member.MetadataToken != null && (node is PrimitiveType || node is ConstructorInitializer ||
-				node is BaseReferenceExpression || node is ThisReferenceExpression ||
-				node is ObjectCreateExpression ||
-				node is AnonymousMethodExpression)) {
-				output.Write(keyword, member.MetadataToken, keyword == "new" ? DecompilerReferenceFlags.Hidden : DecompilerReferenceFlags.None, BoxedTextColor.Keyword);
-			}
-			else if (memberRef != null && memberRef is IMember member2 && member2.MetadataToken != null && node is IndexerDeclaration && keyword == "this") {
-				output.Write(keyword, member2.MetadataToken, DecompilerReferenceFlags.Definition, BoxedTextColor.Keyword);
-			}
-			else {
+				memberRef = node.Annotation<PropertyDef>();
+			if (keyword != "async" && memberRef != null && (node is PrimitiveType || node is ConstructorInitializer || node is BaseReferenceExpression || node is ThisReferenceExpression || node is ObjectCreateExpression || node is AnonymousMethodExpression))
+				output.Write(keyword, memberRef, keyword == "new" ? DecompilerReferenceFlags.Hidden : DecompilerReferenceFlags.None, BoxedTextColor.Keyword);
+			else if (memberRef != null && node is IndexerDeclaration && keyword == "this")
+				output.Write(keyword, memberRef, DecompilerReferenceFlags.Definition, BoxedTextColor.Keyword);
+			else
 				output.Write(keyword, BoxedTextColor.Keyword);
-			}
 		}
 
 		public override void WriteToken(Role role, string token, object data)
 		{
-			var memberRef = GetCurrentMemberReference();
+			IMemberRef memberRef = GetCurrentMemberReference();
 			var node = nodeStack.Peek();
 
 			bool addRef = memberRef != null &&
@@ -260,14 +252,14 @@ namespace ICSharpCode.Decompiler
 						   node is IndexerExpression);
 
 			// Add a ref to the method if it's a delegate call
-			if (!addRef && node is InvocationExpression && memberRef is IMember member && member.MetadataToken is dnlib.DotNet.IMethod) {
-				var md = (member.MetadataToken as dnlib.DotNet.IMethod).Resolve();
+			if (!addRef && node is InvocationExpression && memberRef is dnlib.DotNet.IMethod) {
+				var md = (memberRef as dnlib.DotNet.IMethod).Resolve();
 				if (md != null && md.DeclaringType != null && md.DeclaringType.IsDelegate)
 					addRef = true;
 			}
 
-			if (addRef && memberRef is IMember member2 && member2.MetadataToken != null)
-				output.Write(token, member2.MetadataToken, DecompilerReferenceFlags.None, data);
+			if (addRef)
+				output.Write(token, memberRef, DecompilerReferenceFlags.None, data);
 			else
 				output.Write(token, data);
 		}
@@ -456,19 +448,12 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
-		public static bool IsDefinition(ref AstNode node)
+		private static bool IsDefinition(AstNode node)
 		{
-			if (node is EntityDeclaration && !(node.Parent is LocalFunctionDeclarationStatement))
-				return true;
-			if (node is VariableInitializer && node.Parent is FieldDeclaration) {
-				node = node.Parent;
-				return true;
-			}
-			if (node is FixedVariableInitializer && node.Parent is FixedFieldDeclaration) {
-				node = node.Parent;
-				return true;
-			}
-			return false;
+			return node is EntityDeclaration
+				   || (node is VariableInitializer && node.Parent is FieldDeclaration)
+				   || node is FixedVariableInitializer
+				   || node is TypeParameterDeclaration;
 		}
 
 		class DebugState

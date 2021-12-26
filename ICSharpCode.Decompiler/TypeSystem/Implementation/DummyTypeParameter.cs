@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using dnlib.DotNet;
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.TypeSystem.Implementation
@@ -172,6 +173,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		Nullability ITypeParameter.NullabilityConstraint => Nullability.Oblivious;
 
 		IReadOnlyList<TypeConstraint> ITypeParameter.TypeConstraints => EmptyList<TypeConstraint>.Instance;
+
+		GenericParam ITypeParameter.MDGenericParam => null;
 
 		public override IType ChangeNullability(Nullability nullability)
 		{

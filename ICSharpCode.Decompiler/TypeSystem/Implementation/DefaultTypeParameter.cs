@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using dnlib.DotNet;
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.TypeSystem.Implementation
@@ -56,6 +57,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public override Nullability NullabilityConstraint => nullabilityConstraint;
 
 		public override IReadOnlyList<TypeConstraint> TypeConstraints { get; }
+
+		public override GenericParam MDGenericParam => null;
 
 		IReadOnlyList<TypeConstraint> MakeConstraints(IReadOnlyList<IType> constraints)
 		{

@@ -45,7 +45,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// Gets the generic context of this function.
 		/// </summary>
 		public readonly GenericContext GenericContext;
-		public readonly dnlib.DotNet.MethodDef CecilMethod;
+		public readonly dnlib.DotNet.MethodDef DnlibMethod;
 
 		/// <summary>
 		/// Gets the name of this function, usually this returns the name from metadata.
@@ -192,13 +192,13 @@ namespace ICSharpCode.Decompiler.IL
 		/// <remarks>
 		/// Use <see cref="ILReader"/> to create ILAst.
 		/// </remarks>
-		public ILFunction(IMethod method, dnlib.DotNet.MethodDef cecilMethod, GenericContext genericContext, ILInstruction body, ILFunctionKind kind = ILFunctionKind.TopLevelFunction) : base(OpCode.ILFunction)
+		public ILFunction(IMethod method, dnlib.DotNet.MethodDef dnlibMethod, GenericContext genericContext, ILInstruction body, ILFunctionKind kind = ILFunctionKind.TopLevelFunction) : base(OpCode.ILFunction)
 		{
 			this.Body = body;
 			this.Method = method;
-			this.CecilMethod = cecilMethod;
+			this.DnlibMethod = dnlibMethod;
 			this.Name = method.Name;
-			this.CodeSize = cecilMethod?.Body?.GetCodeSize() ?? 0;
+			this.CodeSize = dnlibMethod?.Body?.GetCodeSize() ?? 0;
 			this.GenericContext = genericContext;
 			this.ReturnType = method.ReturnType;
 			this.Parameters = method.Parameters;
@@ -211,7 +211,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			this.Body = body;
 			this.Method = method;
-			this.CecilMethod = (MethodDef)method.MetadataToken;
+			this.DnlibMethod = (MethodDef)method.MetadataToken;
 			this.Name = method.Name;
 			this.CodeSize = codeSize;
 			this.GenericContext = genericContext;

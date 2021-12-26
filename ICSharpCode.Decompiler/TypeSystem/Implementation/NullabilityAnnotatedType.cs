@@ -109,6 +109,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		bool ITypeParameter.HasUnmanagedConstraint => baseType.HasUnmanagedConstraint;
 		Nullability ITypeParameter.NullabilityConstraint => baseType.NullabilityConstraint;
 		IReadOnlyList<TypeConstraint> ITypeParameter.TypeConstraints => baseType.TypeConstraints;
+		dnlib.DotNet.GenericParam ITypeParameter.MDGenericParam => baseType.MDGenericParam;
 		SymbolKind ISymbol.SymbolKind => SymbolKind.TypeParameter;
 		IEnumerable<IAttribute> ITypeParameter.GetAttributes() => baseType.GetAttributes();
 	}

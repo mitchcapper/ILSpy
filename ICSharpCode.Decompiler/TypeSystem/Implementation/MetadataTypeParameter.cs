@@ -198,6 +198,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return result;
 		}
 
+		public override GenericParam MDGenericParam => handle;
+
 		public override int GetHashCode()
 		{
 			return 0x51fc5b83 ^ module.PEFile.GetHashCode() ^ handle.GetHashCode();

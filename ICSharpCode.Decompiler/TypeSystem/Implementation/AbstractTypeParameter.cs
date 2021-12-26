@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using dnlib.DotNet;
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.TypeSystem.Implementation
@@ -56,6 +57,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.name = name ?? ((this.OwnerType == SymbolKind.Method ? "!!" : "!") + index.ToString(CultureInfo.InvariantCulture));
 			this.variance = variance;
 		}
+
+		public abstract GenericParam MDGenericParam { get; }
 
 		SymbolKind ISymbol.SymbolKind {
 			get { return SymbolKind.TypeParameter; }
