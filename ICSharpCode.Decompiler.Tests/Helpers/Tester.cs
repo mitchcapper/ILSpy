@@ -59,8 +59,9 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		GeneratePdb = 0x100,
 		Preview = 0x200,
 		UseRoslyn2_10_0 = 0x400,
-		UseRoslynLatest = 0x800,
-		UseRoslynMask = UseRoslyn1_3_2 | UseRoslyn2_10_0 | UseRoslynLatest
+		UseRoslyn3_11_0 = 0x800,
+		UseRoslynLatest = 0x1000,
+		UseRoslynMask = UseRoslyn1_3_2 | UseRoslyn2_10_0 | UseRoslyn3_11_0 | UseRoslynLatest
 	}
 
 	[Flags]
@@ -211,7 +212,9 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 		static readonly RoslynToolset roslynToolset = new RoslynToolset();
 
-		static readonly string coreRefAsmPath = new DotNetCorePathFinder(TargetFrameworkIdentifier.NETCoreApp, new Version(3, 1)).GetReferenceAssemblyPath(".NETCoreApp, Version = v3.1");
+		static readonly string coreRefAsmPath = new DotNetCorePathFinder(TargetFrameworkIdentifier.NET,
+				new Version(5, 0), "Microsoft.NETCore.App")
+			.GetReferenceAssemblyPath(".NETCoreApp, Version = v5.0");
 
 		static readonly string refAsmPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
 			@"Reference Assemblies\Microsoft\Framework\.NETFramework\v4.7.2");
@@ -247,7 +250,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 		const string targetFrameworkAttributeSnippet = @"
 
-[assembly: System.Runtime.Versioning.TargetFramework("".NETCoreApp, Version = v3.0"", FrameworkDisplayName = """")]
+[assembly: System.Runtime.Versioning.TargetFramework("".NETCoreApp, Version = v5.0"", FrameworkDisplayName = """")]
 
 ";
 
@@ -293,23 +296,31 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				preprocessorSymbols.Add("VB11");
 				preprocessorSymbols.Add("VB14");
 				if (flags.HasFlag(CompilerOptions.UseRoslyn2_10_0)
+					|| flags.HasFlag(CompilerOptions.UseRoslyn3_11_0)
 					|| flags.HasFlag(CompilerOptions.UseRoslynLatest))
 				{
 					preprocessorSymbols.Add("ROSLYN2");
 					preprocessorSymbols.Add("CS70");
 					preprocessorSymbols.Add("CS71");
 					preprocessorSymbols.Add("CS72");
+					preprocessorSymbols.Add("CS73");
 					preprocessorSymbols.Add("VB15");
+				}
+				if (flags.HasFlag(CompilerOptions.UseRoslyn3_11_0)
+					|| flags.HasFlag(CompilerOptions.UseRoslynLatest))
+				{
+					preprocessorSymbols.Add("ROSLYN3");
+					preprocessorSymbols.Add("CS80");
+					preprocessorSymbols.Add("CS90");
+					preprocessorSymbols.Add("VB16");
 				}
 				if (flags.HasFlag(CompilerOptions.UseRoslynLatest))
 				{
-					preprocessorSymbols.Add("ROSLYN3");
-					preprocessorSymbols.Add("CS73");
-					preprocessorSymbols.Add("CS80");
-					preprocessorSymbols.Add("VB16");
+					preprocessorSymbols.Add("ROSLYN4");
+					preprocessorSymbols.Add("CS100");
 					if (flags.HasFlag(CompilerOptions.Preview))
 					{
-						preprocessorSymbols.Add("CS90");
+
 					}
 				}
 			} else if (flags.HasFlag(CompilerOptions.UseMcs)) {
@@ -344,6 +355,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 					0 => ("legacy", "5"),
 					CompilerOptions.UseRoslyn1_3_2 => ("1.3.2", "6"),
 					CompilerOptions.UseRoslyn2_10_0 => ("2.10.0", "latest"),
+					CompilerOptions.UseRoslyn3_11_0 => ("3.11.0", "latest"),
 					_ => (RoslynLatestVersion, flags.HasFlag(CompilerOptions.Preview) ? "preview" : "latest")
 				};
 
@@ -501,7 +513,8 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				{
 					CompilerOptions.UseRoslyn1_3_2 => CSharp.LanguageVersion.CSharp6,
 					CompilerOptions.UseRoslyn2_10_0 => CSharp.LanguageVersion.CSharp7_3,
-					_ => cscOptions.HasFlag(CompilerOptions.Preview) ? CSharp.LanguageVersion.Latest : CSharp.LanguageVersion.CSharp8_0,
+					CompilerOptions.UseRoslyn3_11_0 => CSharp.LanguageVersion.CSharp9_0,
+					_ => cscOptions.HasFlag(CompilerOptions.Preview) ? CSharp.LanguageVersion.Latest : CSharp.LanguageVersion.CSharp9_0,
 				};
 				return new DecompilerSettings(langVersion);
 			}
@@ -586,6 +599,8 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				suffix += ".roslyn1";
 			if ((cscOptions & CompilerOptions.UseRoslyn2_10_0) != 0)
 				suffix += ".roslyn2";
+			if ((cscOptions & CompilerOptions.UseRoslyn3_11_0) != 0)
+				suffix += ".roslyn3";
 			if ((cscOptions & CompilerOptions.UseRoslynLatest) != 0)
 				suffix += ".roslyn";
 			if ((cscOptions & CompilerOptions.UseMcs) != 0)

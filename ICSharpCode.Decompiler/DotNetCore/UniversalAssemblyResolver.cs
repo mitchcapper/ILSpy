@@ -14,7 +14,8 @@ namespace ICSharpCode.Decompiler
 		NETFramework,
 		NETCoreApp,
 		NETStandard,
-		Silverlight
+		Silverlight,
+		NET
 	}
 
 	enum DecompilerRuntime
@@ -38,7 +39,7 @@ namespace ICSharpCode.Decompiler
 				decompilerRuntime = DecompilerRuntime.Mono;
 		}
 
-		DotNetCorePathFinder dotNetCorePathFinder;
+		readonly Lazy<DotNetCorePathFinder> dotNetCorePathFinder;
 		readonly bool throwOnError;
 		readonly string mainAssemblyFileName;
 		readonly string baseDirectory;
@@ -50,13 +51,19 @@ namespace ICSharpCode.Decompiler
 		public void AddSearchDirectory(string directory)
 		{
 			directories.Add(directory);
-			dotNetCorePathFinder?.AddSearchDirectory(directory);
+			if (dotNetCorePathFinder.IsValueCreated)
+			{
+				dotNetCorePathFinder.Value.AddSearchDirectory(directory);
+			}
 		}
 
 		public void RemoveSearchDirectory(string directory)
 		{
 			directories.Remove(directory);
-			dotNetCorePathFinder?.RemoveSearchDirectory(directory);
+			if (dotNetCorePathFinder.IsValueCreated)
+			{
+				dotNetCorePathFinder.Value.RemoveSearchDirectory(directory);
+			}
 		}
 
 		public string[] GetSearchDirectories()
@@ -64,14 +71,17 @@ namespace ICSharpCode.Decompiler
 			return directories.ToArray();
 		}
 
-		string targetFramework;
-		TargetFrameworkIdentifier targetFrameworkIdentifier;
-		Version targetFrameworkVersion;
+		readonly string targetFramework;
+		readonly string runtimePack;
+		readonly TargetFrameworkIdentifier targetFrameworkIdentifier;
+		readonly Version targetFrameworkVersion;
 
-		protected UniversalAssemblyResolver(string mainAssemblyFileName, bool throwOnError, string targetFramework)
+		protected UniversalAssemblyResolver(string mainAssemblyFileName, bool throwOnError, string targetFramework, string runtimePack = null)
 		{
 			this.targetFramework = targetFramework ?? string.Empty;
+			this.runtimePack = runtimePack ?? "Microsoft.NETCore.App";
 			(targetFrameworkIdentifier, targetFrameworkVersion) = ParseTargetFramework(this.targetFramework);
+			this.dotNetCorePathFinder = new Lazy<DotNetCorePathFinder>(InitDotNetCorePathFinder);
 			this.mainAssemblyFileName = mainAssemblyFileName;
 			this.baseDirectory = Path.GetDirectoryName(mainAssemblyFileName);
 			this.throwOnError = throwOnError;
@@ -130,6 +140,9 @@ namespace ICSharpCode.Decompiler
 						}
 						if (!Version.TryParse(versionString, out version))
 							version = null;
+						// .NET 5 or greater still use ".NETCOREAPP" as TargetFrameworkAttribute value...
+						if (version?.Major >= 5 && identifier == TargetFrameworkIdentifier.NETCoreApp)
+							identifier = TargetFrameworkIdentifier.NET;
 						break;
 				}
 			}
@@ -158,18 +171,14 @@ namespace ICSharpCode.Decompiler
 			}
 
 			string file = null;
-			switch (targetFrameworkIdentifier) {
+			switch (targetFrameworkIdentifier)
+			{
+				case TargetFrameworkIdentifier.NET:
 				case TargetFrameworkIdentifier.NETCoreApp:
 				case TargetFrameworkIdentifier.NETStandard:
 					if (IsZeroOrAllOnes(targetFrameworkVersion))
 						goto default;
-					if (dotNetCorePathFinder == null) {
-						dotNetCorePathFinder = new DotNetCorePathFinder(mainAssemblyFileName, targetFramework, targetFrameworkIdentifier, targetFrameworkVersion);
-						foreach (var directory in directories) {
-							dotNetCorePathFinder.AddSearchDirectory(directory);
-						}
-					}
-					file = dotNetCorePathFinder.TryResolveDotNetCore(name);
+					file = dotNetCorePathFinder.Value.TryResolveDotNetCore(name);
 					if (file != null)
 						return file;
 					goto default;
@@ -183,6 +192,20 @@ namespace ICSharpCode.Decompiler
 				default:
 					return ResolveInternal(name);
 			}
+		}
+
+		DotNetCorePathFinder InitDotNetCorePathFinder()
+		{
+			DotNetCorePathFinder dotNetCorePathFinder;
+			if (mainAssemblyFileName == null)
+				dotNetCorePathFinder = new DotNetCorePathFinder(targetFrameworkIdentifier, targetFrameworkVersion, runtimePack);
+			else
+				dotNetCorePathFinder = new DotNetCorePathFinder(mainAssemblyFileName, targetFramework, runtimePack, targetFrameworkIdentifier, targetFrameworkVersion);
+			foreach (var directory in directories)
+			{
+				dotNetCorePathFinder.AddSearchDirectory(directory);
+			}
+			return dotNetCorePathFinder;
 		}
 
 		string FindWindowsMetadataFile(IAssembly name)

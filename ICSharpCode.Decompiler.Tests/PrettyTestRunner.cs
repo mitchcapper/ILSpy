@@ -59,6 +59,8 @@ namespace ICSharpCode.Decompiler.Tests
 			CompilerOptions.Optimize | CompilerOptions.UseRoslyn1_3_2,
 			CompilerOptions.UseRoslyn2_10_0,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslyn2_10_0,
+			CompilerOptions.UseRoslyn3_11_0,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslyn3_11_0,
 			CompilerOptions.UseRoslynLatest,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest,
 		};
@@ -67,6 +69,16 @@ namespace ICSharpCode.Decompiler.Tests
 		{
 			CompilerOptions.UseRoslyn2_10_0,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslyn2_10_0,
+			CompilerOptions.UseRoslyn3_11_0,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslyn3_11_0,
+			CompilerOptions.UseRoslynLatest,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest,
+		};
+
+		static readonly CompilerOptions[] roslyn3OrNewerOptions =
+		{
+			CompilerOptions.UseRoslyn3_11_0,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslyn3_11_0,
 			CompilerOptions.UseRoslynLatest,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest,
 		};
@@ -79,6 +91,8 @@ namespace ICSharpCode.Decompiler.Tests
 
 		static readonly CompilerOptions[] dotnetCoreOnlyOptions =
 		{
+			CompilerOptions.UseRoslyn3_11_0 | CompilerOptions.ReferenceCore,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslyn3_11_0 | CompilerOptions.ReferenceCore,
 			CompilerOptions.UseRoslynLatest | CompilerOptions.ReferenceCore,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest | CompilerOptions.ReferenceCore,
 		};
@@ -91,6 +105,8 @@ namespace ICSharpCode.Decompiler.Tests
 			CompilerOptions.Optimize | CompilerOptions.UseRoslyn1_3_2,
 			CompilerOptions.UseRoslyn2_10_0,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslyn2_10_0,
+			CompilerOptions.UseRoslyn3_11_0,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslyn3_11_0,
 			CompilerOptions.UseRoslynLatest,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest,
 		};
@@ -103,6 +119,8 @@ namespace ICSharpCode.Decompiler.Tests
 			CompilerOptions.Optimize | CompilerOptions.UseRoslyn1_3_2,
 			CompilerOptions.UseRoslyn2_10_0,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslyn2_10_0,
+			CompilerOptions.UseRoslyn3_11_0,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslyn3_11_0,
 			CompilerOptions.UseRoslynLatest,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest,
 			CompilerOptions.UseMcs,
@@ -119,6 +137,10 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void IndexRangeTest([ValueSource(nameof(dotnetCoreOnlyOptions))] CompilerOptions cscOptions)
 		{
+			if (cscOptions.HasFlag(CompilerOptions.UseRoslynLatest))
+			{
+				Assert.Ignore("See https://github.com/icsharpcode/ILSpy/issues/2540");
+			}
 			RunForLibrary(cscOptions: cscOptions);
 		}
 
@@ -426,7 +448,7 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
-		public void CS73_StackAllocInitializers([ValueSource(nameof(roslynLatestOnlyOptions))] CompilerOptions cscOptions)
+		public void CS73_StackAllocInitializers([ValueSource(nameof(roslyn3OrNewerOptions))] CompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions);
 		}

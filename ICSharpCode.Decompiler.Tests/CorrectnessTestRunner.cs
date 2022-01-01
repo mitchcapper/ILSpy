@@ -54,6 +54,8 @@ namespace ICSharpCode.Decompiler.Tests
 			CompilerOptions.Optimize | CompilerOptions.UseRoslyn1_3_2,
 			CompilerOptions.UseRoslyn2_10_0,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslyn2_10_0,
+			CompilerOptions.UseRoslyn3_11_0,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslyn3_11_0,
 			CompilerOptions.UseRoslynLatest,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest,
 		};
@@ -66,6 +68,8 @@ namespace ICSharpCode.Decompiler.Tests
 			CompilerOptions.Optimize | CompilerOptions.UseRoslyn1_3_2,
 			CompilerOptions.UseRoslyn2_10_0,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslyn2_10_0,
+			CompilerOptions.UseRoslyn3_11_0,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslyn3_11_0,
 			CompilerOptions.UseRoslynLatest,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest,
 			CompilerOptions.UseMcs,
@@ -78,6 +82,8 @@ namespace ICSharpCode.Decompiler.Tests
 			CompilerOptions.Optimize | CompilerOptions.UseRoslyn1_3_2,
 			CompilerOptions.UseRoslyn2_10_0,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslyn2_10_0,
+			CompilerOptions.UseRoslyn3_11_0,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslyn3_11_0,
 			CompilerOptions.UseRoslynLatest,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest,
 		};
@@ -86,6 +92,8 @@ namespace ICSharpCode.Decompiler.Tests
 		{
 			CompilerOptions.UseRoslyn2_10_0,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslyn2_10_0,
+			CompilerOptions.UseRoslyn3_11_0,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslyn3_11_0,
 			CompilerOptions.UseRoslynLatest,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest,
 		};

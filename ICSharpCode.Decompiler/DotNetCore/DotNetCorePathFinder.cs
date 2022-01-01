@@ -44,7 +44,15 @@ namespace ICSharpCode.Decompiler
 			{
 				var parts = fullName.Split('/');
 				this.Name = parts[0];
-				this.Version = parts[1];
+				if (parts.Length > 1)
+				{
+					this.Version = parts[1];
+				}
+				else
+				{
+					this.Version = "<UNKNOWN>";
+				}
+
 				this.Type = type;
 				this.Path = path;
 				this.RuntimeComponents = runtimeComponents ?? Empty<string>.Array;
@@ -52,7 +60,7 @@ namespace ICSharpCode.Decompiler
 		}
 
 		static readonly string[] LookupPaths = new string[] {
-			 Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".nuget", "packages")
+			Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".nuget", "packages")
 		};
 
 		static readonly string[] RuntimePacks = new[] {
@@ -67,10 +75,13 @@ namespace ICSharpCode.Decompiler
 		readonly List<string> packageBasePaths = new List<string>();
 		readonly Version targetFrameworkVersion;
 		readonly string dotnetBasePath = FindDotNetExeDirectory();
+		readonly string preferredRuntimePack;
 
-		public DotNetCorePathFinder(TargetFrameworkIdentifier targetFramework, Version targetFrameworkVersion)
+		public DotNetCorePathFinder(TargetFrameworkIdentifier targetFramework, Version targetFrameworkVersion,
+			string preferredRuntimePack)
 		{
 			this.targetFrameworkVersion = targetFrameworkVersion;
+			this.preferredRuntimePack = preferredRuntimePack;
 
 			if (targetFramework == TargetFrameworkIdentifier.NETStandard)
 			{
@@ -82,8 +93,8 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
-		public DotNetCorePathFinder(string parentAssemblyFileName, string targetFrameworkIdString, TargetFrameworkIdentifier targetFramework, Version targetFrameworkVersion, ReferenceLoadInfo loadInfo = null)
-			: this(targetFramework, targetFrameworkVersion)
+		public DotNetCorePathFinder(string parentAssemblyFileName, string targetFrameworkIdString, string preferredRuntimePack, TargetFrameworkIdentifier targetFramework, Version targetFrameworkVersion, ReferenceLoadInfo loadInfo = null)
+			: this(targetFramework, targetFrameworkVersion, preferredRuntimePack)
 		{
 			string assemblyName = Path.GetFileNameWithoutExtension(parentAssemblyFileName);
 			string basePath = Path.GetDirectoryName(parentAssemblyFileName);
@@ -139,7 +150,7 @@ namespace ICSharpCode.Decompiler
 				}
 			}
 
-			return FallbackToDotNetSharedDirectory(name);
+			return TryResolveDotNetCoreShared(name, out _);
 		}
 
 		internal string GetReferenceAssemblyPath(string targetFramework)
@@ -155,6 +166,10 @@ namespace ICSharpCode.Decompiler
 				case TargetFrameworkIdentifier.NETStandard:
 					identifier = "NETStandard.Library";
 					identifierExt = "netstandard" + version.Major + "." + version.Minor;
+					break;
+				case TargetFrameworkIdentifier.NET:
+					identifier = "Microsoft.NETCore.App";
+					identifierExt = "net" + version.Major + "." + version.Minor;
 					break;
 				default:
 					throw new NotSupportedException();
@@ -188,13 +203,25 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
-		string FallbackToDotNetSharedDirectory(IAssembly name)
+		public string TryResolveDotNetCoreShared(IAssembly name, out string runtimePack)
 		{
 			if (dotnetBasePath == null)
-				return null;
-			var basePaths = RuntimePacks.Select(pack => Path.Combine(dotnetBasePath, "shared", pack));
-			foreach (var basePath in basePaths)
 			{
+				runtimePack = null;
+				return null;
+			}
+
+			IEnumerable<string> runtimePacks = RuntimePacks;
+
+			if (preferredRuntimePack != null)
+			{
+				runtimePacks = new[] { preferredRuntimePack }.Concat(runtimePacks);
+			}
+
+			foreach (string pack in runtimePacks)
+			{
+				runtimePack = pack;
+				string basePath = Path.Combine(dotnetBasePath, "shared", pack);
 				if (!Directory.Exists(basePath))
 					continue;
 				var closestVersion = GetClosestVersionFolder(basePath, targetFrameworkVersion);
@@ -207,6 +234,7 @@ namespace ICSharpCode.Decompiler
 					return Path.Combine(basePath, closestVersion, name.Name + ".exe");
 				}
 			}
+			runtimePack = null;
 			return null;
 		}
 
@@ -261,9 +289,7 @@ namespace ICSharpCode.Decompiler
 					{
 						if ((new FileInfo(fileName).Attributes & FileAttributes.ReparsePoint) == FileAttributes.ReparsePoint)
 						{
-							var sb = new StringBuilder();
-							realpath(fileName, sb);
-							fileName = sb.ToString();
+							fileName = GetRealPath(fileName, Encoding.Default);
 							if (!File.Exists(fileName))
 								continue;
 						}
@@ -275,7 +301,33 @@ namespace ICSharpCode.Decompiler
 			return null;
 		}
 
-		[DllImport("libc")]
-		static extern void realpath(string path, StringBuilder resolvedPath);
+		static unsafe string GetRealPath(string path, Encoding encoding)
+		{
+			var bytes = encoding.GetBytes(path);
+			fixed (byte* input = bytes)
+			{
+
+				byte* output = GetRealPath(input, null);
+				if (output == null)
+				{
+					return null;
+				}
+				int len = 0;
+				for (byte* c = output; *c != 0; c++)
+				{
+					len++;
+				}
+				byte[] result = new byte[len];
+				Marshal.Copy((IntPtr)output, result, 0, result.Length);
+				Free(output);
+				return encoding.GetString(result);
+			}
+		}
+
+		[DllImport("libc", EntryPoint = "realpath")]
+		static extern unsafe byte* GetRealPath(byte* path, byte* resolvedPath);
+
+		[DllImport("libc", EntryPoint = "free")]
+		static extern unsafe void Free(void* ptr);
 	}
 }
