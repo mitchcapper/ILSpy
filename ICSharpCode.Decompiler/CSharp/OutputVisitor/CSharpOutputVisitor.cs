@@ -1359,15 +1359,27 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		{
 			StartNode(namespaceDeclaration);
 			WriteKeyword(Roles.NamespaceKeyword);
-			namespaceDeclaration.NamespaceName.AcceptVisitor (this);
-			OpenBrace(policy.NamespaceBraceStyle);
-			foreach (var member in namespaceDeclaration.Members) {
+			namespaceDeclaration.NamespaceName.AcceptVisitor(this);
+			if (namespaceDeclaration.IsFileScoped)
+			{
+				Semicolon();
+				NewLine();
+			}
+			else
+			{
+				OpenBrace(policy.NamespaceBraceStyle);
+			}
+			foreach (var member in namespaceDeclaration.Members)
+			{
 				member.AcceptVisitor(this);
 				MaybeNewLinesAfterUsings(member);
 			}
-			CloseBrace(policy.NamespaceBraceStyle);
-			OptionalSemicolon(namespaceDeclaration.LastChild);
-			NewLine();
+			if (!namespaceDeclaration.IsFileScoped)
+			{
+				CloseBrace(policy.NamespaceBraceStyle);
+				OptionalSemicolon(namespaceDeclaration.LastChild);
+				NewLine();
+			}
 			EndNode(namespaceDeclaration);
 		}
 
