@@ -18,9 +18,12 @@
 
 using System.Collections.Generic;
 using System.Linq;
+using dnlib.DotNet;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
 using ICSharpCode.Decompiler.TypeSystem;
+using IField = ICSharpCode.Decompiler.TypeSystem.IField;
+using IMethod = ICSharpCode.Decompiler.TypeSystem.IMethod;
 
 namespace ICSharpCode.Decompiler.CSharp.Transforms
 {
@@ -281,8 +284,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (staticCtor != null) {
 				bool ctorIsUnsafe = staticCtor.HasModifier(Modifiers.Unsafe);
 				IMethod ctorMethod = staticCtor.GetSymbol() as IMethod;
-				dnlib.DotNet.MethodDef ctorMethodDef = ctorMethod?.MetadataToken as dnlib.DotNet.MethodDef;
-				if (ctorMethodDef != null && ctorMethodDef.DeclaringType.IsBeforeFieldInit) {
+				if (ctorMethod?.MetadataToken is MethodDef ctorMethodDef) {
+					bool declaringTypeIsBeforeFieldInit = ctorMethodDef.DeclaringType.IsBeforeFieldInit;
 					while (true) {
 						ExpressionStatement es = staticCtor.Body.Statements.FirstOrDefault() as ExpressionStatement;
 						if (es == null)
@@ -296,19 +299,30 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						var fieldOrPropertyDecl = members.FirstOrDefault(f => f.GetSymbol() == fieldOrProperty) as EntityDeclaration;
 						if (fieldOrPropertyDecl == null)
 							break;
-						if (ctorIsUnsafe && IntroduceUnsafeModifier.IsUnsafe(assignment.Right)) {
+						if (ctorIsUnsafe && IntroduceUnsafeModifier.IsUnsafe(assignment.Right))
+						{
 							fieldOrPropertyDecl.Modifiers |= Modifiers.Unsafe;
 						}
-						if (fieldOrPropertyDecl is FieldDeclaration fd)
-							fd.Variables.Single().Initializer = assignment.Right.Detach();
-						else if (fieldOrPropertyDecl is PropertyDeclaration pd)
-							pd.Initializer = assignment.Right.Detach();
+						// Only move fields that are constants, if the declaring type is not marked beforefieldinit.
+						if (declaringTypeIsBeforeFieldInit || fieldOrProperty is IField { IsConst: true })
+						{
+							if (fieldOrPropertyDecl is FieldDeclaration fd)
+								fd.Variables.Single().Initializer = assignment.Right.Detach();
+							else if (fieldOrPropertyDecl is PropertyDeclaration pd)
+								pd.Initializer = assignment.Right.Detach();
+							else
+								break;
+							es.Remove();
+						}
 						else
+						{
 							break;
-						es.Remove();
+						}
 					}
-					if (staticCtor.Body.Statements.Count == 0)
+					if (declaringTypeIsBeforeFieldInit && staticCtor.Body.Statements.Count == 0)
+					{
 						staticCtor.Remove();
+					}
 				}
 			}
 		}
