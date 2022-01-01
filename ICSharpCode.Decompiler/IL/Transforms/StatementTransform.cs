@@ -125,8 +125,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					Debug.Assert(pos == ctx.rerunPosition);
 					ctx.rerunPosition = null;
 				}
-				foreach (var transform in children) {
-					Debug.Assert(block.HasFlag(InstructionFlags.EndPointUnreachable));
+				foreach (var transform in children)
+				{
 					transform.Run(block, pos, ctx);
 #if DEBUG
 					block.Instructions[pos].CheckInvariant(ILPhase.Normal);
@@ -148,6 +148,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					pos--;
 				}
 			}
+			// This invariant can be surprisingly expensive to check if the block has thousands
+			// of instructions and is frequently modified by transforms (invalidating the flags each time)
+			// so we'll check this only once at the end of the block.
+			Debug.Assert(block.HasFlag(InstructionFlags.EndPointUnreachable));
 		}
 	}
 }
