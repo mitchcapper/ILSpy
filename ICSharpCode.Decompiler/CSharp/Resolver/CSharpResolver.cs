@@ -1283,8 +1283,14 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			if (expression.IsCompileTimeConstant && !c.IsUserDefined) {
 				IType underlyingType = targetType.GetEnumUnderlyingType();
 				TypeCode code = ReflectionHelper.GetTypeCode(underlyingType);
-				if (code >= TypeCode.Boolean && code <= TypeCode.Decimal && expression.ConstantValue != null) {
-					try {
+				if (code >= TypeCode.Boolean && code <= TypeCode.Decimal && expression.ConstantValue != null)
+				{
+					if (expression.ConstantValue is string)
+					{
+						return new ErrorResolveResult(targetType);
+					}
+					try
+					{
 						return new ConstantResolveResult(targetType, CSharpPrimitiveCast(code, expression.ConstantValue));
 					} catch (OverflowException) {
 						return new ErrorResolveResult(targetType);
@@ -1296,7 +1302,13 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 						return new ConstantResolveResult(targetType, expression.ConstantValue);
 					else
 						return new ErrorResolveResult(targetType);
-				} else if ((underlyingType.Kind == TypeKind.NInt || underlyingType.Kind == TypeKind.NUInt) && expression.ConstantValue != null) {
+				}
+				else if ((underlyingType.Kind == TypeKind.NInt || underlyingType.Kind == TypeKind.NUInt) && expression.ConstantValue != null)
+				{
+					if (expression.ConstantValue is string)
+					{
+						return new ErrorResolveResult(targetType);
+					}
 					code = (underlyingType.Kind == TypeKind.NInt ? TypeCode.Int32 : TypeCode.UInt32);
 					try {
 						return new ConstantResolveResult(targetType, Util.CSharpPrimitiveCast.Cast(code, expression.ConstantValue, checkForOverflow: true));
