@@ -194,8 +194,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		bool ValidateDisplayClassUses(ILVariable v, DisplayClass displayClass)
 		{
-			Debug.Assert(v == displayClass.Variable);
-			foreach (var ldloc in v.LoadInstructions) {
+			foreach (var ldloc in v.LoadInstructions)
+			{
 				if (!ValidateUse(displayClass, ldloc))
 					return false;
 			}
@@ -224,7 +224,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return false;
 					case StLoc stloc when stloc.Variable.IsSingleDefinition && stloc.Value == use:
 						displayClassCopyMap[stloc.Variable] = v;
-						return true;
+						return ValidateDisplayClassUses(stloc.Variable, displayClass);
 					default:
 						return false;
 				}
