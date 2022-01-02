@@ -877,6 +877,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (!memberDecl.GetChildByRole(EntityDeclaration.PrivateImplementationTypeRole).IsNull) {
 				yield break; // cannot create forwarder for existing explicit interface impl
 			}
+			if (method.IsStatic)
+			{
+				yield break; // cannot create forwarder for static interface impl
+			}
 			var genericContext = new Decompiler.TypeSystem.GenericContext(method);
 			var methodHandle = (MethodDef)method.MetadataToken;
 			foreach (var h in methodHandle.Overrides) {
