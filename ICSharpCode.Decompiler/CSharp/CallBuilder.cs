@@ -627,8 +627,15 @@ namespace ICSharpCode.Decompiler.CSharp
 							yield return (kind, sb.ToString());
 							sb.Clear();
 							kind = TokenKind.String;
-						} else {
-							sb.Append((char)next);
+						}
+						else if (Peek() == '}')
+						{
+							sb.Append("}}");
+							Next();
+						}
+						else
+						{
+							yield return (TokenKind.Error, null);
 						}
 						break;
 					case ':':

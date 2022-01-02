@@ -45,6 +45,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		// for a description of this step.
 
 		ILTransformContext context;
+		ModuleDef metadata;
 
 		/// <summary>The type that contains the function being decompiled.</summary>
 		TypeDef currentType;
@@ -113,6 +114,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				return; // abort if enumerator decompilation is disabled
 			this.context = context;
 			this.currentType = function.DnlibMethod.DeclaringType;
+			this.metadata = function.DnlibMethod.Module;
 			this.enumeratorType = null;
 			this.enumeratorCtor = null;
 			this.stateField = null;
@@ -133,13 +135,17 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				ResolveIEnumerableIEnumeratorFieldMapping();
 				ConstructExceptionTable();
 				newBody = AnalyzeMoveNext(function);
-			} catch (SymbolicAnalysisFailedException) {
+			}
+			catch (SymbolicAnalysisFailedException ex)
+			{
+				function.Warnings.Add($"yield-return decompiler failed: {ex.Message}");
 				return;
 			}
 
 			context.Step("Replacing body with MoveNext() body", function);
 			function.IsIterator = true;
 			function.StateMachineCompiledWithMono = isCompiledWithMono;
+			var oldBody = function.Body;
 			function.Body = newBody;
 			// register any locals used in newBody
 			function.Variables.AddRange(newBody.Descendants.OfType<IInstructionWithVariableOperand>().Select(inst => inst.Variable).Distinct());
@@ -166,15 +172,32 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			newBody.SortBlocks(deleteUnreachableBlocks: true);
 			function.CheckInvariant(ILPhase.Normal);
 
-			if (!isCompiledWithMono) {
-				DecompileFinallyBlocks();
-				ReconstructTryFinallyBlocks(function);
+			try
+			{
+				if (isCompiledWithMono)
+				{
+					CleanSkipFinallyBodies(function);
+				}
+				else
+				{
+					DecompileFinallyBlocks();
+					ReconstructTryFinallyBlocks(function);
+				}
+			}
+			catch (SymbolicAnalysisFailedException ex)
+			{
+				// Revert the yield-return transformation
+				context.Step("Transform failed, roll it back", function);
+				function.IsIterator = false;
+				function.StateMachineCompiledWithMono = false;
+				function.Body = oldBody;
+				function.Variables.RemoveDead();
+				function.Warnings.Add($"yield-return decompiler failed: {ex.Message}");
+				return;
 			}
 
 			context.Step("Translate fields to local accesses", function);
 			TranslateFieldsToLocalAccess(function, function, fieldToParameterMap, isCompiledWithMono);
-
-			CleanSkipFinallyBodies(function);
 
 			// On mono, we still need to remove traces of the state variable(s):
 			if (isCompiledWithMono) {
@@ -295,8 +318,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		internal static Block SingleBlock(ILInstruction body)
 		{
 			var block = body as Block;
-			if (body is BlockContainer blockContainer && blockContainer.Blocks.Count == 1) {
-				block = blockContainer.Blocks.Single() as Block;
+			if (body is BlockContainer blockContainer && blockContainer.Blocks.Count == 1)
+			{
+				block = blockContainer.Blocks.Single();
 			}
 			return block;
 		}
@@ -382,7 +406,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// </summary>
 		internal static ILFunction CreateILAst(MethodDef method, ILTransformContext context)
 		{
-			if (method == null || !method.HasBody)
+			if (method is null)
+				throw new SymbolicAnalysisFailedException();
+
+			if (!method.HasBody)
 				throw new SymbolicAnalysisFailedException();
 
 			GenericContext genericContext = context.Function.GenericContext;
@@ -412,8 +439,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				&& m.Name.EndsWith(".get_Current", StringComparison.Ordinal));
 			Block body = SingleBlock(CreateILAst(getCurrentMethod, context).Body);
 			if (body == null)
-				throw new SymbolicAnalysisFailedException();
-			if (body.Instructions.Count == 1) {
+				throw new SymbolicAnalysisFailedException("get_Current has no body");
+			if (body.Instructions.Count == 1)
+			{
 				// release builds directly return the current field
 				// ret(ldfld F(ldloc(this)))
 				if (body.Instructions[0].MatchReturn(out var retVal)
@@ -908,6 +936,12 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				if (newState != null) {
 					body.EntryPoint.Instructions.RemoveAt(0);
 				}
+				// Avoid yield-return decompilation if there are unrecognized state assignments in a finally method.
+				foreach (var inst in body.Descendants)
+				{
+					if (IsStateAssignment(inst))
+						throw new SymbolicAnalysisFailedException($"Unknown state transition in {function.Name ?? "finally"} at IL_{inst.StartILOffset:x4}");
+				}
 				function.ReleaseRef(); // make body reusable outside of function
 				decompiledFinallyMethods.Add(method, (newState, function));
 			}
@@ -1041,6 +1075,13 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 		}
 
+		bool IsStateAssignment(ILInstruction inst)
+		{
+			return inst.MatchStFld(out var target, out var field, out _)
+				&& target.MatchLdThis()
+				&& field.MemberDefinition.Equals(stateField);
+		}
+
 		// Gets the state that is transitioned to at the start of the block
 		int? GetNewState(Block block)
 		{
@@ -1069,26 +1110,62 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (skipFinallyBodies == null) {
 				return; // only mono-compiled code uses skipFinallyBodies
 			}
-			context.StepStartGroup("CleanSkipFinallyBodies", function);
-			Block entryPoint = AsyncAwaitDecompiler.GetBodyEntryPoint(function.Body as BlockContainer);
-			if (skipFinallyBodies.StoreInstructions.Count != 0 || skipFinallyBodies.AddressCount != 0) {
+			context.StepStartGroup("CleanFinallyBlocks", function);
+			if (skipFinallyBodies.StoreInstructions.Count != 0 || skipFinallyBodies.AddressCount != 0)
+			{
 				// misdetected another variable as doFinallyBodies?
 				// Fortunately removing the initial store of 0 is harmless, as we
 				// default-initialize the variable on uninit uses
 				return;
 			}
-			foreach (var tryFinally in function.Descendants.OfType<TryFinally>()) {
-				entryPoint = AsyncAwaitDecompiler.GetBodyEntryPoint(tryFinally.FinallyBlock as BlockContainer);
-				if (entryPoint?.Instructions[0] is IfInstruction ifInst) {
-					if (ifInst.Condition.MatchLogicNot(out var logicNotArg) && logicNotArg.MatchLdLoc(skipFinallyBodies)) {
+			foreach (var tryFinally in function.Descendants.OfType<TryFinally>())
+			{
+				if (!(tryFinally.FinallyBlock is BlockContainer container))
+					continue;
+				Block entryPoint = AsyncAwaitDecompiler.GetBodyEntryPoint(container);
+				if (entryPoint?.Instructions[0] is IfInstruction ifInst)
+				{
+					if (ifInst.Condition.MatchLogicNot(out var logicNotArg) && logicNotArg.MatchLdLoc(skipFinallyBodies))
+					{
 						context.Step("Remove if (skipFinallyBodies) from try-finally", tryFinally);
 						// condition will always be true now that we're using 'yield' instructions
 						entryPoint.Instructions[0] = ifInst.TrueInst;
 						entryPoint.Instructions.RemoveRange(1, entryPoint.Instructions.Count - 1);
+						// find new entryPoint after the old one was modified
+						entryPoint = AsyncAwaitDecompiler.GetBodyEntryPoint(container);
 					}
+				}
+				if (entryPoint?.Instructions.Count == 2
+					&& IsCallToMonoFinallyMethod(entryPoint.Instructions[0] as Call, out var finallyMethod)
+					&& entryPoint.Instructions[1].MatchLeave((BlockContainer)tryFinally.FinallyBlock))
+				{
+					context.Step("Inline " + finallyMethod.FullName + " into finally", tryFinally);
+					var finallyFunction = CreateILAst((MethodDef)finallyMethod.MetadataToken, context);
+					tryFinally.FinallyBlock = finallyFunction.Body;
+					var variables = finallyFunction.Variables.ToArray();
+					finallyFunction.Variables.Clear();
+					function.Variables.AddRange(variables);
 				}
 			}
 			context.StepEndGroup(keepIfEmpty: true);
+
+			bool IsCallToMonoFinallyMethod(Call call, out IMethod finallyMethod)
+			{
+				finallyMethod = default;
+				if (call == null)
+					return false;
+				if (!(call.Arguments.Count == 1 && call.Arguments[0].MatchLdThis()))
+					return false;
+				if (!call.Method.Name.StartsWith("<>__Finally"))
+					return false;
+				ITypeDefinition declaringTypeDefinition = call.Method.DeclaringTypeDefinition;
+				if (declaringTypeDefinition.MetadataToken != this.enumeratorType)
+					return false;
+				if (declaringTypeDefinition.ParentModule.PEFile.Module != metadata)
+					return false;
+				finallyMethod = call.Method;
+				return call.Method.MetadataToken is not null;
+			}
 		}
 	}
 }

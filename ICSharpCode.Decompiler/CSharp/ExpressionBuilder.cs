@@ -114,8 +114,12 @@ namespace ICSharpCode.Decompiler.CSharp
 					expr = new CastExpression(ConvertType(rr.Type), expr);
 				} else if (rr.Type.IsCSharpSmallIntegerType()) {
 					expr = new CastExpression(new PrimitiveType(KnownTypeReference.GetCSharpNameByTypeCode(rr.Type.GetDefinition().KnownTypeCode)), expr);
-				} else if (rr.Type.IsCSharpNativeIntegerType()) {
+					// Note: no unchecked annotation necessary, because the constant was folded to be in-range
+				}
+				else if (rr.Type.IsCSharpNativeIntegerType())
+				{
 					expr = new CastExpression(new PrimitiveType(rr.Type.Name), expr);
+					// Note: no unchecked annotation necessary, because the rr wouldn't be a constant if the value wasn't in-range on 32bit
 				}
 			}
 			var exprRR = expr.Annotation<ResolveResult>();
@@ -2459,26 +2463,32 @@ namespace ICSharpCode.Decompiler.CSharp
 			var pointer = Translate(inst.Target, typeHint: pointerTypeHint);
 			TranslatedExpression target;
 			TranslatedExpression value = default;
-			// Cast pointer type if necessary:
-			if (!TypeUtils.IsCompatiblePointerTypeForMemoryAccess(pointer.Type, inst.Type))
+			IType memoryType;
+			// Check if we need to cast to pointer type:
+			if (TypeUtils.IsCompatiblePointerTypeForMemoryAccess(pointer.Type, inst.Type))
 			{
+				// cast not necessary, we can use the existing type
+				memoryType = ((TypeWithElementType)pointer.Type).ElementType;
+			}
+			else
+			{
+				// We need to introduce a pointer cast
 				value = Translate(inst.Value, typeHint: inst.Type);
-				IType castTargetType;
 				if (TypeUtils.IsCompatibleTypeForMemoryAccess(value.Type, inst.Type))
 				{
-					castTargetType = value.Type;
+					memoryType = value.Type;
 				}
 				else
 				{
-					castTargetType = inst.Type;
+					memoryType = inst.Type;
 				}
 				if (pointer.Expression is DirectionExpression)
 				{
-					pointer = pointer.ConvertTo(new ByReferenceType(castTargetType), this);
+					pointer = pointer.ConvertTo(new ByReferenceType(memoryType), this);
 				}
 				else
 				{
-					pointer = pointer.ConvertTo(new PointerType(castTargetType), this);
+					pointer = pointer.ConvertTo(new PointerType(memoryType), this);
 				}
 			}
 
@@ -2496,7 +2506,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				} else {
 					target = new UnaryOperatorExpression(UnaryOperatorType.Dereference, pointer.Expression)
 						.WithoutILInstruction()
-						.WithRR(new ResolveResult(((TypeWithElementType)pointer.Type).ElementType));
+						.WithRR(new ResolveResult(memoryType));
 				}
 			}
 			if (value.Expression == null) {
@@ -3991,8 +4001,9 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		protected internal override TranslatedExpression VisitInvalidExpression(InvalidExpression inst, TranslationContext context)
 		{
-			string message = "Error";
-			if (inst.StartILOffset != 0) {
+			string message = inst.Severity;
+			if (inst.StartILOffset != 0)
+			{
 				message += $" near IL_{inst.StartILOffset:x4}";
 			}
 			if (!string.IsNullOrEmpty(inst.Message)) {

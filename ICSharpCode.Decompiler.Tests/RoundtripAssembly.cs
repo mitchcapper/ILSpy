@@ -25,6 +25,7 @@ using System.Threading;
 using dnlib.DotNet;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.Tests.Helpers;
+using ICSharpCode.Decompiler.TypeSystem;
 using Microsoft.Build.Locator;
 using NUnit.Framework;
 
@@ -91,51 +92,85 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void ExplicitConversions_32()
 		{
-			RunWithOutput("Random Tests\\TestCases", "ExplicitConversions_32.exe");
+			RunWithOutput("Random Tests\\TestCases", "ExplicitConversions_32.exe", LanguageVersion.CSharp8_0);
+		}
+
+		[Test]
+		public void ExplicitConversions_With_NativeInts()
+		{
+			RunWithOutput("Random Tests\\TestCases", "ExplicitConversions.exe", LanguageVersion.CSharp9_0);
+		}
+
+		[Test]
+		public void ExplicitConversions_32_With_NativeInts()
+		{
+			RunWithOutput("Random Tests\\TestCases", "ExplicitConversions_32.exe", LanguageVersion.CSharp9_0);
 		}
 
 		[Test]
 		public void Random_TestCase_1()
 		{
-			RunWithOutput("Random Tests\\TestCases", "TestCase-1.exe");
+			RunWithOutput("Random Tests\\TestCases", "TestCase-1.exe", LanguageVersion.CSharp8_0);
 		}
 
-		void RunWithTest(string dir, string fileToRoundtrip, string fileToTest)
+		[Test]
+		[Ignore("See https://github.com/icsharpcode/ILSpy/issues/2541 - Waiting for https://github.com/dotnet/roslyn/issues/45929")]
+		public void Random_TestCase_1_With_NativeInts()
 		{
-			RunInternal(dir, fileToRoundtrip, outputDir => RunTest(outputDir, fileToTest));
+			RunWithOutput("Random Tests\\TestCases", "TestCase-1.exe", LanguageVersion.CSharp9_0);
 		}
 
-		void RunWithOutput(string dir, string fileToRoundtrip)
+		// Let's limit the roundtrip tests to C# 8.0 for now; because 9.0 is still in preview
+		// and the generated project doesn't build as-is.
+		const LanguageVersion defaultLanguageVersion = LanguageVersion.CSharp8_0;
+
+		void RunWithTest(string dir, string fileToRoundtrip, string fileToTest, LanguageVersion languageVersion = defaultLanguageVersion, string keyFile = null, bool useOldProjectFormat = false)
+		{
+			RunInternal(dir, fileToRoundtrip, outputDir => RunTest(outputDir, fileToTest), languageVersion, snkFilePath: keyFile, useOldProjectFormat: useOldProjectFormat);
+		}
+
+		void RunWithOutput(string dir, string fileToRoundtrip, LanguageVersion languageVersion = defaultLanguageVersion)
 		{
 			string inputDir = Path.Combine(TestDir, dir);
 			RunInternal(dir, fileToRoundtrip,
-				outputDir => Tester.RunAndCompareOutput(fileToRoundtrip, Path.Combine(inputDir, fileToRoundtrip), Path.Combine(outputDir, fileToRoundtrip)));
+				outputDir => Tester.RunAndCompareOutput(fileToRoundtrip, Path.Combine(inputDir, fileToRoundtrip), Path.Combine(outputDir, fileToRoundtrip)),
+				languageVersion);
 		}
 
-		void RunInternal(string dir, string fileToRoundtrip, Action<string> testAction)
+		void RunOnly(string dir, string fileToRoundtrip, LanguageVersion languageVersion = defaultLanguageVersion)
 		{
-			if (!Directory.Exists(TestDir)) {
+			RunInternal(dir, fileToRoundtrip, outputDir => { }, languageVersion);
+		}
+
+		void RunInternal(string dir, string fileToRoundtrip, Action<string> testAction, LanguageVersion languageVersion, string snkFilePath = null, bool useOldProjectFormat = false)
+		{
+			if (!Directory.Exists(TestDir))
+			{
 				Assert.Ignore($"Assembly-roundtrip test ignored: test directory '{TestDir}' needs to be checked out separately." + Environment.NewLine +
-				              $"git clone https://github.com/icsharpcode/ILSpy-tests \"{TestDir}\"");
+							  $"git clone https://github.com/icsharpcode/ILSpy-tests \"{TestDir}\"");
 			}
 			string inputDir = Path.Combine(TestDir, dir);
 			string decompiledDir = inputDir + "-decompiled";
 			string outputDir = inputDir + "-output";
-			if (inputDir.EndsWith("TestCases")) {
+			if (inputDir.EndsWith("TestCases"))
+			{
 				// make sure output dir names are unique so that we don't get trouble due to parallel test execution
-				decompiledDir += Path.GetFileNameWithoutExtension(fileToRoundtrip);
-				outputDir += Path.GetFileNameWithoutExtension(fileToRoundtrip);
+				decompiledDir += Path.GetFileNameWithoutExtension(fileToRoundtrip) + "_" + languageVersion.ToString();
+				outputDir += Path.GetFileNameWithoutExtension(fileToRoundtrip) + "_" + languageVersion.ToString();
 			}
 			ClearDirectory(decompiledDir);
 			ClearDirectory(outputDir);
 			string projectFile = null;
-			foreach (string file in Directory.EnumerateFiles(inputDir, "*", SearchOption.AllDirectories)) {
-				if (!file.StartsWith(inputDir + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)) {
+			foreach (string file in Directory.EnumerateFiles(inputDir, "*", SearchOption.AllDirectories))
+			{
+				if (!file.StartsWith(inputDir + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+				{
 					Assert.Fail($"Unexpected file name: {file}");
 				}
 				string relFile = file.Substring(inputDir.Length + 1);
 				Directory.CreateDirectory(Path.Combine(outputDir, Path.GetDirectoryName(relFile)));
-				if (relFile.Equals(fileToRoundtrip, StringComparison.OrdinalIgnoreCase)) {
+				if (relFile.Equals(fileToRoundtrip, StringComparison.OrdinalIgnoreCase))
+				{
 					Console.WriteLine($"Decompiling {fileToRoundtrip}...");
 					Stopwatch w = Stopwatch.StartNew();
 					AssemblyResolver resolver = new AssemblyResolver();
@@ -165,19 +200,25 @@ namespace ICSharpCode.Decompiler.Tests
 		static void ClearDirectory(string dir)
 		{
 			Directory.CreateDirectory(dir);
-			foreach (string subdir in Directory.EnumerateDirectories(dir)) {
-				for (int attempt = 0; ; attempt++) {
-					try {
+			foreach (string subdir in Directory.EnumerateDirectories(dir))
+			{
+				for (int attempt = 0; ; attempt++)
+				{
+					try
+					{
 						Directory.Delete(subdir, true);
 						break;
-					} catch (IOException) {
+					}
+					catch (IOException)
+					{
 						if (attempt >= 10)
 							throw;
 						Thread.Sleep(100);
 					}
 				}
 			}
-			foreach (string file in Directory.EnumerateFiles(dir)) {
+			foreach (string file in Directory.EnumerateFiles(dir))
+			{
 				File.Delete(file);
 			}
 		}
@@ -196,7 +237,7 @@ namespace ICSharpCode.Decompiler.Tests
 		static void Compile(string projectFile, string outputDir)
 		{
 			var info = new ProcessStartInfo(FindMSBuild());
-			info.Arguments = $"/nologo /v:minimal /p:OutputPath=\"{outputDir}\" \"{projectFile}\"";
+			info.Arguments = $"/nologo /v:minimal /restore /p:OutputPath=\"{outputDir}\" \"{projectFile}\"";
 			info.CreateNoWindow = true;
 			info.UseShellExecute = false;
 			info.RedirectStandardOutput = true;
@@ -204,16 +245,20 @@ namespace ICSharpCode.Decompiler.Tests
 			info.EnvironmentVariables.Remove("Configuration");
 			info.EnvironmentVariables.Remove("Platform");
 			Console.WriteLine($"\"{info.FileName}\" {info.Arguments}");
-			using (var p = Process.Start(info)) {
+			using (var p = Process.Start(info))
+			{
 				Regex errorRegex = new Regex(@"^[\w\d.\\-]+\(\d+,\d+\):");
 				string suffix = $" [{projectFile}]";
 				string line;
-				while ((line = p.StandardOutput.ReadLine()) != null) {
-					if (line.EndsWith(suffix, StringComparison.OrdinalIgnoreCase)) {
+				while ((line = p.StandardOutput.ReadLine()) != null)
+				{
+					if (line.EndsWith(suffix, StringComparison.OrdinalIgnoreCase))
+					{
 						line = line.Substring(0, line.Length - suffix.Length);
 					}
 					Match m = errorRegex.Match(line);
-					if (m.Success) {
+					if (m.Success)
+					{
 						// Make path absolute so that it gets hyperlinked
 						line = Path.GetDirectoryName(projectFile) + Path.DirectorySeparatorChar + line;
 					}
@@ -234,9 +279,11 @@ namespace ICSharpCode.Decompiler.Tests
 			info.UseShellExecute = false;
 			info.RedirectStandardOutput = true;
 			Console.WriteLine($"\"{info.FileName}\" {info.Arguments}");
-			using (var p = Process.Start(info)) {
+			using (var p = Process.Start(info))
+			{
 				string line;
-				while ((line = p.StandardOutput.ReadLine()) != null) {
+				while ((line = p.StandardOutput.ReadLine()) != null)
+				{
 					Console.WriteLine(line);
 				}
 				p.WaitForExit();
@@ -251,14 +298,6 @@ namespace ICSharpCode.Decompiler.Tests
 
 			public TestProjectDecompiler(string baseDir)
 			{
-				localAssemblies = new DirectoryInfo(baseDir).EnumerateFiles("*.dll").Select(f => f.FullName).ToArray();
-			}
-
-			protected override bool IsGacAssembly(AssemblyRef r, AssemblyDef asm)
-			{
-				if (asm == null)
-					return false;
-				return !localAssemblies.Contains(asm.ManifestModule.Location);
 			}
 		}
 

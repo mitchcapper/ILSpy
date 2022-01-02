@@ -149,9 +149,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			TypeSystemAstBuilder CreateAstBuilder(CSharpTypeResolveContext context, IL.ILFunction function = null)
 			{
 				CSharpResolver resolver = new CSharpResolver(context);
-				if (function != null) {
-					foreach (var v in function.Variables) {
-						if (v.Kind != IL.VariableKind.Parameter)
+				if (function != null)
+				{
+					foreach (var v in function.Variables)
+					{
+						if (v.Kind != IL.VariableKind.Parameter && v.Name != null)
 							resolver = resolver.AddVariable(new DefaultVariable(v.Type, v.Name));
 					}
 				}

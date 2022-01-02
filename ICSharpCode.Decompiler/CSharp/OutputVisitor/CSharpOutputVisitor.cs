@@ -1779,7 +1779,15 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			StartNode(namespaceDeclaration);
 			WriteKeyword(Roles.NamespaceKeyword);
 			namespaceDeclaration.NamespaceName.AcceptVisitor (this);
-			var braceHelper = OpenBrace(policy.NamespaceBraceStyle, CodeBracesRangeFlags.NamespaceBraces);
+			BraceHelper braceHelper = default;
+			if (namespaceDeclaration.IsFileScoped) {
+				Semicolon();
+				NewLine();
+			}
+			else
+			{
+				braceHelper = OpenBrace(policy.NamespaceBraceStyle, CodeBracesRangeFlags.NamespaceBraces);
+			}
 			int count = 0;
 			int total = -1;
 			foreach (var member in namespaceDeclaration.Members) {
@@ -1793,9 +1801,12 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				member.AcceptVisitor(this);
 				MaybeNewLinesAfterUsings(member);
 			}
-			CloseBrace(policy.NamespaceBraceStyle, braceHelper, true);
-			OptionalSemicolon(namespaceDeclaration.LastChild);
-			NewLine();
+			if (!namespaceDeclaration.IsFileScoped)
+			{
+				CloseBrace(policy.NamespaceBraceStyle, braceHelper, true);
+				OptionalSemicolon(namespaceDeclaration.LastChild);
+				NewLine();
+			}
 			EndNode(namespaceDeclaration);
 		}
 

@@ -27,7 +27,7 @@ namespace ICSharpCode.ILSpy.AddIn
 					if (targetFramework.Length != 2)
 						return FindAssemblyFromGAC(assemblyDefinition);
 					var version = targetFramework[1].Length == 3 ? targetFramework[1] + ".0" : targetFramework[1];
-					var dotNetCorePathFinder = new DotNetCorePathFinder(assemblyFile, detectedTargetFramework, TargetFrameworkIdentifier.NETCoreApp, new Version(version));
+					var dotNetCorePathFinder = new DotNetCorePathFinder(assemblyFile, detectedTargetFramework, "Microsoft.NETCore.App", TargetFrameworkIdentifier.NETCoreApp, new Version(version));
 					file = dotNetCorePathFinder.TryResolveDotNetCore(assemblyDefinition);
 					if (file != null)
 						return file;
@@ -37,7 +37,7 @@ namespace ICSharpCode.ILSpy.AddIn
 					if (targetFramework.Length != 2)
 						return FindAssemblyFromGAC(assemblyDefinition);
 					var version = targetFramework[1].Length == 3 ? targetFramework[1] + ".0" : targetFramework[1];
-					var dotNetCorePathFinder = new DotNetCorePathFinder(assemblyFile, detectedTargetFramework, TargetFrameworkIdentifier.NETStandard, new Version(version));
+					var dotNetCorePathFinder = new DotNetCorePathFinder(assemblyFile, detectedTargetFramework, "Microsoft.NETCore.App", TargetFrameworkIdentifier.NETStandard, new Version(version));
 					file = dotNetCorePathFinder.TryResolveDotNetCore(assemblyDefinition);
 					if (file != null)
 						return file;

@@ -638,9 +638,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					sectionsWithoutLabels.Add(section);
 			}
 
-			foreach (var section in sectionsWithoutLabels) {
-				if (!section.Body.Match(defaultSection.Body).Success)
-					return false;
+			foreach (var section in sectionsWithoutLabels)
+			{
 				defaultSection.Labels = defaultSection.Labels.UnionWith(section.Labels);
 				if (section.HasNullLabel)
 					defaultSection.HasNullLabel = true;

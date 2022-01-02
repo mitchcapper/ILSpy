@@ -126,6 +126,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 							var newBlock = new Block();
 							newBlock.Instructions.Add(block.Instructions[j]);
 							newBlock.Instructions.Add(block.Instructions[j + 1]);
+							newBlock.AddILRange(newBlock.Instructions[0]);
 							Debug.Assert(block.Instructions.Count == j + 2);
 							block.Instructions.RemoveRange(j, 2);
 							block.Instructions.Insert(j, new Branch(newBlock));
@@ -523,9 +524,18 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 							br.TargetBlock.Instructions.RemoveAt(0);
 						}
 					}
-
-					body.Blocks.Add(innerBlock); // move block into body
-					if (!cloneBlocks) {
+					// move block into body
+					if (sourceContainer.Blocks[i] == entryBlock)
+					{
+						// ensure entry point comes first
+						body.Blocks.Insert(0, innerBlock);
+					}
+					else
+					{
+						body.Blocks.Add(innerBlock);
+					}
+					if (!cloneBlocks)
+					{
 						sourceContainer.Blocks[i] = new Block(); // replace with dummy block
 																 // we'll delete the dummy block later
 					}

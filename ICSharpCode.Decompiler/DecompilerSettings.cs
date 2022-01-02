@@ -132,7 +132,7 @@ namespace ICSharpCode.Decompiler
 				ranges = false;
 				switchExpressions = false;
 			}
-			if (languageVersion < CSharp.LanguageVersion.Preview) {
+			if (languageVersion < CSharp.LanguageVersion.CSharp9_0) {
 				nativeIntegers = false;
 				initAccessors = false;
 				functionPointers = false;
@@ -142,14 +142,21 @@ namespace ICSharpCode.Decompiler
 				usePrimaryConstructorSyntax = false;
 				covariantReturns = false;
 			}
+			if (languageVersion < CSharp.LanguageVersion.CSharp10_0)
+			{
+				fileScopedNamespaces = false;
+			}
 		}
 
 		public CSharp.LanguageVersion GetMinimumRequiredVersion()
 		{
+			if (fileScopedNamespaces)
+				return CSharp.LanguageVersion.CSharp10_0;
 			if (nativeIntegers || initAccessors || functionPointers || forEachWithGetEnumeratorExtension
 				|| recordClasses || withExpressions || usePrimaryConstructorSyntax || covariantReturns)
-				return CSharp.LanguageVersion.Preview;
-			if (nullableReferenceTypes || readOnlyMethods || asyncEnumerator || asyncUsingAndForEachStatement || staticLocalFunctions || ranges || switchExpressions)
+				return CSharp.LanguageVersion.CSharp9_0;
+			if (nullableReferenceTypes || readOnlyMethods || asyncEnumerator || asyncUsingAndForEachStatement
+				|| staticLocalFunctions || ranges || switchExpressions)
 				return CSharp.LanguageVersion.CSharp8_0;
 			if (introduceUnmanagedConstraint || tupleComparisons || stackAllocInitializers || patternBasedFixedStatement)
 				return CSharp.LanguageVersion.CSharp7_3;
@@ -367,6 +374,24 @@ namespace ICSharpCode.Decompiler
 			set {
 				if (switchExpressions != value) {
 					switchExpressions = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool fileScopedNamespaces = true;
+
+		/// <summary>
+		/// Use C# 10 file-scoped namespaces.
+		/// </summary>
+		[Category("C# 10.0 / VS 2022")]
+		[Description("DecompilerSettings.FileScopedNamespaces")]
+		public bool FileScopedNamespaces {
+			get { return fileScopedNamespaces; }
+			set {
+				if (fileScopedNamespaces != value)
+				{
+					fileScopedNamespaces = value;
 					OnPropertyChanged();
 				}
 			}

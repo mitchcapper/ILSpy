@@ -42,6 +42,33 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+#if CS80
+		private class NestedContext1
+		{
+			public NestedContext1(object result)
+			{
+			}
+
+			public NestedContext1()
+				: this(UseNested(GetInt(), stackalloc int[2] {
+					GetInt(),
+					GetInt()
+				}))
+			{
+			}
+		}
+		
+		public static object UseNested(object a, Span<int> span)
+		{
+			return null;
+		}
+
+		public static int GetInt()
+		{
+			return 42;
+		}
+#endif
+
 		public unsafe string SimpleStackAllocStruct1()
 		{
 			StructWithSize5* ptr = stackalloc StructWithSize5[4] {
@@ -339,11 +366,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public unsafe string NegativeOffsets(int a, int b, int c)
 		{
 #if OPT
-			byte* intPtr = stackalloc byte[12];
-			*(int*)intPtr = 1;
-			*(int*)(intPtr - 4) = 2;
-			*(int*)(intPtr - 8) = 3;
-			int* ptr = (int*)intPtr;
+			byte* num = stackalloc byte[12];
+			*(int*)num = 1;
+			*(int*)(num - 4) = 2;
+			*(int*)(num - 8) = 3;
+			int* ptr = (int*)num;
 			Console.WriteLine(*ptr);
 			return UsePointer((byte*)ptr);
 #else

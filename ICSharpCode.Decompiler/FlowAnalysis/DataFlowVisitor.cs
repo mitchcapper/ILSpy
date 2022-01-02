@@ -416,7 +416,14 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 				targetState.JoinWith(branchState);
 
 				BlockContainer container = (BlockContainer)targetBlock.Parent;
-				workLists[container].Add(targetBlock.ChildIndex);
+				if (workLists.TryGetValue(container, out var workList))
+				{
+					workList.Add(targetBlock.ChildIndex);
+				}
+				else
+				{
+					Debug.Fail("Failed to find target BlockContainer");
+				}
 			}
 		}
 		
