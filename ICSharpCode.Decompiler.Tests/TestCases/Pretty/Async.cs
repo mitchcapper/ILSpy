@@ -279,16 +279,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public async Task<object> Issue2436()
 		{
-			try
-			{
+			try {
 				Console.WriteLine();
-			}
-			catch (Exception result)
-			{
+			} catch (Exception result) {
 				return result;
-			}
-			finally
-			{
+			} finally {
 				await Task.CompletedTask;
 			}
 			return new object();
