@@ -10,8 +10,8 @@ namespace ICSharpCode.Decompiler
 {
 	internal class DecompileRun
 	{
-		public HashSet<string> DefinedSymbols { get; private set; } = new HashSet<string>();
-		public HashSet<string> Namespaces { get; private set; } = new HashSet<string>();
+		public HashSet<string> DefinedSymbols { get; } = new HashSet<string>();
+		public HashSet<string> Namespaces { get; } = new HashSet<string>();
 		public CancellationToken CancellationToken { get; set; }
 		public DecompilerSettings Settings { get; }
 		public Dictionary<ITypeDefinition, RecordDecompiler> RecordDecompilers { get; } = new Dictionary<ITypeDefinition, RecordDecompiler>();
@@ -39,5 +39,15 @@ namespace ICSharpCode.Decompiler
 			}
 			return usingScope;
 		}
+
+		public EnumValueDisplayMode? EnumValueDisplayMode { get; set; }
+	}
+
+	enum EnumValueDisplayMode
+	{
+		None,
+		All,
+		AllHex,
+		FirstOnly
 	}
 }
