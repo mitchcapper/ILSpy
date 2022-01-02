@@ -135,13 +135,17 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				ResolveIEnumerableIEnumeratorFieldMapping();
 				ConstructExceptionTable();
 				newBody = AnalyzeMoveNext(function);
-			} catch (SymbolicAnalysisFailedException) {
+			}
+			catch (SymbolicAnalysisFailedException ex)
+			{
+				function.Warnings.Add($"yield-return decompiler failed: {ex.Message}");
 				return;
 			}
 
 			context.Step("Replacing body with MoveNext() body", function);
 			function.IsIterator = true;
 			function.StateMachineCompiledWithMono = isCompiledWithMono;
+			var oldBody = function.Body;
 			function.Body = newBody;
 			// register any locals used in newBody
 			function.Variables.AddRange(newBody.Descendants.OfType<IInstructionWithVariableOperand>().Select(inst => inst.Variable).Distinct());
@@ -168,14 +172,28 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			newBody.SortBlocks(deleteUnreachableBlocks: true);
 			function.CheckInvariant(ILPhase.Normal);
 
-			if (isCompiledWithMono)
+			try
 			{
-				CleanSkipFinallyBodies(function);
+				if (isCompiledWithMono)
+				{
+					CleanSkipFinallyBodies(function);
+				}
+				else
+				{
+					DecompileFinallyBlocks();
+					ReconstructTryFinallyBlocks(function);
+				}
 			}
-			else
+			catch (SymbolicAnalysisFailedException ex)
 			{
-				DecompileFinallyBlocks();
-				ReconstructTryFinallyBlocks(function);
+				// Revert the yield-return transformation
+				context.Step("Transform failed, roll it back", function);
+				function.IsIterator = false;
+				function.StateMachineCompiledWithMono = false;
+				function.Body = oldBody;
+				function.Variables.RemoveDead();
+				function.Warnings.Add($"yield-return decompiler failed: {ex.Message}");
+				return;
 			}
 
 			context.Step("Translate fields to local accesses", function);
@@ -300,8 +318,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		internal static Block SingleBlock(ILInstruction body)
 		{
 			var block = body as Block;
-			if (body is BlockContainer blockContainer && blockContainer.Blocks.Count == 1) {
-				block = blockContainer.Blocks.Single() as Block;
+			if (body is BlockContainer blockContainer && blockContainer.Blocks.Count == 1)
+			{
+				block = blockContainer.Blocks.Single();
 			}
 			return block;
 		}
@@ -387,7 +406,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// </summary>
 		internal static ILFunction CreateILAst(MethodDef method, ILTransformContext context)
 		{
-			if (method == null || !method.HasBody)
+			if (method is null)
+				throw new SymbolicAnalysisFailedException();
+			
+			if (!method.HasBody)
 				throw new SymbolicAnalysisFailedException();
 
 			GenericContext genericContext = context.Function.GenericContext;
@@ -417,8 +439,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				&& m.Name.EndsWith(".get_Current", StringComparison.Ordinal));
 			Block body = SingleBlock(CreateILAst(getCurrentMethod, context).Body);
 			if (body == null)
-				throw new SymbolicAnalysisFailedException();
-			if (body.Instructions.Count == 1) {
+				throw new SymbolicAnalysisFailedException("get_Current has no body");
+			if (body.Instructions.Count == 1)
+			{
 				// release builds directly return the current field
 				// ret(ldfld F(ldloc(this)))
 				if (body.Instructions[0].MatchReturn(out var retVal)
@@ -913,6 +936,12 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				if (newState != null) {
 					body.EntryPoint.Instructions.RemoveAt(0);
 				}
+				// Avoid yield-return decompilation if there are unrecognized state assignments in a finally method.
+				foreach (var inst in body.Descendants)
+				{
+					if (IsStateAssignment(inst))
+						throw new SymbolicAnalysisFailedException($"Unknown state transition in {function.Name ?? "finally"} at IL_{inst.StartILOffset:x4}");
+				}
 				function.ReleaseRef(); // make body reusable outside of function
 				decompiledFinallyMethods.Add(method, (newState, function));
 			}
@@ -1044,6 +1073,13 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				}
 				return foundMethod;
 			}
+		}
+
+		bool IsStateAssignment(ILInstruction inst)
+		{
+			return inst.MatchStFld(out var target, out var field, out _)
+				&& target.MatchLdThis()
+				&& field.MemberDefinition.Equals(stateField);
 		}
 
 		// Gets the state that is transitioned to at the start of the block
