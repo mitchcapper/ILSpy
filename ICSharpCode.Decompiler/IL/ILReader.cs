@@ -490,13 +490,14 @@ namespace ICSharpCode.Decompiler.IL
 			cancellationToken.ThrowIfCancellationRequested();
 			Init(methodDef, genericContext);
 			ReadInstructions(cancellationToken);
-			var blockBuilder = new BlockBuilder(body, variableByExceptionHandler);
+			var blockBuilder = new BlockBuilder(body, variableByExceptionHandler, compilation);
 			blockBuilder.CreateBlocks(mainContainer, instructionBuilder, isBranchTarget, cancellationToken);
 			var function = new ILFunction(this.method, methodDef, this.genericContext, mainContainer, kind);
-			CollectionExtensions.AddRange(function.Variables, parameterVariables);
-			CollectionExtensions.AddRange(function.Variables, localVariables);
-			CollectionExtensions.AddRange(function.Variables, stackVariables);
-			CollectionExtensions.AddRange(function.Variables, variableByExceptionHandler.Values);
+			function.Variables.AddRange(parameterVariables);
+			function.Variables.AddRange(localVariables);
+			function.Variables.AddRange(stackVariables);
+			function.Variables.AddRange(variableByExceptionHandler.Values);
+			function.Variables.AddRange(blockBuilder.OnErrorDispatcherVariables);
 			function.AddRef(); // mark the root node
 			var removedBlocks = new List<Block>();
 			foreach (var c in function.Descendants.OfType<BlockContainer>()) {
