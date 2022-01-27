@@ -23,6 +23,7 @@ using System.Diagnostics;
 using System.Linq;
 using dnlib.DotNet;
 using dnlib.DotNet.MD;
+using dnSpy.Contracts.Decompiler;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
 
@@ -181,6 +182,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public ITypeDefinition GetDefinition(TypeDef handle)
 		{
+			return GetDefinitionInternal(handle);
+		}
+
+		internal MetadataTypeDefinition GetDefinitionInternal(TypeDef handle)
+		{
 			if (handle == null)
 				return null;
 			if (typeDefDict == null)
@@ -188,12 +194,19 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			lock (typeDefDict) {
 				if (typeDefDict.TryGetValue(handle, out var tsType))
 					return tsType;
-				tsType = new MetadataTypeDefinition(this, handle);
+				tsType = new MetadataTypeDefinition(this, handle) {
+					OriginalMember = handle
+				};
 				return typeDefDict[handle] = tsType;
 			}
 		}
 
 		public IField GetDefinition(FieldDef handle)
+		{
+			return GetDefinitionInternal(handle);
+		}
+
+		internal MetadataField GetDefinitionInternal(FieldDef handle)
 		{
 			if (handle == null)
 				return null;
@@ -202,12 +215,19 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			lock (fieldDefDict) {
 				if (fieldDefDict.TryGetValue(handle, out var tsField))
 					return tsField;
-				tsField = new MetadataField(this, handle);
+				tsField = new MetadataField(this, handle) {
+					OriginalMember = handle
+				};
 				return fieldDefDict[handle] = tsField;
 			}
 		}
 
 		public IMethod GetDefinition(MethodDef handle)
+		{
+			return GetDefinitionInternal(handle);
+		}
+
+		internal MetadataMethod GetDefinitionInternal(MethodDef handle)
 		{
 			if (handle == null)
 				return null;
@@ -216,7 +236,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			lock (methodDefDict) {
 				if (methodDefDict.TryGetValue(handle, out var tsMethod))
 					return tsMethod;
-				tsMethod = new MetadataMethod(this, handle);
+				tsMethod = new MetadataMethod(this, handle) {
+					OriginalMember = handle
+				};
 				return methodDefDict[handle] = tsMethod;
 			}
 		}
@@ -383,7 +405,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 				var resolved = memberRef.ResolveMethod();
 				if (resolved is not null && Compilation.GetOrAddModule(resolved.Module) is MetadataModule mod) {
-					method = mod.GetDefinition(resolved);
+					var mdMethod = mod.GetDefinitionInternal(resolved);
+					mdMethod.OriginalMember = memberRef;
+					method = mdMethod;
 				} else {
 					var symbolKind = memberRef.Name == ".ctor" || memberRef.Name == ".cctor"
 						? SymbolKind.Constructor
@@ -487,7 +511,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			IField tsField;
 			var resolved = memberRef.ResolveField();
 			if (resolved is not null && Compilation.GetOrAddModule(resolved.Module) is MetadataModule mod) {
-				tsField = mod.GetDefinition(resolved);
+				var mdField = mod.GetDefinitionInternal(resolved);
+				mdField.OriginalMember = memberRef;
+				tsField = mdField;
 			} else {
 				tsField = new MetadataUnresolvedField(this, memberRef) {
 					DeclaringType = declaringType
@@ -524,16 +550,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			var b = new AttributeListBuilder(this);
 			if (metadata.Assembly != null) {
-				var assembly = metadata.Assembly;
-				b.Add(assembly.CustomAttributes, SymbolKind.Module);
-				b.AddSecurityAttributes(assembly.DeclSecurities);
-
-				// AssemblyVersionAttribute
-				if (assembly.Version != null) {
-					b.Add(KnownAttribute.AssemblyVersion, KnownTypeCode.String, assembly.Version.ToString());
-				}
-
-				AddTypeForwarderAttributes(ref b);
+				b.Add(metadata.Assembly.GetCustomAttributes(), SymbolKind.Module);
 			}
 
 			return b.Build();
@@ -556,7 +573,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		void AddTypeForwarderAttributes(ref AttributeListBuilder b)
 		{
 			foreach (ExportedType type in metadata.ExportedTypes) {
-				if (type.IsForwarder) {
+				if (type.MovedToAnotherAssembly) {
 					b.Add(KnownAttribute.TypeForwardedTo, KnownTypeCode.Type, ResolveForwardedType(type));
 				}
 			}

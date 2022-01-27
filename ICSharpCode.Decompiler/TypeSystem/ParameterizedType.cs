@@ -101,6 +101,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public dnlib.DotNet.IType MetadataToken => dnlibType;
 
+		dnlib.DotNet.IMDTokenProvider IType.OriginalMember => genericType.OriginalMember;
+
 		public TypeKind Kind {
 			get { return genericType.Kind; }
 		}

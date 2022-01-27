@@ -171,6 +171,7 @@ namespace ICSharpCode.Decompiler.IL
 				localType = pinnedType.ElementType;
 
 			ILVariable ilVar = new ILVariable(kind, localType, v.Index);
+			ilVar.OriginalVariable = v;
 			if (!UseDebugSymbols || v.Name == null) {
 				ilVar.Name = "V_" + v.Index;
 				ilVar.HasGeneratedName = true;
@@ -206,6 +207,7 @@ namespace ICSharpCode.Decompiler.IL
 
 			var ilVar = new ILVariable(VariableKind.Parameter, parameterType, p.MethodSigIndex == -2 ? -1 : p.MethodSigIndex);
 			ilVar.IsRefReadOnly = isRefReadOnly;
+			ilVar.OriginalParameter = p;
 			Debug.Assert(ilVar.StoreCount == 1); // count the initial store when the method is called with an argument
 			if (p.IsHiddenThisParameter)
 				ilVar.Name = "this";

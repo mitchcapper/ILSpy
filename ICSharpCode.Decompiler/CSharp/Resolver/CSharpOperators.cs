@@ -20,10 +20,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using dnlib.DotNet;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
+using IMethod = ICSharpCode.Decompiler.TypeSystem.IMethod;
+using IModule = ICSharpCode.Decompiler.TypeSystem.IModule;
+using IType = ICSharpCode.Decompiler.TypeSystem.IType;
 
 namespace ICSharpCode.Decompiler.CSharp.Resolver
 {
@@ -117,6 +121,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 
 			public dnlib.DotNet.IMDTokenProvider MetadataToken => null;
+
+			IMDTokenProvider IEntity.OriginalMember => null;
 
 			ITypeDefinition IEntity.DeclaringTypeDefinition {
 				get { return null; }

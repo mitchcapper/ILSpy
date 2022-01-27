@@ -415,7 +415,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			if (UseKeywordsForBuiltinTypes && typeDef != null) {
 				string keyword = KnownTypeReference.GetCSharpNameByTypeCode(typeDef.KnownTypeCode);
 				if (keyword != null) {
-					return new PrimitiveType(keyword).WithAnnotation(typeDef.MetadataToken);
+					return new PrimitiveType(keyword).WithAnnotation(typeDef.OriginalMember);
 				}
 			}
 
@@ -429,7 +429,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 						foreach (var pair in usingScope.UsingAliases) {
 							if (pair.Value is TypeResolveResult) {
 								if (TypeMatches(pair.Value.Type, typeDef, typeArguments))
-									return MakeSimpleType(pair.Key).WithAnnotation(pair.Value.Type.MetadataToken);
+									return MakeSimpleType(pair.Key).WithAnnotation(pair.Value.Type.OriginalMember);
 							}
 						}
 					}
@@ -450,7 +450,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					if (!trr.IsError && TypeMatches(trr.Type, typeDef, typeArguments)) {
 						// We can use the short type name
 						SimpleType shortResult = MakeSimpleType(typeDef.Name);
-						shortResult.WithAnnotation(typeDef.MetadataToken);
+						shortResult.WithAnnotation(typeDef.OriginalMember);
 						AddTypeArguments(shortResult, typeDef.TypeParameters, typeArguments, outerTypeParameterCount, typeDef.TypeParameterCount);
 						return shortResult;
 					}
@@ -458,7 +458,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 
 			if (AlwaysUseShortTypeNames || (typeDef == null && genericType.DeclaringType == null)) {
-				var shortResult = MakeSimpleType(genericType.Name).WithAnnotation(genericType.MetadataToken);
+				var shortResult = MakeSimpleType(genericType.Name).WithAnnotation(genericType.OriginalMember);
 				AddTypeArguments(shortResult, genericType.TypeParameters, typeArguments, outerTypeParameterCount, genericType.TypeParameterCount);
 				return shortResult;
 			}
@@ -480,7 +480,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				}
 			}
 			result.MemberName = genericType.Name;
-			result.WithAnnotation(genericType.MetadataToken);
+			result.WithAnnotation(genericType.OriginalMember);
 			AddTypeArguments(result, genericType.TypeParameters, typeArguments, outerTypeParameterCount, genericType.TypeParameterCount);
 			return result;
 		}
@@ -635,7 +635,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		SimpleType MakeGlobal()
 		{
-			var global = new SimpleType("global");
+			var global = new SimpleType("global").WithAnnotation(BoxedTextColor.Keyword);
 			if (AddResolveResultAnnotations && resolver != null)
 				global.AddAnnotation(new NamespaceResolveResult(resolver.Compilation.RootNamespace));
 			return global;
@@ -676,9 +676,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			if (attribute.NamedArguments.Length > 0) {
 				InitializedObjectResolveResult targetResult = new InitializedObjectResolveResult(attribute.AttributeType);
 				foreach (var namedArg in attribute.NamedArguments) {
-					NamedExpression namedArgument = new NamedExpression(namedArg.Name, ConvertConstantValue(namedArg.Type, namedArg.Value));
+					var member = MetadataCustomAttribute.MemberForNamedArgument(attribute.AttributeType, namedArg);
+					NamedExpression namedArgument = new NamedExpression {
+						NameToken = Identifier.Create(namedArg.Name).WithAnnotation(member?.OriginalMember),
+						Expression = ConvertConstantValue(namedArg.Type, namedArg.Value)
+					}.WithAnnotation(member?.OriginalMember);
 					if (AddResolveResultAnnotations) {
-						IMember member = MetadataCustomAttribute.MemberForNamedArgument(attribute.AttributeType, namedArg);
 						if (member != null) {
 							namedArgument.AddAnnotation(new MemberResolveResult(targetResult, member));
 						}
@@ -1073,8 +1076,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				if (value == val) {
 					var mre = new MemberReferenceExpression {
 						Target = new TypeReferenceExpression(ConvertType(type)),
-						MemberNameToken = Identifier.Create(field.Name).WithAnnotation(field.MetadataToken)
-					}.WithAnnotation(field.MetadataToken);
+						MemberNameToken = Identifier.Create(field.Name).WithAnnotation(field.OriginalMember)
+					}.WithAnnotation(field.OriginalMember);
 					if (AddResolveResultAnnotations)
 						mre.AddAnnotation(new MemberResolveResult(mre.Target.GetResolveResult(), field));
 					return mre;
@@ -1107,8 +1110,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					if ((fieldValue & enumValue) == fieldValue) {
 						var fieldExpression = new MemberReferenceExpression {
 							Target = new TypeReferenceExpression(ConvertType(type)),
-							MemberNameToken = Identifier.Create(field.Name).WithAnnotation(field.MetadataToken)
-						}.WithAnnotation(field.MetadataToken);
+							MemberNameToken = Identifier.Create(field.Name).WithAnnotation(field.OriginalMember)
+						}.WithAnnotation(field.OriginalMember);
 						if (expr == null)
 							expr = fieldExpression;
 						else
@@ -1119,8 +1122,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					if ((fieldValue & negatedEnumValue) == fieldValue) {
 						var fieldExpression = new MemberReferenceExpression {
 							Target = new TypeReferenceExpression(ConvertType(type)),
-							MemberNameToken = Identifier.Create(field.Name).WithAnnotation(field.MetadataToken)
-						}.WithAnnotation(field.MetadataToken);
+							MemberNameToken = Identifier.Create(field.Name).WithAnnotation(field.OriginalMember)
+						}.WithAnnotation(field.OriginalMember);
 						if (negatedExpr == null)
 							negatedExpr = fieldExpression;
 						else
@@ -1719,7 +1722,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		FieldDeclaration ConvertField(IField field)
 		{
 			FieldDeclaration decl = new FieldDeclaration();
-			decl.WithAnnotation(field.MetadataToken);
+			decl.WithAnnotation(field.OriginalMember);
 			if (ShowModifiers) {
 				Modifiers m = GetMemberModifiers(field);
 				if (field.IsConst) {
@@ -1747,7 +1750,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					initializer = new ErrorExpression(ex.Message);
 				}
 			}
-			decl.Variables.Add(new VariableInitializer(field.MetadataToken, field.Name, initializer));
+			decl.Variables.Add(new VariableInitializer(field.OriginalMember, field.Name, initializer));
 			return decl;
 		}
 
@@ -1768,7 +1771,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			if (accessor == null)
 				return Accessor.Null;
 			Accessor decl = new Accessor();
-			decl.WithAnnotation(accessor.MetadataToken);
+			decl.WithAnnotation(accessor.OriginalMember);
 			if (ShowAttributes) {
 				decl.Attributes.AddRange(ConvertAttributes(accessor.GetAttributes()));
 				decl.Attributes.AddRange(ConvertAttributes(accessor.GetReturnTypeAttributes(), "return"));
@@ -1926,8 +1929,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				ct.HasReadOnlySpecifier = true;
 			}
 
-			decl.WithAnnotation(method.MetadataToken);
-			decl.NameToken = Identifier.Create(method.Name).WithAnnotation(method.MetadataToken);
+			decl.WithAnnotation(method.OriginalMember);
+			decl.NameToken = Identifier.Create(method.Name).WithAnnotation(method.OriginalMember);
 
 			if (this.ShowTypeParameters) {
 				foreach (ITypeParameter tp in method.TypeParameters) {
@@ -1960,7 +1963,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return ConvertMethod(op);
 
 			OperatorDeclaration decl = new OperatorDeclaration();
-			decl.WithAnnotation(op.MetadataToken);
+			decl.WithAnnotation(op.OriginalMember);
 			decl.Modifiers = GetMemberModifiers(op);
 			decl.OperatorType = opType.Value;
 			decl.ReturnType = ConvertType(op.ReturnType);
@@ -1984,7 +1987,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		ConstructorDeclaration ConvertConstructor(IMethod ctor)
 		{
 			ConstructorDeclaration decl = new ConstructorDeclaration();
-			decl.WithAnnotation(ctor);
+			decl.WithAnnotation(ctor.OriginalMember);
 			decl.Modifiers = GetMemberModifiers(ctor);
 			if (ShowAttributes)
 				decl.Attributes.AddRange(ConvertAttributes(ctor.GetAttributes()));
@@ -2004,7 +2007,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		DestructorDeclaration ConvertDestructor(IMethod dtor)
 		{
 			DestructorDeclaration decl = new DestructorDeclaration();
-			decl.WithAnnotation(dtor);
+			decl.WithAnnotation(dtor.OriginalMember);
 			if (ShowAttributes)
 				decl.Attributes.AddRange(ConvertAttributes(dtor.GetAttributes()));
 			if (dtor.DeclaringTypeDefinition != null) {

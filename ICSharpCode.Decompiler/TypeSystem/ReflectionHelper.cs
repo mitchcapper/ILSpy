@@ -205,10 +205,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		public static TypeCode GetTypeCode(this IType type)
 		{
-			ITypeDefinition def = type as ITypeDefinition;
-			if (def != null) {
+			if (type is ITypeDefinition def) {
 				KnownTypeCode typeCode = def.KnownTypeCode;
-				if (typeCode <= KnownTypeCode.String && typeCode != KnownTypeCode.Void)
+				if (typeCode <= KnownTypeCode.String)
 					return (TypeCode)typeCode;
 				else
 					return TypeCode.Empty;

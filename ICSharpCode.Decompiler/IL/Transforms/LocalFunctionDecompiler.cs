@@ -704,9 +704,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		public static bool IsLocalFunctionMethod(TypeSystem.IMethod method, ILTransformContext context)
 		{
-			if (method.MetadataToken is null)
+			if (method.MetadataToken is not MethodDef def)
 				return false;
-			return IsLocalFunctionMethod(method.ParentModule.PEFile, (MethodDef)method.MetadataToken, context);
+			return IsLocalFunctionMethod(method.ParentModule.PEFile, (MethodDef)def, context);
 		}
 
 		public static bool IsLocalFunctionMethod(PEFile module, MethodDef method, ILTransformContext context = null)

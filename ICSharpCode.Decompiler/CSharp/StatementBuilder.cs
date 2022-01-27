@@ -1253,6 +1253,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				var astBuilder = exprBuilder.astBuilder;
 				var method = (MethodDeclaration)astBuilder.ConvertEntity(function.ReducedMethod);
+				method.RemoveAnnotations<dnlib.DotNet.IMethod>();
+				method.AddAnnotation(function.DnlibMethod);
 
 				if (function.Method.HasBody)
 				{

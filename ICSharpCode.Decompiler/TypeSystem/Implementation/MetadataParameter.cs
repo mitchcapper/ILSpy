@@ -18,6 +18,7 @@
 
 using System.Collections.Generic;
 using dnlib.DotNet;
+using dnSpy.Contracts.Decompiler;
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.TypeSystem.Implementation

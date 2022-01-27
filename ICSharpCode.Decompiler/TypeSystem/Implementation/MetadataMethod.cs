@@ -23,7 +23,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using dnlib.DotNet;
-using ICSharpCode.Decompiler.Semantics;
+using dnSpy.Contracts.Decompiler;
 using ICSharpCode.Decompiler.Util;
 using CallingConvention = dnlib.DotNet.CallingConvention;
 
@@ -134,6 +134,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 
 		IMDTokenProvider IEntity.MetadataToken => handle;
+
+		public IMDTokenProvider OriginalMember { get; internal set; }
 
 		public dnlib.DotNet.IMethod MetadataToken => handle;
 
@@ -291,108 +293,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			var b = new AttributeListBuilder(module);
 
-			MethodImplAttributes implAttributes = handle.ImplAttributes & ~MethodImplAttributes.CodeTypeMask;
-
-			#region DllImportAttribute
-
-			var info = handle.ImplMap;
-			if ((attributes & MethodAttributes.PinvokeImpl) == MethodAttributes.PinvokeImpl && info != null && info.Module != null) {
-				var dllImport = new AttributeBuilder(module, KnownAttribute.DllImport);
-				dllImport.AddFixedArg(KnownTypeCode.String, info.Module.Name.String);
-
-				if (info.IsBestFitDisabled)
-					dllImport.AddNamedArg("BestFitMapping", KnownTypeCode.Boolean, false);
-				if (info.IsBestFitEnabled)
-					dllImport.AddNamedArg("BestFitMapping", KnownTypeCode.Boolean, true);
-
-				System.Runtime.InteropServices.CallingConvention callingConvention;
-				switch (info.CallConv) {
-					case 0:
-						Debug.WriteLine($"P/Invoke calling convention not set on: {this}");
-						callingConvention = 0;
-						break;
-					case PInvokeAttributes.CallConvCdecl:
-						callingConvention = System.Runtime.InteropServices.CallingConvention.Cdecl;
-						break;
-					case PInvokeAttributes.CallConvFastcall:
-						callingConvention = System.Runtime.InteropServices.CallingConvention.FastCall;
-						break;
-					case PInvokeAttributes.CallConvStdcall:
-						callingConvention = System.Runtime.InteropServices.CallingConvention.StdCall;
-						break;
-					case PInvokeAttributes.CallConvThiscall:
-						callingConvention = System.Runtime.InteropServices.CallingConvention.ThisCall;
-						break;
-					case PInvokeAttributes.CallConvWinapi:
-						callingConvention = System.Runtime.InteropServices.CallingConvention.Winapi;
-						break;
-					default:
-						throw new NotSupportedException("unknown calling convention");
-				}
-				if (callingConvention != System.Runtime.InteropServices.CallingConvention.Winapi) {
-					var callingConventionType = FindInteropType(nameof(System.Runtime.InteropServices.CallingConvention));
-					dllImport.AddNamedArg("CallingConvention", callingConventionType, (int)callingConvention);
-				}
-
-				CharSet charSet = CharSet.None;
-				switch (info.CharSet) {
-					case PInvokeAttributes.CharSetAnsi:
-						charSet = CharSet.Ansi;
-						break;
-					case PInvokeAttributes.CharSetAuto:
-						charSet = CharSet.Auto;
-						break;
-					case PInvokeAttributes.CharSetUnicode:
-						charSet = CharSet.Unicode;
-						break;
-				}
-				if (charSet != CharSet.None) {
-					var charSetType = FindInteropType(nameof(CharSet));
-					dllImport.AddNamedArg("CharSet", charSetType, (int)charSet);
-				}
-
-				if (!UTF8String.IsNullOrEmpty(info.Name) && info.Name != handle.Name) {
-					dllImport.AddNamedArg("EntryPoint", KnownTypeCode.String, info.Name.String);
-				}
-
-				if (info.IsNoMangle) {
-					dllImport.AddNamedArg("ExactSpelling", KnownTypeCode.Boolean, true);
-				}
-
-				if ((implAttributes & MethodImplAttributes.PreserveSig) == MethodImplAttributes.PreserveSig) {
-					implAttributes &= ~MethodImplAttributes.PreserveSig;
-				} else {
-					dllImport.AddNamedArg("PreserveSig", KnownTypeCode.Boolean, false);
-				}
-
-				if (info.SupportsLastError)
-					dllImport.AddNamedArg("SetLastError", KnownTypeCode.Boolean, true);
-
-				if (info.IsThrowOnUnmappableCharDisabled)
-					dllImport.AddNamedArg("ThrowOnUnmappableChar", KnownTypeCode.Boolean, false);
-				if (info.IsThrowOnUnmappableCharEnabled)
-					dllImport.AddNamedArg("ThrowOnUnmappableChar", KnownTypeCode.Boolean, true);
-
-				b.Add(dllImport.Build());
-			}
-			#endregion
-
-			#region PreserveSigAttribute
-			if (implAttributes == MethodImplAttributes.PreserveSig) {
-				b.Add(KnownAttribute.PreserveSig);
-				implAttributes = 0;
-			}
-			#endregion
-
-			#region MethodImplAttribute
-			if (implAttributes != 0) {
-				b.Add(KnownAttribute.MethodImpl,
-					new TopLevelTypeName("System.Runtime.CompilerServices", nameof(MethodImplOptions)),
-					(int)implAttributes
-				);
-			}
-			#endregion
-
 			// SpecialName
 			if ((handle.Attributes & (MethodAttributes.SpecialName | MethodAttributes.RTSpecialName)) == MethodAttributes.SpecialName
 				&& SymbolKind == SymbolKind.Method)
@@ -400,8 +300,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				b.Add(KnownAttribute.SpecialName);
 			}
 
-			b.Add(handle.CustomAttributes, symbolKind);
-			b.AddSecurityAttributes(handle.DeclSecurities);
+			b.Add(handle.GetCustomAttributes(), symbolKind);
 
 			return b.Build();
 		}

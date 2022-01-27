@@ -46,6 +46,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public abstract dnlib.DotNet.IType MetadataToken { get; }
 
+		public dnlib.DotNet.IMDTokenProvider OriginalMember { get; internal set; }
+
 		public virtual string Namespace {
 			get { return string.Empty; }
 		}

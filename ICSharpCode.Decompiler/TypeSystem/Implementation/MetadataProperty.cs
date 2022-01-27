@@ -73,6 +73,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 
 		IMDTokenProvider IEntity.MetadataToken => propertyHandle;
+
+		public IMDTokenProvider OriginalMember => propertyHandle;
+
 		public PropertyDef MetadataToken => propertyHandle;
 		public string Name => name;
 

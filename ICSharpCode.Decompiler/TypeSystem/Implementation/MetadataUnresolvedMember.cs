@@ -32,6 +32,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		IMDTokenProvider IEntity.MetadataToken => dnlibRef;
 
+		IMDTokenProvider IEntity.OriginalMember => dnlibRef;
+
 		public string Name => dnlibRef.Name;
 
 		ITypeDefinition IEntity.DeclaringTypeDefinition => DeclaringType?.GetDefinition();

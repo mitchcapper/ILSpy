@@ -237,13 +237,13 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (callOpCode == OpCode.NewObj) {
 				target = default(TranslatedExpression); // no target
 			} else if (localFunction != null) {
-				var ide = new IdentifierExpression(localFunction.Name);
+				var ide = IdentifierExpression.Create(localFunction.Name, method.OriginalMember, true);
 				if (method.TypeArguments.Count > 0) {
 					ide.TypeArguments.AddRange(method.TypeArguments.Select(expressionBuilder.ConvertType));
 				}
 				ide.AddAnnotation(localFunction);
 				target = ide.WithoutILInstruction()
-					.WithRR(ToMethodGroup(method, localFunction));
+							.WithRR(ToMethodGroup(method, localFunction));
 			} else {
 				target = expressionBuilder.TranslateTarget(
 					callArguments.FirstOrDefault(),
@@ -306,7 +306,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 
 			if (method.Name == "Invoke" && method.DeclaringType.Kind == TypeKind.Delegate && !IsNullConditional(target)) {
-				return new InvocationExpression(target, argumentList.GetArgumentExpressions()).WithAnnotation(method.MetadataToken)
+				return new InvocationExpression(target, argumentList.GetArgumentExpressions()).WithAnnotation(method.OriginalMember)
 					.WithRR(new CSharpInvocationResolveResult(target.ResolveResult, method,
 						argumentList.GetArgumentResolveResults(), isExpandedForm: argumentList.IsExpandedForm, isDelegateInvocation: true));
 			}
@@ -402,7 +402,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			if ((transform & CallTransformation.RequireTarget) != 0) {
 				targetExpr = new MemberReferenceExpression {
 					Target = target.Expression,
-					MemberNameToken = Identifier.Create(methodName).WithAnnotation(method.MetadataToken)
+					MemberNameToken = Identifier.Create(methodName).WithAnnotation(method.OriginalMember)
 				};
 				typeArgumentList = ((MemberReferenceExpression)targetExpr).TypeArguments;
 
@@ -414,18 +414,18 @@ namespace ICSharpCode.Decompiler.CSharp
 					methodName = interfaceMember.Name;
 					targetExpr = new MemberReferenceExpression {
 						Target = castExpression,
-						MemberNameToken = Identifier.Create(methodName).WithAnnotation(method.MetadataToken)
+						MemberNameToken = Identifier.Create(methodName).WithAnnotation(method.OriginalMember)
 					};
 					typeArgumentList = ((MemberReferenceExpression)targetExpr).TypeArguments;
 				}
 			} else {
-				targetExpr = new IdentifierExpression { IdentifierToken = Identifier.Create(methodName).WithAnnotation(method.MetadataToken) };
+				targetExpr = new IdentifierExpression { IdentifierToken = Identifier.Create(methodName).WithAnnotation(method.OriginalMember) };
 				typeArgumentList = ((IdentifierExpression)targetExpr).TypeArguments;
 			}
 
 			if ((transform & CallTransformation.RequireTypeArguments) != 0 && (!settings.AnonymousTypes || !method.TypeArguments.Any(a => a.ContainsAnonymousType())))
 				typeArgumentList.AddRange(method.TypeArguments.Select(expressionBuilder.ConvertType));
-			return new InvocationExpression(targetExpr, argumentList.GetArgumentExpressions()).WithAnnotation(method.MetadataToken)
+			return new InvocationExpression(targetExpr, argumentList.GetArgumentExpressions()).WithAnnotation(method.OriginalMember)
 				.WithRR(new CSharpInvocationResolveResult(target.ResolveResult, foundMethod,
 					argumentList.GetArgumentResolveResultsDirect(), isExpandedForm: argumentList.IsExpandedForm));
 		}
@@ -1251,17 +1251,17 @@ namespace ICSharpCode.Decompiler.CSharp
 
 				if (arguments.Count != 0) {
 					expr = new IndexerExpression(target.ResolveResult is InitializedObjectResolveResult ? null : target.Expression, arguments.Select(a => a.Expression))
-						   .WithAnnotation(owner.MetadataToken).WithAnnotation(method.MetadataToken)
+						   .WithAnnotation(owner.OriginalMember).WithAnnotation(method.OriginalMember)
 						.WithoutILInstruction().WithRR(rr);
 				} else if (requireTarget) {
 					expr = new MemberReferenceExpression {
 						Target = target.Expression,
-						MemberNameToken = Identifier.Create(owner.Name).WithAnnotation(owner.MetadataToken)
-					}.WithAnnotation(owner.MetadataToken).WithAnnotation(method.MetadataToken).WithoutILInstruction().WithRR(rr);
+						MemberNameToken = Identifier.Create(owner.Name).WithAnnotation(owner.OriginalMember)
+					}.WithAnnotation(owner.OriginalMember).WithAnnotation(method.OriginalMember).WithoutILInstruction().WithRR(rr);
 				} else {
 					expr = new IdentifierExpression {
-						IdentifierToken = Identifier.Create(owner.Name).WithAnnotation(owner.MetadataToken)
-					}.WithAnnotation(owner.MetadataToken).WithAnnotation(method.MetadataToken).WithoutILInstruction().WithRR(rr);
+						IdentifierToken = Identifier.Create(owner.Name).WithAnnotation(owner.OriginalMember)
+					}.WithAnnotation(owner.OriginalMember).WithAnnotation(method.OriginalMember).WithoutILInstruction().WithRR(rr);
 				}
 
 				var op = AssignmentOperatorType.Assign;
@@ -1277,17 +1277,17 @@ namespace ICSharpCode.Decompiler.CSharp
 			} else {
 				if (arguments.Count != 0) {
 					return new IndexerExpression(target.Expression, arguments.Select(a => a.Expression))
-						   .WithAnnotation(owner.MetadataToken).WithAnnotation(method.MetadataToken)
+						   .WithAnnotation(owner.OriginalMember).WithAnnotation(method.OriginalMember)
 						.WithoutILInstruction().WithRR(rr);
 				} else if (requireTarget) {
 					return new MemberReferenceExpression {
 						Target = target.Expression,
-						MemberNameToken = Identifier.Create(owner.Name).WithAnnotation(owner.MetadataToken)
-					}.WithAnnotation(owner.MetadataToken).WithAnnotation(method.MetadataToken).WithoutILInstruction().WithRR(rr);
+						MemberNameToken = Identifier.Create(owner.Name).WithAnnotation(owner.OriginalMember)
+					}.WithAnnotation(owner.OriginalMember).WithAnnotation(method.OriginalMember).WithoutILInstruction().WithRR(rr);
 				} else {
 					return new IdentifierExpression {
-						IdentifierToken = Identifier.Create(owner.Name).WithAnnotation(owner.MetadataToken)
-					}.WithAnnotation(owner.MetadataToken).WithAnnotation(method.MetadataToken).WithoutILInstruction().WithRR(rr);
+						IdentifierToken = Identifier.Create(owner.Name).WithAnnotation(owner.OriginalMember)
+					}.WithAnnotation(owner.OriginalMember).WithAnnotation(method.OriginalMember).WithoutILInstruction().WithRR(rr);
 				}
 			}
 		}
@@ -1354,7 +1354,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				return new ObjectCreateExpression(
 					expressionBuilder.ConvertType(method.DeclaringType),
 					argumentList.GetArgumentExpressions()
-				).WithAnnotation(method.MetadataToken).WithRR(new CSharpInvocationResolveResult(
+				).WithAnnotation(method.OriginalMember).WithRR(new CSharpInvocationResolveResult(
 					target, method, argumentList.GetArgumentResolveResults().ToArray(),
 					isExpandedForm: argumentList.IsExpandedForm, argumentToParameterMap: argumentList.ArgumentToParameterMap
 				));
@@ -1526,15 +1526,15 @@ namespace ICSharpCode.Decompiler.CSharp
 				Debug.Assert(target.Expression != null);
 				var mre = new MemberReferenceExpression {
 					Target = target,
-					MemberNameToken = Identifier.Create(methodName).WithAnnotation(method.MetadataToken)
-				}.WithAnnotation(method.MetadataToken);
+					MemberNameToken = Identifier.Create(methodName).WithAnnotation(method.OriginalMember)
+				}.WithAnnotation(method.OriginalMember);
 				if ((step & 2) != 0)
 					mre.TypeArguments.AddRange(method.TypeArguments.Select(expressionBuilder.ConvertType));
 				targetExpression = mre.WithRR(result);
 			} else {
 				var ide = new IdentifierExpression
-						{ IdentifierToken = Identifier.Create(methodName).WithAnnotation(method.MetadataToken) }
-					.WithAnnotation(method.MetadataToken);
+						{ IdentifierToken = Identifier.Create(methodName).WithAnnotation(method.OriginalMember) }
+					.WithAnnotation(method.OriginalMember);
 				if ((step & 2) != 0) {
 					ide.TypeArguments.AddRange(method.TypeArguments.Select(expressionBuilder.ConvertType));
 				}

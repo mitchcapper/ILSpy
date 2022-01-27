@@ -131,6 +131,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public IMDTokenProvider MetadataToken => baseMember.MetadataToken;
 
+		public IMDTokenProvider OriginalMember => baseMember.OriginalMember;
+
 		public bool IsVirtual {
 			get { return baseMember.IsVirtual; }
 		}

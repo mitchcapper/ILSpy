@@ -326,6 +326,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		IEnumerable<IMethod> GetAccessors(Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.None);
 
 		dnlib.DotNet.IType MetadataToken { get; }
+
+		dnlib.DotNet.IMDTokenProvider OriginalMember { get; }
 	}
 
 	[Flags]

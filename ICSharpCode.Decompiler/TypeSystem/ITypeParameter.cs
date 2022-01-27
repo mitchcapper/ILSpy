@@ -26,7 +26,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	/// <summary>
 	/// Type parameter of a generic class/method.
 	/// </summary>
-	public interface ITypeParameter : IType, INamedElement, ISymbol
+	public interface ITypeParameter : IType, ISymbol
 	{
 		/// <summary>
 		/// Get the type of this type parameter's owner.

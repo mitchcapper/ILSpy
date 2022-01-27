@@ -50,6 +50,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		IMDTokenProvider IEntity.MetadataToken => handle;
 
+		public IMDTokenProvider OriginalMember => handle;
+
 		public EventDef MetadataToken => handle;
 
 		public string Name => name;

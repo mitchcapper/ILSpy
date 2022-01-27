@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	public class UnknownType : AbstractType, ITypeReference
 	{
 		public override dnlib.DotNet.IType MetadataToken => null;
-		
+
 		readonly bool namespaceKnown;
 		readonly FullTypeName fullTypeName;
 		readonly bool? isReferenceType = null;

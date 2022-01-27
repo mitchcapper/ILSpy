@@ -140,6 +140,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		IMDTokenProvider IEntity.MetadataToken => baseMethod.MetadataToken;
 		public dnlib.DotNet.IMethod MetadataToken => baseMethod.MetadataToken;
+		IMDTokenProvider IEntity.OriginalMember => baseMethod.OriginalMember;
 		public SymbolKind SymbolKind => baseMethod.SymbolKind;
 		public ITypeDefinition DeclaringTypeDefinition => baseMethod.DeclaringTypeDefinition;
 		public IType DeclaringType => baseMethod.DeclaringType;

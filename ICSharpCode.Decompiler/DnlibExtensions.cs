@@ -60,6 +60,8 @@ namespace ICSharpCode.Decompiler
 
 		public static TypeSig GetTypeSig(this IType type)
 		{
+			if (type is null)
+				return null;
 			if (type is TypeSig typeSig)
 				return typeSig;
 			if (type is TypeSpec typeSpec)
@@ -88,29 +90,42 @@ namespace ICSharpCode.Decompiler
 
 		public static bool IsCompilerGenerated(this IHasCustomAttribute  provider)
 		{
-			if (provider != null && provider.HasCustomAttributes) {
-				foreach (CustomAttribute a in provider.CustomAttributes) {
-					if (a.AttributeType.FullName == "System.Runtime.CompilerServices.CompilerGeneratedAttribute")
-						return true;
-				}
-			}
-			return false;
+			return provider.IsDefined(systemRuntimeCompilerServicesString, compilerGeneratedAttributeString);
 		}
+
+		static readonly UTF8String systemRuntimeCompilerServicesString = new UTF8String("System.Runtime.CompilerServices");
+		static readonly UTF8String compilerGeneratedAttributeString = new UTF8String("CompilerGeneratedAttribute");
 
 		public static bool IsAnonymousType(this ITypeDefOrRef type)
 		{
 			if (type == null)
 				return false;
-			if (string.IsNullOrEmpty(type.Namespace) && type.HasGeneratedName() && (type.Name.Contains("AnonType") || type.Name.Contains("AnonymousType"))) {
-				TypeDef td = type.Resolve();
+			if (!string.IsNullOrEmpty(type.GetNamespaceInternal()))
+				return false;
+			string name = type.Name;
+			if (name.StartsWith("VB$AnonymousType_")|| (type.HasGeneratedName() && (name.Contains("AnonType") || name.Contains("AnonymousType")))) {
+				TypeDef td = type.ResolveTypeDef();
 				return td != null && td.IsCompilerGenerated();
 			}
 			return false;
 		}
 
+		static string GetNamespaceInternal(this ITypeDefOrRef tdr) {
+			var tr = tdr as TypeRef;
+			if (tr != null)
+				return tr.Namespace;
+			var td = tdr as TypeDef;
+			if (td != null)
+				return td.Namespace;
+			return tdr.Namespace;
+		}
+
 		public static bool HasGeneratedName(this IMemberRef member)
 		{
-			return member.Name.StartsWith("<", StringComparison.Ordinal) || member.Name.Contains("$");
+			if (member == null)
+				return false;
+			var u = member.Name;
+			return (object)u != null && u.Data != null && u.Data.Length > 0 && (u.Data[0] == '<' || (u.Data[0] == '$' && u.StartsWith("$VB", StringComparison.Ordinal)));
 		}
 
 		public static bool IsUnconditionalBranch(this OpCode opcode)
@@ -134,17 +149,6 @@ namespace ICSharpCode.Decompiler
 		public static TypeSystem.FullTypeName GetFullTypeName(this IType typeDef)
 		{
 			return new TypeSystem.FullTypeName(typeDef.FullName, true);
-		}
-
-		public static bool IsDelegate(this TypeDef type)
-		{
-			if (type.BaseType != null && type.BaseType.Namespace == "System") {
-				if (type.BaseType.Name == "MulticastDelegate")
-					return true;
-				if (type.BaseType.Name == "Delegate" && type.Name != "MulticastDelegate")
-					return true;
-			}
-			return false;
 		}
 
 		public static int GetCodeSize(this CilBody body)

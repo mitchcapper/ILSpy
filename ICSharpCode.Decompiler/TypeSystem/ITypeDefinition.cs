@@ -81,5 +81,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		bool IsRecord { get; }
 
 		new TypeDef MetadataToken { get; }
+
+		new IMDTokenProvider OriginalMember { get; }
 	}
 }

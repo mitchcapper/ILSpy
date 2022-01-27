@@ -48,6 +48,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		TypeParameterSubstitution IMember.Substitution => TypeParameterSubstitution.Identity;
 		dnlib.DotNet.IMDTokenProvider IEntity.MetadataToken => null;
+		dnlib.DotNet.IMDTokenProvider IEntity.OriginalMember => null;
 
 		public string Name { get; set; }
 

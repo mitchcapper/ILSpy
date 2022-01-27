@@ -38,6 +38,7 @@ using System.Text;
 using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
 using dnlib.DotNet.Emit;
 using dnSpy.Contracts.Decompiler;
+using dnSpy.Contracts.Text;
 
 namespace ICSharpCode.Decompiler.CSharp
 {
@@ -288,7 +289,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						return true;
 					if (settings.AnonymousTypes && type.IsAnonymousType())
 						return true;
-					if (settings.Dynamic && type.IsDelegate() && (type.Name.StartsWith("<>A", StringComparison.Ordinal) || type.Name.StartsWith("<>F", StringComparison.Ordinal)))
+					if (settings.Dynamic && type.IsDelegate && (type.Name.StartsWith("<>A", StringComparison.Ordinal) || type.Name.StartsWith("<>F", StringComparison.Ordinal)))
 						return true;
 				}
 				if (settings.ArrayInitializers && settings.SwitchStatementOnString && type.Name.StartsWith("<PrivateImplementationDetails>", StringComparison.Ordinal))
@@ -805,10 +806,16 @@ namespace ICSharpCode.Decompiler.CSharp
 				methodDecl.Body.AddChild(new Comment(
 					"ILSpy generated this explicit interface implementation from .override directive in " + memberDecl.Name),
 				                         Roles.Comment);
-				var forwardingCall = new InvocationExpression(new MemberReferenceExpression(new ThisReferenceExpression(), memberDecl.Name,
-					methodDecl.TypeParameters.Select(tp => new SimpleType(tp.Name))),
-					methodDecl.Parameters.Select(p => ForwardParameter(p))
-				);
+
+				var member = new MemberReferenceExpression {
+					Target = new ThisReferenceExpression().WithAnnotation(methodHandle.DeclaringType),
+					MemberNameToken = Identifier.Create(memberDecl.Name).WithAnnotation(method.OriginalMember)
+				}.WithAnnotation(method.OriginalMember);
+				member.TypeArguments.AddRange(methodDecl.TypeParameters.Select(tp => new SimpleType(tp.Name)));
+
+				var forwardingCall = new InvocationExpression(member,
+					methodDecl.Parameters.Select(ForwardParameter)
+				).WithAnnotation(method.OriginalMember);
 				if (m.ReturnType.IsKnownType(KnownTypeCode.Void)) {
 					methodDecl.Body.Add(new ExpressionStatement(forwardingCall));
 				} else {
@@ -1117,7 +1124,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			var methodDecl = typeSystemAstBuilder.ConvertEntity(method);
 			int lastDot = method.Name.LastIndexOf('.');
 			if (method.IsExplicitInterfaceImplementation && lastDot >= 0) {
-				methodDecl.Name = method.Name.Substring(lastDot + 1);
+				methodDecl.NameToken.Name = method.Name.Substring(lastDot + 1);
 			}
 			FixParameterNames(methodDecl);
 			var methodDefinition = (MethodDef)method.MetadataToken;
@@ -1382,7 +1389,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				EntityDeclaration propertyDecl = typeSystemAstBuilder.ConvertEntity(property);
 				if (property.IsExplicitInterfaceImplementation && !property.IsIndexer) {
 					int lastDot = property.Name.LastIndexOf('.');
-					propertyDecl.Name = property.Name.Substring(lastDot + 1);
+					propertyDecl.NameToken.Name = property.Name.Substring(lastDot + 1);
 				}
 				FixParameterNames(propertyDecl);
 				Accessor getter, setter;
@@ -1436,7 +1443,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				var eventDecl = typeSystemAstBuilder.ConvertEntity(ev);
 				if (ev.IsExplicitInterfaceImplementation) {
 					int lastDot = ev.Name.LastIndexOf('.');
-					eventDecl.Name = ev.Name.Substring(lastDot + 1);
+					eventDecl.NameToken.Name = ev.Name.Substring(lastDot + 1);
 				}
 				if (adderHasBody)
 				{

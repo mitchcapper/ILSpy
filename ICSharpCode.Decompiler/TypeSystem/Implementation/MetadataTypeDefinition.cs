@@ -22,6 +22,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using dnlib.DotNet;
+using dnSpy.Contracts.Decompiler;
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.TypeSystem.Implementation
@@ -66,7 +67,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.attributes = handle.Attributes;
 			this.fullTypeName = handle.GetFullTypeName();
 			// Find DeclaringType + KnownTypeCode:
-			if (fullTypeName.IsNested) {
+			if (handle.IsNested) {
 				this.DeclaringTypeDefinition = module.GetDefinition(handle.DeclaringType);
 
 				// Create type parameters:
@@ -273,6 +274,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 
 		dnlib.DotNet.IType IType.MetadataToken => handle;
+
+		public IMDTokenProvider OriginalMember { get; internal set; }
+
 		IMDTokenProvider IEntity.MetadataToken => handle;
 		public TypeDef MetadataToken => handle;
 
@@ -286,64 +290,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			var b = new AttributeListBuilder(module);
 
-			// SerializableAttribute
-			if (handle.IsSerializable)
-				b.Add(KnownAttribute.Serializable);
-
-			// ComImportAttribute
-			if (handle.IsImport)
-				b.Add(KnownAttribute.ComImport);
-
 			// SpecialName
 			if ((handle.Attributes & (TypeAttributes.SpecialName | TypeAttributes.RTSpecialName)) == TypeAttributes.SpecialName)
 				b.Add(KnownAttribute.SpecialName);
 
-			#region StructLayoutAttribute
-			LayoutKind layoutKind = LayoutKind.Auto;
-			switch (handle.Layout) {
-				case TypeAttributes.SequentialLayout:
-					layoutKind = LayoutKind.Sequential;
-					break;
-				case TypeAttributes.ExplicitLayout:
-					layoutKind = LayoutKind.Explicit;
-					break;
-			}
-			CharSet charSet = CharSet.None;
-			switch (handle.StringFormat) {
-				case TypeAttributes.AnsiClass:
-					charSet = CharSet.Ansi;
-					break;
-				case TypeAttributes.AutoClass:
-					charSet = CharSet.Auto;
-					break;
-				case TypeAttributes.UnicodeClass:
-					charSet = CharSet.Unicode;
-					break;
-			}
-
-			LayoutKind defaultLayoutKind = Kind == TypeKind.Struct ? LayoutKind.Sequential : LayoutKind.Auto;
-			if (layoutKind != defaultLayoutKind || charSet != CharSet.Ansi || (handle.PackingSize > 0 && handle.PackingSize != ushort.MaxValue) || (handle.ClassSize > 0 && handle.ClassSize != uint.MaxValue)) {
-				var structLayout = new AttributeBuilder(module, KnownAttribute.StructLayout);
-				structLayout.AddFixedArg(
-					new TopLevelTypeName("System.Runtime.InteropServices", "LayoutKind"),
-					(int)layoutKind);
-				if (charSet != CharSet.Ansi) {
-					var charSetType = Compilation.FindType(new TopLevelTypeName("System.Runtime.InteropServices", "CharSet"));
-					structLayout.AddNamedArg("CharSet", charSetType, (int)charSet);
-				}
-				if (handle.PackingSize > 0 && handle.PackingSize != ushort.MaxValue) {
-					structLayout.AddNamedArg("Pack", KnownTypeCode.Int32, (int)handle.PackingSize);
-				}
-				if (handle.ClassSize > 0 && handle.ClassSize != uint.MaxValue) {
-					structLayout.AddNamedArg("Size", KnownTypeCode.Int32, (int)handle.ClassSize);
-				}
-				b.Add(structLayout.Build());
-			}
-
-			#endregion
-
-			b.Add(handle.CustomAttributes, SymbolKind.TypeDefinition);
-			b.AddSecurityAttributes(handle.DeclSecurities);
+			b.Add(handle.GetCustomAttributes(), SymbolKind.TypeDefinition);
 
 			return b.Build();
 		}

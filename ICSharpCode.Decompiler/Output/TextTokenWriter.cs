@@ -136,7 +136,7 @@ namespace ICSharpCode.Decompiler
 			AstNode node = nodeStack.Peek();
 			ILVariable variable = node.Annotation<ILVariableResolveResult>()?.Variable;
 			if (variable != null)
-				return variable.Name;
+				return variable.GetTextReferenceObject();
 
 			var letClauseVariable = node.Annotation<CSharp.Transforms.LetIdentifierAnnotation>();
 			if (letClauseVariable != null)
@@ -146,12 +146,6 @@ namespace ICSharpCode.Decompiler
 				var method = nodeStack.Select(nd => nd.GetSymbol() as IMethod).FirstOrDefault(mr => mr != null);
 				if (method != null)
 					return method + gotoStatement.Label;
-			}
-
-			if (node.Role == Roles.TargetExpression && node.Parent is InvocationExpression) {
-				var symbol = node.Parent.GetSymbol();
-				if (symbol is LocalFunctionMethod s)
-					return s.FullName;
 			}
 
 			return null;
@@ -166,14 +160,14 @@ namespace ICSharpCode.Decompiler
 			if (node is ParameterDeclaration || node is VariableInitializer || node is CatchClause || node is VariableDesignation) {
 				var variable = node.Annotation<ILVariableResolveResult>()?.Variable;
 				if (variable != null)
-					return variable.Name;
+					return variable.GetTextReferenceObject();;
 			}
 
 			if (id.Role == QueryJoinClause.IntoIdentifierRole || id.Role == QueryJoinClause.JoinIdentifierRole)
 			{
 				var variable = id.Annotation<ILVariableResolveResult>()?.Variable;
 				if (variable != null)
-					return variable.Name;
+					return variable.GetTextReferenceObject();;
 			}
 
 			if (node is QueryLetClause)
@@ -187,12 +181,6 @@ namespace ICSharpCode.Decompiler
 				var method = nodeStack.Select(nd => nd.GetSymbol() as IMethod).FirstOrDefault(mr => mr != null);
 				if (method != null)
 					return method + label.Label;
-			}
-
-			if (node is MethodDeclaration && node.Parent is LocalFunctionDeclarationStatement) {
-				var localFunction = node.Parent.GetResolveResult() as MemberResolveResult;
-				if (localFunction != null)
-					return localFunction.Member.FullName;
 			}
 
 			return null;

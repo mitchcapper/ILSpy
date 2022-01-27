@@ -37,6 +37,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </remarks>
 		IMDTokenProvider MetadataToken { get; }
 
+		IMDTokenProvider OriginalMember { get; }
+
 		/// <summary>
 		/// Gets the short name of the entity.
 		/// </summary>

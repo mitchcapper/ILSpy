@@ -327,13 +327,13 @@ namespace ICSharpCode.Decompiler.CSharp
 				mrr = new MemberResolveResult(target.ResolveResult, field);
 			}
 
-			Identifier id = Identifier.Create(field.Name).WithAnnotation(field.MetadataToken);
+			Identifier id = Identifier.Create(field.Name).WithAnnotation(field.OriginalMember);
 			if (requireTarget) {
-				return new MemberReferenceExpression { Target = target, MemberNameToken = id }.WithAnnotation(field.MetadataToken)
+				return new MemberReferenceExpression { Target = target, MemberNameToken = id }.WithAnnotation(field.OriginalMember)
 					.WithRR(mrr);
 			}
 
-			return new IdentifierExpression { IdentifierToken = id }.WithAnnotation(field.MetadataToken).WithRR(mrr);
+			return new IdentifierExpression { IdentifierToken = id }.WithAnnotation(field.OriginalMember).WithRR(mrr);
 		}
 
 		TranslatedExpression IsType(IsInst inst)
@@ -618,19 +618,19 @@ namespace ICSharpCode.Decompiler.CSharp
 				handleName = "FieldHandle";
 				referencedEntity = new MemberReferenceExpression {
 					Target = new TypeReferenceExpression(ConvertType(fr.DeclaringType)),
-					MemberNameToken = Identifier.Create(fr.Name).WithAnnotation(fr.MetadataToken)
-				}.WithAnnotation(fr.MetadataToken);
+					MemberNameToken = Identifier.Create(fr.Name).WithAnnotation(fr.OriginalMember)
+				}.WithAnnotation(fr.OriginalMember);
 			} else if (inst.Member is IMethod mr) {
 				loadName = "methodof";
 				handleName = "MethodHandle";
 				var inco = new InvocationExpression {
 					Target = new MemberReferenceExpression {
 						Target = new TypeReferenceExpression(ConvertType(mr.DeclaringType)),
-						MemberNameToken = Identifier.Create(mr.Name).WithAnnotation(mr.MetadataToken)
+						MemberNameToken = Identifier.Create(mr.Name).WithAnnotation(mr.OriginalMember)
 					}
 				};
 				inco.Arguments.AddRange(mr.Parameters.Select(p => new TypeReferenceExpression(ConvertType(p.Type))));
-				inco.WithAnnotation(mr.MetadataToken);
+				inco.WithAnnotation(mr.OriginalMember);
 				referencedEntity = inco;
 			} else {
 				return base.VisitLdMemberToken(inst, context);
@@ -1647,9 +1647,11 @@ namespace ICSharpCode.Decompiler.CSharp
 				AssignmentOperatorType? op = GetAssignmentOperatorTypeFromMetadataName(inst.Method.Name);
 				Debug.Assert(op != null);
 
-				return new AssignmentExpression(target, op.Value, value)
-					.WithILInstruction(inst)
-					.WithRR(new OperatorResolveResult(inst.Method.ReturnType, AssignmentExpression.GetLinqNodeType(op.Value, false), inst.Method, inst.IsLifted, new[] { target.ResolveResult, value.ResolveResult }));
+				return new AssignmentExpression(target, op.Value, value).WithAnnotation(inst.Method.OriginalMember)
+					   .WithILInstruction(inst)
+					   .WithRR(new OperatorResolveResult(inst.Method.ReturnType,
+						   AssignmentExpression.GetLinqNodeType(op.Value, false), inst.Method, inst.IsLifted,
+						   new[] { target.ResolveResult, value.ResolveResult }));
 			} else {
 				UnaryOperatorType? op = GetUnaryOperatorTypeFromMetadataName(inst.Method.Name, inst.EvalMode == CompoundEvalMode.EvaluatesToOldValue);
 				Debug.Assert(op != null);
@@ -2263,7 +2265,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				{
 					var baseReferenceType = resolver.CurrentTypeDefinition.DirectBaseTypes
 						.FirstOrDefault(t => t.Kind != TypeKind.Interface);
-					return new BaseReferenceExpression().WithAnnotation((baseReferenceType ?? memberDeclaringType)?.MetadataToken)
+					return new BaseReferenceExpression().WithAnnotation((baseReferenceType ?? memberDeclaringType)?.OriginalMember)
 						.WithILInstruction(target)
 						.WithRR(new ThisResolveResult(baseReferenceType ?? memberDeclaringType, nonVirtualInvocation));
 				}
@@ -2544,6 +2546,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		protected internal override TranslatedExpression VisitLdLen(LdLen inst, TranslationContext context)
 		{
+			//TODO: annotate with member reference
 			IType arrayType = compilation.FindType(KnownTypeCode.Array);
 			TranslatedExpression arrayExpr = Translate(inst.Array, typeHint: arrayType);
 			if (arrayExpr.Type.Kind != TypeKind.Array) {
@@ -2552,21 +2555,77 @@ namespace ICSharpCode.Decompiler.CSharp
 			arrayExpr = EnsureTargetNotNullable(arrayExpr, inst.Array);
 			string memberName;
 			KnownTypeCode code;
+			dnlib.DotNet.IMDTokenProvider dnlibMember;
 			if (inst.ResultType == StackType.I4) {
 				memberName = "Length";
 				code = KnownTypeCode.Int32;
+				dnlibMember = Create_SystemArray_get_Length();
 			} else {
 				memberName = "LongLength";
 				code = KnownTypeCode.Int64;
+				dnlibMember = Create_SystemArray_get_LongLength();
 			}
 			IProperty member = arrayType.GetProperties(p => p.Name == memberName).FirstOrDefault();
 			ResolveResult rr = member == null
 				? new ResolveResult(compilation.FindType(code))
 				: new MemberResolveResult(arrayExpr.ResolveResult, member);
-			return new MemberReferenceExpression(arrayExpr.Expression, memberName)
-				.WithILInstruction(inst)
-				.WithRR(rr);
+			return new MemberReferenceExpression {
+				MemberNameToken = Identifier.Create(memberName).WithAnnotation(BoxedTextColor.InstanceProperty),
+				Target = arrayExpr.Expression
+			}.WithAnnotation(dnlibMember).WithILInstruction(inst).WithRR(rr);
 		}
+
+		dnlib.DotNet.IMDTokenProvider Create_SystemArray_get_Length()
+		{
+			if (Create_SystemArray_get_Length_result_initd)
+				return Create_SystemArray_get_Length_result;
+			Create_SystemArray_get_Length_result_initd = true;
+
+			const string propName = "Length";
+			var module = typeSystem.MainModule.metadata;
+			var corLib = typeSystem.MainModule.metadata.CorLibTypes;
+			var type = corLib.GetTypeRef("System", "Array");
+			var retType = corLib.Int32;
+			var mr = new dnlib.DotNet.MemberRefUser(module, "get_" + propName, dnlib.DotNet.MethodSig.CreateInstance(retType), type);
+			Create_SystemArray_get_Length_result = mr;
+			var md = mr.ResolveMethod();
+			if (md == null || md.DeclaringType == null)
+				return mr;
+			var prop = md.DeclaringType.FindProperty(propName);
+			if (prop == null)
+				return mr;
+
+			Create_SystemArray_get_Length_result = prop;
+			return prop;
+		}
+		dnlib.DotNet.IMDTokenProvider Create_SystemArray_get_Length_result;
+		bool Create_SystemArray_get_Length_result_initd;
+
+		dnlib.DotNet.IMDTokenProvider Create_SystemArray_get_LongLength()
+		{
+			if (Create_SystemArray_get_LongLength_result_initd)
+				return Create_SystemArray_get_LongLength_result;
+			Create_SystemArray_get_LongLength_result_initd = true;
+
+			const string propName = "LongLength";
+			var module = typeSystem.MainModule.metadata;
+			var corLib = typeSystem.MainModule.metadata.CorLibTypes;
+			var type = corLib.GetTypeRef("System", "Array");
+			var retType = corLib.Int64;
+			var mr = new dnlib.DotNet.MemberRefUser(module, "get_" + propName, dnlib.DotNet.MethodSig.CreateInstance(retType), type);
+			Create_SystemArray_get_LongLength_result = mr;
+			var md = mr.ResolveMethod();
+			if (md == null || md.DeclaringType == null)
+				return mr;
+			var prop = md.DeclaringType.FindProperty(propName);
+			if (prop == null)
+				return mr;
+
+			Create_SystemArray_get_LongLength_result = prop;
+			return prop;
+		}
+		dnlib.DotNet.IMDTokenProvider Create_SystemArray_get_LongLength_result;
+		bool Create_SystemArray_get_LongLength_result_initd;
 
 		protected internal override TranslatedExpression VisitLdFlda(LdFlda inst, TranslationContext context)
 		{
@@ -2958,8 +3017,11 @@ namespace ICSharpCode.Decompiler.CSharp
 						} else {
 							var value = Translate(info.Values.Single(), typeHint: memberRR.Type)
 								.ConvertTo(memberRR.Type, this, allowImplicitConversion: true);
-							var assignment = new NamedExpression(lastElement.Member.Name, value)
-								.WithILInstruction(inst).WithRR(memberRR);
+							var named = new NamedExpression().WithAnnotation(lastElement.Member.OriginalMember);
+							named.NameToken = Identifier.Create(lastElement.Member.Name).WithAnnotation(lastElement.Member.OriginalMember);
+							named.Expression = value;
+							var assignment = named
+											 .WithILInstruction(inst).WithRR(memberRR);
 							elementsStack.Peek().Add(assignment);
 						}
 						break;

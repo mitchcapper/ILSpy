@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Linq;
 using dnlib.DotNet;
-using dnSpy.Contracts.Decompiler;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
 
@@ -83,7 +82,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					Console.WriteLine("Resolving TypeRef: {0}", typeRef);
 					var resolved = typeRef.Resolve();
 					if (resolved != null && module.Compilation.GetOrAddModule(resolved.Module) is MetadataModule mod) {
-						tsType = mod.GetDefinition(resolved);
+						var mdType = mod.GetDefinitionInternal(resolved);
+						mdType.OriginalMember = typeRef;
+						tsType = mdType;
 					}
 					else {
 						Console.WriteLine("Failed");
@@ -92,7 +93,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 							isReferenceType = isVT == ThreeState.False;
 						else
 							isReferenceType = null;
-						tsType = new UnknownType(typeDefOrRef.GetFullTypeName(), isReferenceType);
+						tsType = new UnknownType(typeRef.GetFullTypeName(), isReferenceType) { OriginalMember = typeRef };
 					}
 
 					return module.typeRefDict[typeRef] = tsType;

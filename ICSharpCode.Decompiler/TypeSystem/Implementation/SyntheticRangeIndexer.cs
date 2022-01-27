@@ -86,6 +86,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		TypeParameterSubstitution IMember.Substitution => underlyingMethod.Substitution;
 		dnlib.DotNet.IMDTokenProvider IEntity.MetadataToken => underlyingMethod.MetadataToken;
 		public dnlib.DotNet.IMethod MetadataToken => underlyingMethod.MetadataToken;
+		dnlib.DotNet.IMDTokenProvider IEntity.OriginalMember => underlyingMethod.OriginalMember;
 		public string Name => underlyingMethod.Name;
 		IType IEntity.DeclaringType => underlyingMethod.DeclaringType;
 		ITypeDefinition IEntity.DeclaringTypeDefinition => underlyingMethod.DeclaringTypeDefinition;

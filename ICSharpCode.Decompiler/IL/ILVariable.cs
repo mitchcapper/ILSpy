@@ -437,6 +437,9 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		internal bool RemoveIfRedundant;
 
+		public dnlib.DotNet.Parameter OriginalParameter;
+		public dnlib.DotNet.Emit.Local OriginalVariable;
+
 		public ILVariable(VariableKind kind, IType type, int? index = null)
 		{
 			if (type == null)
@@ -467,6 +470,52 @@ namespace ICSharpCode.Decompiler.IL
 				this.UsesInitialValue = true;
 			}
 			CheckInvariant();
+		}
+
+		public dnlib.DotNet.TypeSig GetVariableType()
+		{
+			//TODO: This doesn't work since most signature types in the TypeSystem don't store a dnlib type.
+			return (Type.OriginalMember as dnlib.DotNet.IType)?.GetTypeSig() ??
+				   OriginalVariable?.Type ?? OriginalParameter?.Type ?? new dnlib.DotNet.SentinelSig();
+		}
+
+		public SourceLocal GetSourceLocal() {
+			Debug.Assert(OriginalParameter == null);
+			Debug.Assert(Name != null);
+			var hoistedField = StateMachineField?.MetadataToken as dnlib.DotNet.FieldDef;
+			if (sourceParamOrLocal == null)
+				Interlocked.CompareExchange(ref sourceParamOrLocal,
+					hoistedField != null
+						? new SourceLocal(OriginalVariable, Name, hoistedField, GetSourceVariableFlags())
+						: new SourceLocal(OriginalVariable, Name, GetVariableType(), GetSourceVariableFlags()), null);
+			return (SourceLocal)sourceParamOrLocal;
+		}
+
+		SourceVariableFlags GetSourceVariableFlags()
+		{
+			var flags = SourceVariableFlags.None;
+			if (IsRefReadOnly)
+				flags |= SourceVariableFlags.ReadOnlyReference;
+			return flags;
+		}
+
+		public SourceParameter GetSourceParameter() {
+			Debug.Assert(OriginalParameter != null);
+			Debug.Assert(Name != null);
+			var hoistedField = StateMachineField?.MetadataToken as dnlib.DotNet.FieldDef;
+			if (sourceParamOrLocal == null)
+				Interlocked.CompareExchange(ref sourceParamOrLocal,
+					hoistedField != null
+						? new SourceParameter(OriginalParameter, Name, hoistedField, GetSourceVariableFlags())
+						: new SourceParameter(OriginalParameter, Name, GetVariableType(), GetSourceVariableFlags()), null);
+			return (SourceParameter)sourceParamOrLocal;
+		}
+		object sourceParamOrLocal;
+
+		public object GetTextReferenceObject() {
+			if (OriginalParameter != null)
+				return OriginalParameter;
+			return GetSourceLocal();
 		}
 
 		public override string ToString()

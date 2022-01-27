@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using dnlib.DotNet;
+using dnSpy.Contracts.Decompiler;
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.TypeSystem.Implementation
@@ -58,6 +59,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		IMDTokenProvider IEntity.MetadataToken => handle;
 
 		public dnlib.DotNet.IField MetadataToken => handle;
+
+		public IMDTokenProvider OriginalMember { get; internal set; }
 
 		public override string ToString()
 		{
@@ -126,25 +129,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			var b = new AttributeListBuilder(module);
 
-			// FieldOffsetAttribute
-			uint? offset = handle.FieldOffset;
-			if (offset.HasValue) {
-				b.Add(KnownAttribute.FieldOffset, KnownTypeCode.Int32, (int)offset.Value);
-			}
-
-			// NonSerializedAttribute
-			if ((handle.Attributes & FieldAttributes.NotSerialized) != 0) {
-				b.Add(KnownAttribute.NonSerialized);
-			}
-
 			// SpecialName
 			if ((handle.Attributes & (FieldAttributes.SpecialName | FieldAttributes.RTSpecialName)) == FieldAttributes.SpecialName)
 			{
 				b.Add(KnownAttribute.SpecialName);
 			}
 
-			b.AddMarshalInfo(handle.MarshalType);
-			b.Add(handle.CustomAttributes, SymbolKind.Field);
+			b.Add(handle.GetCustomAttributes(), SymbolKind.Field);
 
 			return b.Build();
 		}

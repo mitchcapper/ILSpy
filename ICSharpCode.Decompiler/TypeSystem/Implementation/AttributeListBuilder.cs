@@ -16,18 +16,13 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
-using System.Text;
 using ICSharpCode.Decompiler.Util;
-using ICSharpCode.Decompiler.Semantics;
 using System.Runtime.InteropServices;
 using System.Linq;
 using dnlib.DotNet;
-using dnlib.IO;
 
 namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
@@ -143,7 +138,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		#endregion
 
 		#region Custom Attributes (ReadAttribute)
-		public void Add(CustomAttributeCollection attributes, SymbolKind target)
+		public void Add(IEnumerable<CustomAttribute> attributes, SymbolKind target)
 		{
 			foreach (var handle in attributes) {
 				// Attribute types shouldn't be generic (and certainly not open), so we don't need a generic context.
@@ -220,86 +215,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				_ => false
 			};
 		}
-		#endregion
-
-		#region Security Attributes
-		public void AddSecurityAttributes(IList<DeclSecurity> securityDeclarations)
-		{
-			foreach (var secDecl in securityDeclarations) {
-				if (secDecl is null)
-					continue;
-				AddSecurityAttributes(secDecl);
-			}
-		}
-
-		public void AddSecurityAttributes(DeclSecurity secDecl)
-		{
-			var securityActionType = module.Compilation.FindType(new TopLevelTypeName("System.Security.Permissions", "SecurityAction"));
-			var securityAction = new CustomAttributeTypedArgument<IType>(securityActionType, (int)secDecl.Action);
-
-			if (secDecl.GetBlob()[0] == '.') {
-				// binary attribute
-				foreach (var secAttr in secDecl.SecurityAttributes) {
-					Add(ReadBinarySecurityAttribute(secAttr, securityAction));
-				}
-			} else {
-				// for backward compatibility with .NET 1.0: XML-encoded attribute
-				Add(ReadXmlSecurityAttribute(secDecl, securityAction));
-			}
-		}
-
-		private IAttribute ReadXmlSecurityAttribute(DeclSecurity secDecl, CustomAttributeTypedArgument<IType> securityAction)
-		{
-			string xml = secDecl.GetNet1xXmlString();
-			var b = new AttributeBuilder(module, KnownAttribute.PermissionSet);
-			b.AddFixedArg(securityAction);
-			b.AddNamedArg("XML", KnownTypeCode.String, xml);
-			return b.Build();
-		}
-
-		private IAttribute ReadBinarySecurityAttribute(SecurityAttribute secDecl, CustomAttributeTypedArgument<IType> securityAction)
-		{
-			var attributeType = secDecl.AttributeType.DecodeSignature(module, new GenericContext());
-
-			List<CustomAttributeNamedArgument<IType>> named = new List<CustomAttributeNamedArgument<IType>>();
-			foreach (CANamedArgument namedArgument in secDecl.NamedArguments) {
-				var converted = Convert(namedArgument.Argument);
-				named.Add(new CustomAttributeNamedArgument<IType>(namedArgument.Name.String,
-					namedArgument.IsField
-						? CustomAttributeNamedArgumentKind.Field
-						: CustomAttributeNamedArgumentKind.Property,
-					converted.Type, converted.Value));
-			}
-
-			return new DefaultAttribute(
-				attributeType,
-				fixedArguments: ImmutableArray.Create(securityAction),
-				namedArguments: named.ToImmutableArray());
-		}
-
-		CustomAttributeTypedArgument<IType> Convert(CAArgument argument)
-		{
-			var convertedType = argument.Type.DecodeSignature(module, new GenericContext());
-			if (argument.Value is TypeSig ts) {
-				return new CustomAttributeTypedArgument<IType>(convertedType,
-					ts.DecodeSignature(module, new GenericContext()));
-			}
-			if (argument.Value is IList<CAArgument> list) {
-				List<CustomAttributeTypedArgument<IType>> converted = new List<CustomAttributeTypedArgument<IType>>();
-				foreach (CAArgument caArgument in list) {
-					converted.Add(Convert(caArgument));
-				}
-				return new CustomAttributeTypedArgument<IType>(convertedType, converted.ToImmutableArray());
-			}
-			if (argument.Value is UTF8String utf8String) {
-				return new CustomAttributeTypedArgument<IType>(convertedType, utf8String.String);
-			}
-			if (argument.Value is CAArgument) {
-				throw new NotSupportedException();
-			}
-			return new CustomAttributeTypedArgument<IType>(convertedType, argument.Value);
-		}
-
 		#endregion
 
 		public IAttribute[] Build()
