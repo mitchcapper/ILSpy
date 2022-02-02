@@ -1079,8 +1079,9 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		object GetParameterColor(ILVariable ilv)
 		{
-			if (ilv.Name == "value" && ilv.Index.HasValue && ilv.Index.Value == ilv.Function.Parameters.Count - 1)
-				return BoxedTextColor.Keyword;
+			//TODO:
+			// if (valueParameterIsKeyword && ilv.OriginalParameter?.Name == "value" && methodDef.Parameters.Count > 0 && methodDef.Parameters[methodDef.Parameters.Count - 1] == ilv.OriginalParameter)
+			// 	return BoxedTextColor.Keyword;
 			return ilv.Kind == VariableKind.Parameter ? BoxedTextColor.Parameter : BoxedTextColor.Local;
 		}
 

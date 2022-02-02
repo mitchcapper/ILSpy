@@ -14,7 +14,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		dnlib.DotNet.IType IType.MetadataToken => baseType.MetadataToken;
 
-		dnlib.DotNet.IMDTokenProvider IType.OriginalMember => baseType.OriginalMember;
+		dnlib.DotNet.IType IType.OriginalMember => baseType.OriginalMember;
 
 		TypeKind IType.Kind => baseType.Kind;
 

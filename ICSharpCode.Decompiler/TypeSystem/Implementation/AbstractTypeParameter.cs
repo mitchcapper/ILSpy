@@ -60,7 +60,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public abstract GenericParam MDGenericParam { get; }
 
-		public IMDTokenProvider OriginalMember { get; internal set; }
+		public dnlib.DotNet.IType OriginalMember { get; internal set; }
 
 		SymbolKind ISymbol.SymbolKind {
 			get { return SymbolKind.TypeParameter; }

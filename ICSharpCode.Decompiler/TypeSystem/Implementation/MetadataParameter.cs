@@ -158,6 +158,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		SymbolKind ISymbol.SymbolKind => SymbolKind.Parameter;
 
+		public Parameter MDParameter => handle;
+
 		public override string ToString()
 		{
 			return $"NO-TOKEN {DefaultParameter.ToString(this)}";

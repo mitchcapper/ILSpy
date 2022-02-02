@@ -66,15 +66,9 @@ namespace ICSharpCode.Decompiler
 				return;
 			}
 
-			var member = GetCurrentMemberReference();
+			var member = GetCurrentMemberReference() ?? (object)identifier.Annotation<NamespaceReference>();
 			if (member != null) {
 				output.Write(escapedName, member, DecompilerReferenceFlags.None, data);
-				return;
-			}
-
-			object memberRef = identifier.Annotation<NamespaceReference>();
-			if (memberRef != null) {
-				output.Write(escapedName, memberRef, DecompilerReferenceFlags.None, data);
 				return;
 			}
 
@@ -134,7 +128,12 @@ namespace ICSharpCode.Decompiler
 		object GetCurrentLocalReference()
 		{
 			AstNode node = nodeStack.Peek();
-			ILVariable variable = node.Annotation<ILVariableResolveResult>()?.Variable;
+
+			ILVariable variable = node.Annotation<ILVariable>();
+			if (variable != null)
+				return variable.GetTextReferenceObject();
+
+			variable = node.Annotation<ILVariableResolveResult>()?.Variable;
 			if (variable != null)
 				return variable.GetTextReferenceObject();
 
@@ -156,6 +155,10 @@ namespace ICSharpCode.Decompiler
 			AstNode node = nodeStack.Peek();
 			if (node is Identifier && node.Parent != null)
 				node = node.Parent;
+
+			var parameterDef = node.Annotation<Parameter>();
+			if (parameterDef != null)
+				return parameterDef;
 
 			if (node is ParameterDeclaration || node is VariableInitializer || node is CatchClause || node is VariableDesignation) {
 				var variable = node.Annotation<ILVariableResolveResult>()?.Variable;
@@ -342,11 +345,11 @@ namespace ICSharpCode.Decompiler
 		public override void WritePreProcessorDirective(PreProcessorDirectiveType type, string argument)
 		{
 			// pre-processor directive must start on its own line
-			output.Write("#", BoxedTextColor.Text);
-			output.Write(type.ToString().ToLowerInvariant(), BoxedTextColor.Text);
+			output.Write("#", BoxedTextColor.PreprocessorKeyword);
+			output.Write(type.ToString().ToLowerInvariant(), BoxedTextColor.PreprocessorKeyword);
 			if (!string.IsNullOrEmpty(argument)) {
 				output.Write(" ", BoxedTextColor.Text);
-				output.Write(argument, BoxedTextColor.Text);
+				output.Write(argument, BoxedTextColor.PreprocessorText);
 			}
 			output.WriteLine();
 		}

@@ -201,8 +201,12 @@ namespace ICSharpCode.Decompiler.CSharp
 			Expression expr;
 			if (variable.Kind == VariableKind.Parameter && variable.Index < 0)
 				expr = new ThisReferenceExpression().WithAnnotation(currentFunction.DnlibMethod.DeclaringType);
-			else
-				expr = new IdentifierExpression(variable.Name);
+			else {
+				var ide = IdentifierExpression.Create(variable.Name, GetParameterColor(variable)).WithAnnotation(variable);
+				ide.IdentifierToken.AddAnnotation(variable);
+				expr = ide;
+			}
+
 			if (variable.Type.Kind == TypeKind.ByReference) {
 				// When loading a by-ref parameter, use 'ref paramName'.
 				// We'll strip away the 'ref' when dereferencing.
@@ -221,6 +225,14 @@ namespace ICSharpCode.Decompiler.CSharp
 				return expr.WithRR(new ILVariableResolveResult(variable, variable.Type));
 			}
 		}
+
+		object GetParameterColor(ILVariable ilv)
+        {
+			//TODO:
+        	// if (valueParameterIsKeyword && ilv.OriginalParameter?.Name == "value" && methodDef.Parameters.Count > 0 && methodDef.Parameters[methodDef.Parameters.Count - 1] == ilv.OriginalParameter)
+        	// 	return BoxedTextColor.Keyword;
+			return ilv.Kind == VariableKind.Parameter ? BoxedTextColor.Parameter : BoxedTextColor.Local;
+        }
 
 		internal bool HidesVariableWithName(string name)
 		{
@@ -2546,7 +2558,6 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		protected internal override TranslatedExpression VisitLdLen(LdLen inst, TranslationContext context)
 		{
-			//TODO: annotate with member reference
 			IType arrayType = compilation.FindType(KnownTypeCode.Array);
 			TranslatedExpression arrayExpr = Translate(inst.Array, typeHint: arrayType);
 			if (arrayExpr.Type.Kind != TypeKind.Array) {

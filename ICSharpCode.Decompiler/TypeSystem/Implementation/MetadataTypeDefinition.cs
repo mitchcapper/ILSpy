@@ -275,7 +275,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		dnlib.DotNet.IType IType.MetadataToken => handle;
 
-		public IMDTokenProvider OriginalMember { get; internal set; }
+		IMDTokenProvider IEntity.OriginalMember => OriginalMember;
+
+		public dnlib.DotNet.IType OriginalMember { get; internal set; }
 
 		IMDTokenProvider IEntity.MetadataToken => handle;
 		public TypeDef MetadataToken => handle;

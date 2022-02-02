@@ -32,19 +32,24 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				}
 				case GenericInstSig instSig:
 					return new ParameterizedType(instSig, instSig.GenericType.DecodeSignature(module, context),
-						instSig.GenericArguments.Select(x => x.DecodeSignature(module, context)));
+						instSig.GenericArguments.Select(x => x.DecodeSignature(module, context))) { OriginalMember = instSig };
 				case ByRefSig byRefSig:
-					return new ByReferenceType(byRefSig, byRefSig.Next.DecodeSignature(module, context));
+					return new ByReferenceType(byRefSig, byRefSig.Next.DecodeSignature(module, context))
+						{ OriginalMember = byRefSig };
 				case PinnedSig pinnedSig:
-					return new PinnedType(pinnedSig, pinnedSig.Next.DecodeSignature(module, context));
+					return new PinnedType(pinnedSig, pinnedSig.Next.DecodeSignature(module, context))
+						{ OriginalMember = pinnedSig };
 				case CModOptSig cModOptSig:
-					return new ModifiedType(cModOptSig, cModOptSig.Modifier.DecodeSignature(module, context), cModOptSig.Next.DecodeSignature(module, context), false);
+					return new ModifiedType(cModOptSig, cModOptSig.Modifier.DecodeSignature(module, context),
+						cModOptSig.Next.DecodeSignature(module, context), false) { OriginalMember = cModOptSig };
 				case CModReqdSig cModReqdSig:
-					return new ModifiedType(cModReqdSig, cModReqdSig.Modifier.DecodeSignature(module, context), cModReqdSig.Next.DecodeSignature(module, context), true);
+					return new ModifiedType(cModReqdSig, cModReqdSig.Modifier.DecodeSignature(module, context),
+						cModReqdSig.Next.DecodeSignature(module, context), true) { OriginalMember = cModReqdSig };
 				case PtrSig ptrSig:
-					return new PointerType(ptrSig, ptrSig.Next.DecodeSignature(module, context));
+					return new PointerType(ptrSig, ptrSig.Next.DecodeSignature(module, context)) { OriginalMember = ptrSig };
 				case ArraySigBase arraySigBase:
-					return new ArrayType(module.Compilation, arraySigBase.Next.DecodeSignature(module, context), (int)arraySigBase.Rank);
+					return new ArrayType(module.Compilation, arraySigBase.Next.DecodeSignature(module, context),
+						(int)arraySigBase.Rank) { OriginalMember = arraySigBase };
 				case ClassOrValueTypeSig classOrValueTypeSig:
 					ThreeState isVT = ThreeState.Unknown;
 					if (classOrValueTypeSig is ClassSig)

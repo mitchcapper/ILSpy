@@ -325,9 +325,15 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </remarks>
 		IEnumerable<IMethod> GetAccessors(Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.None);
 
+		/// <summary>
+		/// The dnlib representation of the type.
+		/// </summary>
 		dnlib.DotNet.IType MetadataToken { get; }
 
-		dnlib.DotNet.IMDTokenProvider OriginalMember { get; }
+		/// <summary>
+		/// The original metadata member this type originates from.
+		/// </summary>
+		dnlib.DotNet.IType OriginalMember { get; }
 	}
 
 	[Flags]

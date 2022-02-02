@@ -82,6 +82,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		new TypeDef MetadataToken { get; }
 
-		new IMDTokenProvider OriginalMember { get; }
+		new dnlib.DotNet.IType OriginalMember { get; }
 	}
 }

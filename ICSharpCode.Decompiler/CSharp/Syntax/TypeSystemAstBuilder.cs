@@ -25,6 +25,7 @@ using System.Reflection;
 using dnlib.DotNet;
 using dnSpy.Contracts.Text;
 using System.Runtime.CompilerServices;
+using dnSpy.Contracts.Decompiler;
 using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.CSharp.TypeSystem;
 using ICSharpCode.Decompiler.IL;
@@ -476,10 +477,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				else
 				{
 					result.Target = ConvertNamespace(genericType.Namespace,
-						out _, genericType.Namespace == genericType.Name);
+						out _, genericType.Namespace == genericType.Name, genericType.OriginalMember?.DefinitionAssembly);
 				}
 			}
-			result.MemberName = genericType.Name;
+			result.MemberNameToken = Identifier.Create(genericType.Name).WithAnnotation(genericType.OriginalMember);
 			result.WithAnnotation(genericType.OriginalMember);
 			AddTypeArguments(result, genericType.TypeParameters, typeArguments, outerTypeParameterCount, genericType.TypeParameterCount);
 			return result;
@@ -540,12 +541,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public AstType ConvertNamespace(string namespaceName, out NamespaceResolveResult nrr)
-		{
-			return ConvertNamespace(namespaceName, out nrr, requiresGlobalPrefix: false);
-		}
-
-		AstType ConvertNamespace(string namespaceName, out NamespaceResolveResult nrr, bool requiresGlobalPrefix)
+		AstType ConvertNamespace(string namespaceName, out NamespaceResolveResult nrr, bool requiresGlobalPrefix, IAssembly nsAsm)
 		{
 			if (resolver != null)
 			{
@@ -573,11 +569,15 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 						ns = new MemberType {
 							Target = MakeGlobal(),
 							IsDoubleColon = true,
-							MemberName = namespaceName
+							MemberNameToken = Identifier.Create(namespaceName).WithAnnotation(BoxedTextColor.Namespace)
+														.WithAnnotation(new NamespaceReference(nsAsm, namespaceName))
 						};
 					}
 					else {
-						ns = MakeSimpleType(namespaceName);
+						var simpleType = MakeSimpleType(namespaceName);
+						simpleType.IdentifierToken.WithAnnotation(BoxedTextColor.Namespace)
+								  .WithAnnotation(new NamespaceReference(nsAsm, namespaceName));
+						ns = simpleType;
 					}
 					ns.AddAnnotation(BoxedTextColor.Namespace);
 					if (AddResolveResultAnnotations && nrr != null)
@@ -588,9 +588,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					var ns = new MemberType {
 						Target = MakeGlobal(),
 						IsDoubleColon = true,
-						MemberName = namespaceName
-					};
-					if (AddResolveResultAnnotations) {
+						MemberNameToken = Identifier.Create(namespaceName).WithAnnotation(BoxedTextColor.Namespace)
+													.WithAnnotation(new NamespaceReference(nsAsm, namespaceName))
+					}.WithAnnotation(BoxedTextColor.Namespace);
+					if (AddResolveResultAnnotations && resolver is not null) {
 						var @namespace = resolver.Compilation.RootNamespace.GetChildNamespace(namespaceName);
 						if (@namespace != null)
 							ns.AddAnnotation(nrr = new NamespaceResolveResult(@namespace));
@@ -600,12 +601,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			} else {
 				string parentNamespace = namespaceName.Substring(0, pos);
 				string localNamespace = namespaceName.Substring(pos + 1);
-				var parentNS = ConvertNamespace(parentNamespace, out var parentNRR, requiresGlobalPrefix);
+				var parentNS = ConvertNamespace(parentNamespace, out var parentNRR, requiresGlobalPrefix, nsAsm);
 				var ns = new MemberType {
 					Target = parentNS,
-					MemberName = localNamespace
-				};
-				ns.AddAnnotation(BoxedTextColor.Namespace);
+					MemberNameToken = Identifier.Create(localNamespace).WithAnnotation(BoxedTextColor.Namespace)
+												.WithAnnotation(new NamespaceReference(nsAsm, namespaceName))
+				}.WithAnnotation(BoxedTextColor.Namespace);
 				nrr = null;
 				if (AddResolveResultAnnotations && parentNRR != null) {
 					var newNamespace = parentNRR.Namespace.GetChildNamespace(localNamespace);
@@ -1011,7 +1012,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			if (AddResolveResultAnnotations)
 				expression.AddAnnotation(new TypeResolveResult(constantType));
 
-			expression = new MemberReferenceExpression(expression, info.Member);
+			expression = new MemberReferenceExpression() {
+				Target = expression,
+				MemberNameToken = Identifier.Create(info.Member).WithAnnotation(field.OriginalMember)
+			}.WithAnnotation(field.OriginalMember);
 
 			if (AddResolveResultAnnotations)
 				expression.AddAnnotation(new MemberResolveResult(new TypeResolveResult(constantType), field));
@@ -1465,6 +1469,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			if (parameter == null)
 				throw new ArgumentNullException("parameter");
 			ParameterDeclaration decl = new ParameterDeclaration();
+			decl.WithAnnotation(parameter.MDParameter);
 			if (parameter.IsRef) {
 				decl.ParameterModifier = ParameterModifier.Ref;
 			} else if (parameter.IsOut) {
@@ -1486,7 +1491,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 			decl.Type = ConvertType(parameterType);
 			if (this.ShowParameterNames) {
-				decl.Name = parameter.Name;
+				decl.NameToken = Identifier.Create(parameter.Name).WithAnnotation(parameter.MDParameter);
 			}
 			if (parameter.IsOptional && parameter.HasConstantValueInSignature && this.ShowConstantValues) {
 				try {

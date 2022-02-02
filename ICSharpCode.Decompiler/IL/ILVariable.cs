@@ -475,7 +475,7 @@ namespace ICSharpCode.Decompiler.IL
 		public dnlib.DotNet.TypeSig GetVariableType()
 		{
 			//TODO: This doesn't work since most signature types in the TypeSystem don't store a dnlib type.
-			return (Type.OriginalMember as dnlib.DotNet.IType)?.GetTypeSig() ??
+			return Type.OriginalMember?.GetTypeSig() ?? Type.MetadataToken?.GetTypeSig() ??
 				   OriginalVariable?.Type ?? OriginalParameter?.Type ?? new dnlib.DotNet.SentinelSig();
 		}
 

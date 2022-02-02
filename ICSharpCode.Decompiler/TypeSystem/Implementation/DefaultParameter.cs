@@ -1,14 +1,14 @@
 ﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
-// 
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
 // without restriction, including without limitation the rights to use, copy, modify, merge,
 // publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
 // to whom the Software is furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in all copies or
 // substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
 // INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
 // PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
@@ -35,7 +35,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		readonly bool isParams, isOptional;
 		readonly object defaultValue;
 		readonly IParameterizedMember owner;
-		
+
 		public DefaultParameter(IType type, string name)
 		{
 			if (type == null)
@@ -46,7 +46,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.name = name;
 			this.attributes = EmptyList<IAttribute>.Instance;
 		}
-		
+
 		public DefaultParameter(IType type, string name, IParameterizedMember owner = null, IReadOnlyList<IAttribute> attributes = null,
 		                        ReferenceKind referenceKind = ReferenceKind.None, bool isParams = false, bool isOptional = false, object defaultValue = null)
 		{
@@ -63,15 +63,17 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.isOptional = isOptional;
 			this.defaultValue = defaultValue;
 		}
-		
+
 		SymbolKind ISymbol.SymbolKind {
 			get { return SymbolKind.Parameter; }
 		}
-		
+
+		dnlib.DotNet.Parameter IParameter.MDParameter => null;
+
 		public IParameterizedMember Owner {
 			get { return owner; }
 		}
-		
+
 		public IEnumerable<IAttribute> GetAttributes() => attributes;
 
 		public ReferenceKind ReferenceKind => referenceKind;
@@ -86,29 +88,29 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public string Name {
 			get { return name; }
 		}
-		
+
 		public IType Type {
 			get { return type; }
 		}
-		
+
 		bool IVariable.IsConst {
 			get { return false; }
 		}
-		
+
 		public bool HasConstantValueInSignature {
 			get { return IsOptional; }
 		}
-		
+
 		public object GetConstantValue(bool throwOnInvalidMetadata)
 		{
 			return defaultValue;
 		}
-		
+
 		public override string ToString()
 		{
 			return ToString(this);
 		}
-		
+
 		public static string ToString(IParameter parameter)
 		{
 			StringBuilder b = new StringBuilder();
