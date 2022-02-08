@@ -27,23 +27,23 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 	{
 		readonly string groupName;
 		readonly INode childNode;
-		
+
 		public string GroupName {
 			get { return groupName; }
 		}
-		
+
 		public INode ChildNode {
 			get { return childNode; }
 		}
-		
+
 		public NamedNode(string groupName, INode childNode)
 		{
 			if (childNode == null)
-				throw new ArgumentNullException("childNode");
+				throw new ArgumentNullException(nameof(childNode));
 			this.groupName = groupName;
 			this.childNode = childNode;
 		}
-		
+
 		public override bool DoMatch(INode other, Match match)
 		{
 			match.Add(this.groupName, other);

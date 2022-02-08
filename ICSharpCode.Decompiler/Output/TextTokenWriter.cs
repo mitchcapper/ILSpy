@@ -57,7 +57,8 @@ namespace ICSharpCode.Decompiler
 
 		public override void WriteIdentifier(Identifier identifier)
 		{
-			if (identifier.IsVerbatim || CSharpOutputVisitor.IsKeyword(identifier.Name, identifier)) {
+			if (identifier.IsVerbatim || CSharpOutputVisitor.IsKeyword(identifier.Name, identifier))
+			{
 				output.Write('@');
 			}
 
@@ -91,7 +92,8 @@ namespace ICSharpCode.Decompiler
 				return;
 			}
 
-			if (firstUsingDeclaration) {
+			if (firstUsingDeclaration && !lastUsingDeclaration)
+			{
 				output.MarkFoldStart(defaultCollapsed: !settings.ExpandUsingDeclarations);
 				firstUsingDeclaration = false;
 			}
@@ -114,14 +116,17 @@ namespace ICSharpCode.Decompiler
 		{
 			AstNode node = nodeStack.Peek();
 			var symbol = node.GetSymbol();
-			if (symbol == null && node.Role == Roles.TargetExpression && node.Parent is InvocationExpression) {
+			if (symbol == null && node.Role == Roles.TargetExpression && node.Parent is InvocationExpression)
+			{
 				symbol = node.Parent.GetSymbol();
 			}
-			if (symbol != null && node.Role == Roles.Type && node.Parent is ObjectCreateExpression) {
+			if (symbol != null && node.Role == Roles.Type && node.Parent is ObjectCreateExpression)
+			{
 				symbol = node.Parent.GetSymbol();
 			}
 
-			if (node is IdentifierExpression && node.Role == Roles.TargetExpression && node.Parent is InvocationExpression && symbol is IMember member) {
+			if (node is IdentifierExpression && node.Role == Roles.TargetExpression && node.Parent is InvocationExpression && symbol is IMember member)
+			{
 				var declaringType = member.DeclaringType;
 				if (declaringType != null && declaringType.Kind == TypeKind.Delegate)
 					return null;
@@ -151,13 +156,15 @@ namespace ICSharpCode.Decompiler
 			if (letClauseVariable != null)
 				return letClauseVariable;
 
-			if (node is GotoStatement gotoStatement) {
+			if (node is GotoStatement gotoStatement)
+			{
 				var method = nodeStack.Select(nd => nd.GetSymbol() as IMethod).FirstOrDefault(mr => mr != null);
 				if (method != null)
 					return method + gotoStatement.Label;
 			}
 
-			if (node.Role == Roles.TargetExpression && node.Parent is InvocationExpression) {
+			if (node.Role == Roles.TargetExpression && node.Parent is InvocationExpression)
+			{
 				var symbol = node.Parent.GetSymbol();
 				if (symbol is LocalFunctionMethod)
 					return symbol;
@@ -172,7 +179,8 @@ namespace ICSharpCode.Decompiler
 			if (node is Identifier && node.Parent != null)
 				node = node.Parent;
 
-			if (node is ParameterDeclaration || node is VariableInitializer || node is CatchClause || node is VariableDesignation) {
+			if (node is ParameterDeclaration || node is VariableInitializer || node is CatchClause || node is VariableDesignation)
+			{
 				var variable = node.Annotation<ILVariableResolveResult>()?.Variable;
 				if (variable != null)
 					return variable;
@@ -192,13 +200,15 @@ namespace ICSharpCode.Decompiler
 					return variable;
 			}
 
-			if (node is LabelStatement label) {
+			if (node is LabelStatement label)
+			{
 				var method = nodeStack.Select(nd => nd.GetSymbol() as IMethod).FirstOrDefault(mr => mr != null);
 				if (method != null)
 					return method + label.Label;
 			}
 
-			if (node is MethodDeclaration && node.Parent is LocalFunctionDeclarationStatement) {
+			if (node is MethodDeclaration && node.Parent is LocalFunctionDeclarationStatement)
+			{
 				var localFunction = node.Parent.GetResolveResult() as MemberResolveResult;
 				if (localFunction != null)
 					return localFunction.Member;
@@ -238,22 +248,26 @@ namespace ICSharpCode.Decompiler
 
 		public override void WriteToken(Role role, string token)
 		{
-			switch (token) {
+			switch (token)
+			{
 				case "{":
-					if (role != Roles.LBrace) {
+					if (role != Roles.LBrace)
+					{
 						output.Write("{");
 						break;
 					}
 					if (braceLevelWithinType >= 0 || nodeStack.Peek() is TypeDeclaration)
 						braceLevelWithinType++;
-					if (nodeStack.OfType<BlockStatement>().Count() <= 1 || settings.FoldBraces) {
+					if (nodeStack.OfType<BlockStatement>().Count() <= 1 || settings.FoldBraces)
+					{
 						output.MarkFoldStart(defaultCollapsed: !settings.ExpandMemberDefinitions && braceLevelWithinType == 1);
 					}
 					output.Write("{");
 					break;
 				case "}":
 					output.Write('}');
-					if (role != Roles.RBrace) break;
+					if (role != Roles.RBrace)
+						break;
 					if (nodeStack.OfType<BlockStatement>().Count() <= 1 || settings.FoldBraces)
 						output.MarkFoldEnd();
 					if (braceLevelWithinType >= 0)
@@ -261,7 +275,7 @@ namespace ICSharpCode.Decompiler
 					break;
 				default:
 					// Attach member reference to token only if there's no identifier in the current node.
-					var member = SymbolToCecil(GetCurrentMemberReference());
+					var member = GetCurrentMemberReference();
 					var node = nodeStack.Peek();
 					if (member != null && node.GetChildByRole(Roles.Identifier).IsNull)
 						output.WriteReference(token, member);
@@ -288,17 +302,18 @@ namespace ICSharpCode.Decompiler
 
 		public override void NewLine()
 		{
-			if (lastUsingDeclaration) {
+			if (!firstUsingDeclaration && lastUsingDeclaration)
+			{
 				output.MarkFoldEnd();
 				lastUsingDeclaration = false;
 			}
-//			lastEndOfLine = output.Location;
 			output.WriteLine();
 		}
 
 		public override void WriteComment(CommentType commentType, string content)
 		{
-			switch (commentType) {
+			switch (commentType)
+			{
 				case CommentType.SingleLine:
 					output.Write("//");
 					output.WriteLine(content);
@@ -310,13 +325,15 @@ namespace ICSharpCode.Decompiler
 					break;
 				case CommentType.Documentation:
 					bool isLastLine = !(nodeStack.Peek().NextSibling is Comment);
-					if (!inDocumentationComment && !isLastLine) {
+					if (!inDocumentationComment && !isLastLine)
+					{
 						inDocumentationComment = true;
 						output.MarkFoldStart("///" + content, true);
 					}
 					output.Write("///");
 					output.Write(content);
-					if (inDocumentationComment && isLastLine) {
+					if (inDocumentationComment && isLastLine)
+					{
 						inDocumentationComment = false;
 						output.MarkFoldEnd();
 					}
@@ -333,7 +350,8 @@ namespace ICSharpCode.Decompiler
 			// pre-processor directive must start on its own line
 			output.Write('#');
 			output.Write(type.ToString().ToLowerInvariant());
-			if (!string.IsNullOrEmpty(argument)) {
+			if (!string.IsNullOrEmpty(argument))
+			{
 				output.Write(' ');
 				output.Write(argument);
 			}
@@ -352,7 +370,8 @@ namespace ICSharpCode.Decompiler
 
 		public override void WritePrimitiveType(string type)
 		{
-			switch (type) {
+			switch (type)
+			{
 				case "new":
 					output.Write(type);
 					output.Write("()");
@@ -374,9 +393,12 @@ namespace ICSharpCode.Decompiler
 				case "object":
 					var node = nodeStack.Peek();
 					ISymbol symbol;
-					if (node.Role == Roles.Type && node.Parent is ObjectCreateExpression) {
+					if (node.Role == Roles.Type && node.Parent is ObjectCreateExpression)
+					{
 						symbol = node.Parent.GetSymbol();
-					} else {
+					}
+					else
+					{
 						symbol = nodeStack.Peek().GetSymbol();
 					}
 					if (symbol == null) goto default;
@@ -390,25 +412,20 @@ namespace ICSharpCode.Decompiler
 
 		public override void StartNode(AstNode node)
 		{
-			if (nodeStack.Count == 0) {
-				if (IsUsingDeclaration(node)) {
+			if (nodeStack.Count == 0)
+			{
+				if (IsUsingDeclaration(node))
+				{
 					firstUsingDeclaration = !IsUsingDeclaration(node.PrevSibling);
 					lastUsingDeclaration = !IsUsingDeclaration(node.NextSibling);
-				} else {
+				}
+				else
+				{
 					firstUsingDeclaration = false;
 					lastUsingDeclaration = false;
 				}
 			}
 			nodeStack.Push(node);
-//			startLocations.Push(output.Location);
-
-//			if (node is EntityDeclaration && node.GetSymbol() != null && node.GetChildByRole(Roles.Identifier).IsNull)
-//				output.WriteDefinition("", node.GetSymbol(), false);
-
-//			if (node.Annotation<MethodDebugSymbols>() != null) {
-//				symbolsStack.Push(node.Annotation<MethodDebugSymbols>());
-//				symbolsStack.Peek().StartLocation = startLocations.Peek();
-//			}
 		}
 
 		private bool IsUsingDeclaration(AstNode node)
@@ -426,11 +443,13 @@ namespace ICSharpCode.Decompiler
 		{
 			if (node is EntityDeclaration && !(node.Parent is LocalFunctionDeclarationStatement))
 				return true;
-			if (node is VariableInitializer && node.Parent is FieldDeclaration) {
+			if (node is VariableInitializer && node.Parent is FieldDeclaration)
+			{
 				node = node.Parent;
 				return true;
 			}
-			if (node is FixedVariableInitializer && node.Parent is FixedFieldDeclaration) {
+			if (node is FixedVariableInitializer && node.Parent is FixedFieldDeclaration)
+			{
 				node = node.Parent;
 				return true;
 			}

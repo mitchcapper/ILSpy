@@ -16,11 +16,13 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
+
 namespace ICSharpCode.Decompiler.TypeSystem
 {
 	/// <summary>
 	/// Main interface for the decompiler type system.
-	///
+	/// 
 	/// The MetadataModule class allows decoding/resolving metadata tokens into type system entities.
 	/// </summary>
 	public interface IDecompilerTypeSystem : ICompilation

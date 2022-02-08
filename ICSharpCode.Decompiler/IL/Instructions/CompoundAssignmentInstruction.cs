@@ -1,5 +1,6 @@
-﻿// Copyright (c) 2016 Siegfried Pammer
-//
+﻿#nullable enable
+// Copyright (c) 2016 Siegfried Pammer
+// 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
 // without restriction, including without limitation the rights to use, copy, modify, merge,
@@ -19,6 +20,7 @@
 using System;
 using System.Diagnostics;
 using System.Linq.Expressions;
+
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL
@@ -85,8 +87,9 @@ namespace ICSharpCode.Decompiler.IL
 
 		[Conditional("DEBUG")]
 		void CheckValidTarget()
-		{ 
-			switch (TargetKind) {
+		{
+			switch (TargetKind)
+			{
 				case CompoundTargetKind.Address:
 					Debug.Assert(target.ResultType == StackType.Ref || target.ResultType == StackType.I);
 					break;
@@ -103,7 +106,8 @@ namespace ICSharpCode.Decompiler.IL
 
 		protected void WriteSuffix(ITextOutput output)
 		{
-			switch (TargetKind) {
+			switch (TargetKind)
+			{
 				case CompoundTargetKind.Address:
 					output.Write(".address");
 					break;
@@ -111,7 +115,8 @@ namespace ICSharpCode.Decompiler.IL
 					output.Write(".property");
 					break;
 			}
-			switch (EvalMode) {
+			switch (EvalMode)
+			{
 				case CompoundEvalMode.EvaluatesToNewValue:
 					output.Write(".new");
 					break;
@@ -168,17 +173,22 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>
 		/// Gets whether the specific binary instruction is compatible with a compound operation on the specified type.
 		/// </summary>
-		internal static bool IsBinaryCompatibleWithType(BinaryNumericInstruction binary, IType type, DecompilerSettings settings)
+		internal static bool IsBinaryCompatibleWithType(BinaryNumericInstruction binary, IType type, DecompilerSettings? settings)
 		{
-			if (binary.IsLifted) {
+			if (binary.IsLifted)
+			{
 				if (!NullableType.IsNullable(type))
 					return false;
 				type = NullableType.GetUnderlyingType(type);
 			}
-			if (type.Kind == TypeKind.Unknown) {
+			if (type.Kind == TypeKind.Unknown)
+			{
 				return false; // avoid introducing a potentially-incorrect compound assignment
-			} else if (type.Kind == TypeKind.Enum) {
-				switch (binary.Operator) {
+			}
+			else if (type.Kind == TypeKind.Enum)
+			{
+				switch (binary.Operator)
+				{
 					case BinaryNumericOperator.Add:
 					case BinaryNumericOperator.Sub:
 					case BinaryNumericOperator.BitAnd:
@@ -188,8 +198,11 @@ namespace ICSharpCode.Decompiler.IL
 					default:
 						return false; // operator not supported on enum types
 				}
-			} else if (type.Kind == TypeKind.Pointer) {
-				switch (binary.Operator) {
+			}
+			else if (type.Kind == TypeKind.Pointer)
+			{
+				switch (binary.Operator)
+				{
 					case BinaryNumericOperator.Add:
 					case BinaryNumericOperator.Sub:
 						// ensure that the byte offset is a multiple of the pointer size
@@ -215,12 +228,33 @@ namespace ICSharpCode.Decompiler.IL
 						return false;
 				}
 			}
-			if (binary.Sign != Sign.None) {
-				if (type.IsCSharpSmallIntegerType()) {
+			else if (type.IsKnownType(KnownTypeCode.IntPtr) || type.IsKnownType(KnownTypeCode.UIntPtr))
+			{
+				// "target.intptr *= 2;" is compiler error, but
+				// "target.intptr *= (nint)2;" works
+				if (settings != null && !settings.NativeIntegers)
+				{
+					// But if native integers are not available, we cannot use compound assignment.
+					return false;
+				}
+				// The trick with casting the RHS to n(u)int doesn't work for shifts:
+				switch (binary.Operator)
+				{
+					case BinaryNumericOperator.ShiftLeft:
+					case BinaryNumericOperator.ShiftRight:
+						return false;
+				}
+			}
+			if (binary.Sign != Sign.None)
+			{
+				if (type.IsCSharpSmallIntegerType())
+				{
 					// C# will use numeric promotion to int, binary op must be signed
 					if (binary.Sign != Sign.Signed)
 						return false;
-				} else {
+				}
+				else
+				{
 					// C# will use sign from type
 					if (type.GetSign() != binary.Sign)
 						return false;
@@ -254,17 +288,22 @@ namespace ICSharpCode.Decompiler.IL
 			WriteILRange(output, options);
 			output.Write(OpCode);
 			output.Write("." + BinaryNumericInstruction.GetOperatorName(Operator));
-			if (CheckForOverflow) {
+			if (CheckForOverflow)
+			{
 				output.Write(".ovf");
 			}
-			if (Sign == Sign.Unsigned) {
+			if (Sign == Sign.Unsigned)
+			{
 				output.Write(".unsigned");
-			} else if (Sign == Sign.Signed) {
+			}
+			else if (Sign == Sign.Signed)
+			{
 				output.Write(".signed");
 			}
 			output.Write('.');
 			output.Write(UnderlyingResultType.ToString().ToLowerInvariant());
-			if (IsLifted) {
+			if (IsLifted)
+			{
 				output.Write(".lifted");
 			}
 			base.WriteSuffix(output);
@@ -281,7 +320,7 @@ namespace ICSharpCode.Decompiler.IL
 		public readonly IMethod Method;
 		public bool IsLifted => false; // TODO: implement lifted user-defined compound assignments
 
-		public UserDefinedCompoundAssign(IMethod method, CompoundEvalMode evalMode, 
+		public UserDefinedCompoundAssign(IMethod method, CompoundEvalMode evalMode,
 			ILInstruction target, CompoundTargetKind targetKind, ILInstruction value)
 			: base(OpCode.UserDefinedCompoundAssign, evalMode, target, targetKind, value)
 		{
@@ -320,13 +359,13 @@ namespace ICSharpCode.Decompiler.IL
 		public CSharpBinderFlags BinderFlags { get; }
 
 		public DynamicCompoundAssign(ExpressionType op, CSharpBinderFlags binderFlags,
-			ILInstruction target, CSharpArgumentInfo targetArgumentInfo, 
+			ILInstruction target, CSharpArgumentInfo targetArgumentInfo,
 			ILInstruction value, CSharpArgumentInfo valueArgumentInfo,
 			CompoundTargetKind targetKind = CompoundTargetKind.Dynamic)
 			: base(OpCode.DynamicCompoundAssign, CompoundEvalModeFromOperation(op), target, targetKind, value)
 		{
 			if (!IsExpressionTypeSupported(op))
-				throw new ArgumentOutOfRangeException("op");
+				throw new ArgumentOutOfRangeException(nameof(op));
 			this.BinderFlags = binderFlags;
 			this.Operation = op;
 			this.TargetArgumentInfo = targetArgumentInfo;
@@ -367,7 +406,8 @@ namespace ICSharpCode.Decompiler.IL
 
 		static CompoundEvalMode CompoundEvalModeFromOperation(ExpressionType op)
 		{
-			switch (op) {
+			switch (op)
+			{
 				case ExpressionType.PostIncrementAssign:
 				case ExpressionType.PostDecrementAssign:
 					return CompoundEvalMode.EvaluatesToOldValue;

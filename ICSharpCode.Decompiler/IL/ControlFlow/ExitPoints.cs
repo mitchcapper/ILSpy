@@ -22,6 +22,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
+
 using ICSharpCode.Decompiler.IL.Transforms;
 
 namespace ICSharpCode.Decompiler.IL.ControlFlow
@@ -87,7 +88,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		{
 			if (exit1 == null || exit2 == null || exit1.OpCode != exit2.OpCode)
 				return false;
-			switch (exit1.OpCode) {
+			switch (exit1.OpCode)
+			{
 				case OpCode.Branch:
 					Branch br1 = (Branch)exit1;
 					Branch br2 = (Branch)exit2;
@@ -152,8 +154,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// It's possible that there are unreachable code blocks which we only
 			// detect as such during exit point detection.
 			// Clean them up.
-			foreach (var block in blocksPotentiallyMadeUnreachable) {
-				if (block.IncomingEdgeCount == 0 || block.IncomingEdgeCount == 1 && IsInfiniteLoop(block)) {
+			foreach (var block in blocksPotentiallyMadeUnreachable)
+			{
+				if (block.IncomingEdgeCount == 0 || block.IncomingEdgeCount == 1 && IsInfiniteLoop(block))
+				{
 					block.Remove();
 				}
 			}
@@ -198,7 +202,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				while (inst.Parent!.OpCode != OpCode.Block)
 					inst = inst.Parent;
 				Block block = (Block)inst.Parent;
-				if (block.HasFlag(InstructionFlags.EndPointUnreachable)) {
+				if (block.HasFlag(InstructionFlags.EndPointUnreachable))
+				{
 					// Special case: despite replacing the exits with leave(currentContainer),
 					// we still have an unreachable endpoint.
 					// The appended currentExit instruction would not be reachable!
@@ -240,7 +245,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		{
 			cancellationToken.ThrowIfCancellationRequested();
 			// Don't use foreach loop, because the children might add to the block
-			for (int i = 0; i < block.Instructions.Count; i++) {
+			for (int i = 0; i < block.Instructions.Count; i++)
+			{
 				block.Instructions[i].AcceptVisitor(this);
 			}
 		}

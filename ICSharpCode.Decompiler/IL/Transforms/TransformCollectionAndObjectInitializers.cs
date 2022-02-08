@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+
 using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.CSharp.TypeSystem;
 using ICSharpCode.Decompiler.Semantics;
@@ -36,11 +37,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		void IStatementTransform.Run(Block block, int pos, StatementTransformContext context)
 		{
-			if (!context.Settings.ObjectOrCollectionInitializers) return;
+			if (!context.Settings.ObjectOrCollectionInitializers)
+				return;
 			this.context = context;
-			try {
+			try
+			{
 				DoTransform(block, pos);
-			} finally {
+			}
+			finally
+			{
 				this.context = null;
 			}
 		}
@@ -206,7 +211,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// Include any stores to local variables that are single-assigned and do not reference the initializer-variable
 			// in the list of possible index variables.
 			// Index variables are used to implement dictionary initializers.
-			if (instructions[pos] is StLoc stloc && stloc.Variable.Kind == VariableKind.Local && stloc.Variable.IsSingleDefinition) {
+			if (instructions[pos] is StLoc stloc && stloc.Variable.Kind == VariableKind.Local && stloc.Variable.IsSingleDefinition)
+			{
 				if (!context.Settings.DictionaryInitializers)
 					return false;
 				if (stloc.Value.Descendants.OfType<IInstructionWithVariableOperand>().Any(ld => ld.Variable == target && (ld is LdLoc || ld is LdLoca)))
@@ -227,19 +233,22 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			int firstDifferenceIndex = 0;
 			while (firstDifferenceIndex < minLen && newPath[firstDifferenceIndex] == currentPath[firstDifferenceIndex])
 				firstDifferenceIndex++;
-			while (currentPath.Count > firstDifferenceIndex) {
+			while (currentPath.Count > firstDifferenceIndex)
+			{
 				isCollection = false;
 				currentPath.RemoveAt(currentPath.Count - 1);
 				pathStack.Pop();
 			}
-			while (currentPath.Count < newPath.Count) {
+			while (currentPath.Count < newPath.Count)
+			{
 				AccessPathElement newElement = newPath[currentPath.Count];
 				currentPath.Add(newElement);
 				if (isCollection || !pathStack.Peek().Add(newElement))
 					return false;
 				pathStack.Push(new HashSet<AccessPathElement>());
 			}
-			switch (kind) {
+			switch (kind)
+			{
 				case AccessPathKind.Adder:
 					isCollection = true;
 					if (pathStack.Peek().Count != 0)
@@ -303,35 +312,50 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			List<ILInstruction> values = null;
 			IMethod method;
 			var inst = instruction;
-			while (instruction != null) {
-				switch (instruction) {
+			while (instruction != null)
+			{
+				switch (instruction)
+				{
 					case CallInstruction call:
-						if (!(call is CallVirt || call is Call)) goto default;
+						if (!(call is CallVirt || call is Call))
+							goto default;
 						method = call.Method;
-						if (resolveContext != null && !IsMethodApplicable(method, call.Arguments, rootType, resolveContext, settings)) goto default;
+						if (resolveContext != null && !IsMethodApplicable(method, call.Arguments, rootType, resolveContext, settings))
+							goto default;
 						instruction = call.Arguments[0];
-						if (method.IsAccessor) {
+						if (method.IsAccessor)
+						{
 							var property = method.AccessorOwner as IProperty;
-							if (!CanBeUsedInInitializer(property, resolveContext, kind, path)) goto default;
+							if (!CanBeUsedInInitializer(property, resolveContext, kind, path))
+								goto default;
 							var isGetter = method.Equals(property?.Getter);
 							var indices = call.Arguments.Skip(1).Take(call.Arguments.Count - (isGetter ? 1 : 2)).ToArray();
-							if (indices.Length > 0 && settings?.DictionaryInitializers == false) goto default;
-							if (possibleIndexVariables != null) {
+							if (indices.Length > 0 && settings?.DictionaryInitializers == false)
+								goto default;
+							if (possibleIndexVariables != null)
+							{
 								// Mark all index variables as used
-								foreach (var index in indices.OfType<IInstructionWithVariableOperand>()) {
+								foreach (var index in indices.OfType<IInstructionWithVariableOperand>())
+								{
 									if (possibleIndexVariables.TryGetValue(index.Variable, out var info))
 										possibleIndexVariables[index.Variable] = (-1, info.Value);
 								}
 							}
 							path.Insert(0, new AccessPathElement(call.OpCode, method.AccessorOwner, indices));
-						} else {
+						}
+						else
+						{
 							path.Insert(0, new AccessPathElement(call.OpCode, method));
 						}
-						if (values == null) {
-							if (method.IsAccessor) {
+						if (values == null)
+						{
+							if (method.IsAccessor)
+							{
 								kind = AccessPathKind.Setter;
 								values = new List<ILInstruction> { call.Arguments.Last() };
-							} else {
+							}
+							else
+							{
 								kind = AccessPathKind.Adder;
 								values = new List<ILInstruction>(call.Arguments.Skip(1));
 								if (values.Count == 0)
@@ -339,19 +363,24 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							}
 						}
 						break;
-					case LdObj ldobj: {
-						if (ldobj.Target is LdFlda ldflda && (kind != AccessPathKind.Setter || !ldflda.Field.IsReadOnly)) {
+					case LdObj ldobj:
+					{
+						if (ldobj.Target is LdFlda ldflda && (kind != AccessPathKind.Setter || !ldflda.Field.IsReadOnly))
+						{
 							path.Insert(0, new AccessPathElement(ldobj.OpCode, ldflda.Field));
 							instruction = ldflda.Target;
 							break;
 						}
 						goto default;
 					}
-					case StObj stobj: {
-						if (stobj.Target is LdFlda ldflda) {
+					case StObj stobj:
+					{
+						if (stobj.Target is LdFlda ldflda)
+						{
 							path.Insert(0, new AccessPathElement(stobj.OpCode, ldflda.Field));
 							instruction = ldflda.Target;
-							if (values == null) {
+							if (values == null)
+							{
 								values = new List<ILInstruction>(new[] { stobj.Value });
 								kind = AccessPathKind.Setter;
 							}
@@ -435,9 +464,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		static IType GetReturnTypeFromInstruction(ILInstruction instruction)
 		{
-			switch (instruction) {
+			switch (instruction)
+			{
 				case CallInstruction call:
-					if (!(call is CallVirt || call is Call)) goto default;
+					if (!(call is CallVirt || call is Call))
+						goto default;
 					return call.Method.ReturnType;
 				case LdObj ldobj:
 					if (ldobj.Target is LdFlda ldflda)
@@ -462,7 +493,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		public override int GetHashCode()
 		{
 			int hashCode = 0;
-			unchecked {
+			unchecked
+			{
 				if (Member != null)
 					hashCode += 1000000007 * Member.GetHashCode();
 			}

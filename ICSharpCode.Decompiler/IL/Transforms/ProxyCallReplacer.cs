@@ -1,9 +1,28 @@
-﻿using System.Linq;
+﻿﻿// Copyright (c) 2017 AlphaSierraPapa for the SharpDevelop Team
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this
+// software and associated documentation files (the "Software"), to deal in the Software
+// without restriction, including without limitation the rights to use, copy, modify, merge,
+// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
+// to whom the Software is furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all copies or
+// substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+// INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+// FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
+
+using System.Linq;
 using dnlib.DotNet;
+
 using ICSharpCode.Decompiler.TypeSystem;
 using IMethod = ICSharpCode.Decompiler.TypeSystem.IMethod;
 
-namespace ICSharpCode.Decompiler.IL.Transforms
+ namespace ICSharpCode.Decompiler.IL.Transforms
 {
 	class ProxyCallReplacer : IILTransform
 	{
@@ -11,7 +30,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			if (!context.Settings.AsyncAwait)
 				return;
-			foreach (var inst in function.Descendants.OfType<CallInstruction>()) {
+			foreach (var inst in function.Descendants.OfType<CallInstruction>())
+			{
 				Run(inst, context);
 			}
 		}
@@ -43,7 +63,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var block = blockContainer.Blocks[0];
 			Call call;
 			ILInstruction returnValue;
-			switch (block.Instructions.Count) {
+			switch (block.Instructions.Count)
+			{
 				case 1:
 					// leave IL_0000 (call Test(ldloc this, ldloc A_1))
 					if (!block.Instructions[0].MatchLeave(blockContainer, out returnValue))
@@ -62,18 +83,22 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				default:
 					return;
 			}
-			if (call == null || call.Method.IsConstructor) {
+			if (call == null || call.Method.IsConstructor)
+			{
 				return;
 			}
-			if (call.Method.IsStatic || call.Method.Parameters.Count != inst.Method.Parameters.Count) {
+			if (call.Method.IsStatic || call.Method.Parameters.Count != inst.Method.Parameters.Count)
+			{
 				return;
 			}
 			// check if original arguments are only correct ldloc calls
-			for (int i = 0; i < call.Arguments.Count; i++) {
+			for (int i = 0; i < call.Arguments.Count; i++)
+			{
 				var originalArg = call.Arguments[i];
 				if (!originalArg.MatchLdLoc(out ILVariable var) ||
 					var.Kind != VariableKind.Parameter ||
-					var.Index != i - 1) {
+					var.Index != i - 1)
+				{
 					return;
 				}
 			}
@@ -92,7 +117,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		static bool IsDefinedInCurrentOrOuterClass(IMethod method, ITypeDefinition declaringTypeDefinition)
 		{
-			while (declaringTypeDefinition != null) {
+			while (declaringTypeDefinition != null)
+			{
 				if (method.DeclaringTypeDefinition == declaringTypeDefinition)
 					return true;
 				declaringTypeDefinition = declaringTypeDefinition.DeclaringTypeDefinition;

@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
@@ -28,7 +29,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	{
 		public void Run(ILFunction function, ILTransformContext context)
 		{
-			foreach (var catchBlock in function.Descendants.OfType<TryCatchHandler>()) {
+			foreach (var catchBlock in function.Descendants.OfType<TryCatchHandler>())
+			{
 				if (catchBlock.Filter is BlockContainer container
 					&& MatchCatchWhenEntryPoint(catchBlock.Variable, container, container.EntryPoint,
 						out var exceptionType, out var exceptionSlot, out var whenConditionBlock)
@@ -47,7 +49,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					//   br whenConditionBlock
 					// }
 					var instructions = container.EntryPoint.Instructions;
-					if (instructions.Count == 3) {
+					if (instructions.Count == 3)
+					{
 						// stloc temp(isinst exceptionType(ldloc exceptionVar))
 						// if (comp(ldloc temp != ldnull)) br whenConditionBlock
 						// br falseBlock
@@ -56,7 +59,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						instructions[1].ReplaceWith(new Branch(whenConditionBlock));
 						instructions.RemoveAt(2);
 						container.SortBlocks(deleteUnreachableBlocks: true);
-					} else if (instructions.Count == 2) {
+					}
+					else if (instructions.Count == 2)
+					{
 						// if (comp(isinst exceptionType(ldloc exceptionVar) != ldnull)) br whenConditionBlock
 						// br falseBlock
 						context.Step($"Detected catch-when for {catchBlock.Variable.Name}", instructions[0]);
@@ -164,7 +169,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			whenConditionBlock = null;
 			if (entryPoint == null || entryPoint.IncomingEdgeCount != 1)
 				return false;
-			if (entryPoint.Instructions.Count == 3) {
+			if (entryPoint.Instructions.Count == 3)
+			{
 				// stloc temp(isinst exceptionType(ldloc exceptionVar))
 				// if (comp(ldloc temp != ldnull)) br whenConditionBlock
 				// br falseBlock
@@ -179,10 +185,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 				if (!entryPoint.Instructions[2].MatchBranch(out var falseBlock) || !MatchFalseBlock(container, falseBlock, out var returnVar, out var exitBlock))
 					return false;
-				if ((left.MatchLdNull() && right.MatchLdLoc(temp)) || (right.MatchLdNull() && left.MatchLdLoc(temp))) {
+				if ((left.MatchLdNull() && right.MatchLdLoc(temp)) || (right.MatchLdNull() && left.MatchLdLoc(temp)))
+				{
 					return branch.MatchBranch(out whenConditionBlock);
 				}
-			} else if (entryPoint.Instructions.Count == 2) {
+			}
+			else if (entryPoint.Instructions.Count == 2)
+			{
 				// if (comp(isinst exceptionType(ldloc exceptionVar) != ldnull)) br whenConditionBlock
 				// br falseBlock
 				if (!entryPoint.Instructions[0].MatchIfInstruction(out var condition, out var branch))
@@ -195,7 +204,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 				if (!exceptionSlot.MatchLdLoc(exceptionVar))
 					return false;
-				if (right.MatchLdNull()) {
+				if (right.MatchLdNull())
+				{
 					return branch.MatchBranch(out whenConditionBlock);
 				}
 			}

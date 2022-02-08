@@ -2,13 +2,9 @@
 {
 	public abstract class Base
 	{
-		public abstract Base Instance {
-			get;
-		}
+		public abstract Base Instance { get; }
 
-		public abstract Base this[int index] {
-			get;
-		}
+		public abstract Base this[int index] { get; }
 
 		public virtual Base Build()
 		{
@@ -20,9 +16,7 @@
 
 	public class Derived : Base
 	{
-		public override Derived Instance {
-			get;
-		}
+		public override Derived Instance { get; }
 
 		public override Derived this[int index] {
 			get {

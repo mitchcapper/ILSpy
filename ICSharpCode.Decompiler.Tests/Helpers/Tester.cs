@@ -22,6 +22,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection.PortableExecutable;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -34,7 +35,9 @@ using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 using ICSharpCode.Decompiler.CSharp.Transforms;
 using ICSharpCode.Decompiler.Disassembler;
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
+
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Emit;
@@ -107,14 +110,18 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			}
 			string outputFile = Path.Combine(Path.GetDirectoryName(sourceFileName), Path.GetFileNameWithoutExtension(sourceFileName));
 			string otherOptions = " ";
-			if (options.HasFlag(AssemblerOptions.Force32Bit)) {
+			if (options.HasFlag(AssemblerOptions.Force32Bit))
+			{
 				outputFile += ".32";
 				otherOptions += "/32BitPreferred ";
 			}
-			if (options.HasFlag(AssemblerOptions.Library)) {
+			if (options.HasFlag(AssemblerOptions.Library))
+			{
 				outputFile += ".dll";
 				otherOptions += "/dll ";
-			} else {
+			}
+			else
+			{
 				outputFile += ".exe";
 				otherOptions += "/exe ";
 			}
@@ -348,7 +355,8 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		public static CompilerResults CompileCSharp(string sourceFileName, CompilerOptions flags = CompilerOptions.UseDebug, string outputFileName = null)
 		{
 			List<string> sourceFileNames = new List<string> { sourceFileName };
-			foreach (Match match in Regex.Matches(File.ReadAllText(sourceFileName), @"#include ""([\w\d./]+)""")) {
+			foreach (Match match in Regex.Matches(File.ReadAllText(sourceFileName), @"#include ""([\w\d./]+)"""))
+			{
 				sourceFileNames.Add(Path.GetFullPath(Path.Combine(Path.GetDirectoryName(sourceFileName), match.Groups[1].Value)));
 			}
 			if (flags.HasFlag(CompilerOptions.ReferenceCore))
@@ -468,8 +476,9 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			{
 				CompilerResults results = new CompilerResults(new TempFileCollection());
 				results.PathToAssembly = outputFileName ?? Path.GetTempFileName();
-				string testBasePath = RoundtripAssembly.TestDir;
-				if (!Directory.Exists(testBasePath)) {
+				string testBasePath = TestDir;
+				if (!Directory.Exists(testBasePath))
+				{
 					Assert.Ignore($"Compilation with mcs ignored: test directory '{testBasePath}' needs to be checked out separately." + Environment.NewLine +
 			  $"git clone https://github.com/icsharpcode/ILSpy-tests \"{testBasePath}\"");
 				}
@@ -481,7 +490,9 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 				if (flags.HasFlag(CompilerOptions.Library)) {
 					otherOptions += "-t:library ";
-				} else {
+				}
+				else
+				{
 					otherOptions += "-t:exe ";
 				}
 
@@ -491,10 +502,13 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 				if (flags.HasFlag(CompilerOptions.Force32Bit)) {
 					otherOptions += "-platform:x86 ";
-				} else {
+				}
+				else
+				{
 					otherOptions += "-platform:anycpu ";
 				}
-				if (preprocessorSymbols.Count > 0) {
+				if (preprocessorSymbols.Count > 0)
+				{
 					otherOptions += " \"-d:" + string.Join(";", preprocessorSymbols) + "\" ";
 				}
 
@@ -520,6 +534,8 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				return results;
 			}
 		}
+
+		public static readonly string TestDir = Path.GetFullPath(Path.Combine(Tester.TestCasePath, "../../ILSpy-tests"));
 
 		internal static DecompilerSettings GetSettings(CompilerOptions cscOptions)
 		{
@@ -663,7 +679,8 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				var syntaxTree = decompiler.DecompileWholeModuleAsSingleFile(sortTypes: true);
 
 				StringWriter output = new StringWriter();
-				var visitor = new CSharpOutputVisitor(output, FormattingOptionsFactory.CreateSharpDevelop());
+				CSharpFormattingOptions formattingPolicy = CreateFormattingPolicyForTests();
+				var visitor = new CSharpOutputVisitor(output, formattingPolicy);
 				syntaxTree.AcceptVisitor(visitor);
 
 				string fileName = Path.GetTempFileName();
@@ -671,6 +688,17 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 				return fileName;
 			}
+		}
+
+		private static CSharpFormattingOptions CreateFormattingPolicyForTests()
+		{
+			var formattingPolicy = FormattingOptionsFactory.CreateSharpDevelop();
+			formattingPolicy.StatementBraceStyle = BraceStyle.NextLine;
+			formattingPolicy.CatchNewLinePlacement = NewLinePlacement.NewLine;
+			formattingPolicy.ElseNewLinePlacement = NewLinePlacement.NewLine;
+			formattingPolicy.FinallyNewLinePlacement = NewLinePlacement.NewLine;
+			formattingPolicy.SpaceBeforeAnonymousMethodParentheses = true;
+			return formattingPolicy;
 		}
 
 		public static void RunAndCompareOutput(string testFileName, string outputFile, string decompiledOutputFile, string decompiledCodeFile = null)
@@ -685,10 +713,12 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			if (output1 != output2 || error1 != error2) {
 				StringBuilder b = new StringBuilder();
 				b.AppendLine($"Test {testFileName} failed: output does not match.");
-				if (decompiledCodeFile != null) {
+				if (decompiledCodeFile != null)
+				{
 					b.AppendLine($"Decompiled code in {decompiledCodeFile}:line 1");
 				}
-				if (error1 != error2) {
+				if (error1 != error2)
+				{
 					b.AppendLine("Got different error output.");
 					b.AppendLine("Original error:");
 					b.AppendLine(error1);
@@ -697,25 +727,30 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 					b.AppendLine(error2);
 					b.AppendLine();
 				}
-				if (output1 != output2) {
+				if (output1 != output2)
+				{
 					string outputFileName = Path.Combine(Path.GetTempPath(), Path.GetFileNameWithoutExtension(testFileName));
 					File.WriteAllText(outputFileName + ".original.out", output1);
 					File.WriteAllText(outputFileName + ".decompiled.out", output2);
 					int diffLine = 0;
 					string lastHeader = null;
 					Tuple<string, string> errorItem = null;
-					foreach (var pair in output1.Replace("\r", "").Split('\n').Zip(output2.Replace("\r", "").Split('\n'), Tuple.Create)) {
+					foreach (var pair in output1.Replace("\r", "").Split('\n').Zip(output2.Replace("\r", "").Split('\n'), Tuple.Create))
+					{
 						diffLine++;
-						if (pair.Item1 != pair.Item2) {
+						if (pair.Item1 != pair.Item2)
+						{
 							errorItem = pair;
 							break;
 						}
-						if (pair.Item1.EndsWith(":", StringComparison.Ordinal)) {
+						if (pair.Item1.EndsWith(":", StringComparison.Ordinal))
+						{
 							lastHeader = pair.Item1;
 						}
 					}
 					b.AppendLine($"Output differs; first difference in line {diffLine}");
-					if (lastHeader != null) {
+					if (lastHeader != null)
+					{
 						b.AppendLine(lastHeader);
 					}
 					b.AppendLine($"{outputFileName}.original.out:line {diffLine}");

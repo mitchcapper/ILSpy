@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.Documentation
@@ -37,7 +38,8 @@ namespace ICSharpCode.Decompiler.Documentation
 
 		bool CanMatch(IMember member)
 		{
-			switch (member.SymbolKind) {
+			switch (member.SymbolKind)
+			{
 				case SymbolKind.Field:
 					return memberType == 'F';
 				case SymbolKind.Property:
@@ -62,7 +64,8 @@ namespace ICSharpCode.Decompiler.Documentation
 		public IMember Resolve(ITypeResolveContext context)
 		{
 			IType declaringType = declaringTypeReference.Resolve(context);
-			foreach (var member in declaringType.GetMembers(CanMatch, GetMemberOptions.IgnoreInheritedMembers)) {
+			foreach (var member in declaringType.GetMembers(CanMatch, GetMemberOptions.IgnoreInheritedMembers))
+			{
 				if (IdStringProvider.GetIdString(member) == memberIdString)
 					return member;
 			}

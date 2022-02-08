@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+
 using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -55,7 +56,8 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 			// However, in almost all cases this will work correctly - if the resulting type is only available in the
 			// nested compilation and not in this, we wouldn't be able to map it anyways.
 			var ctx = context as CSharpTypeResolveContext;
-			if (ctx == null) {
+			if (ctx == null)
+			{
 				ctx = new CSharpTypeResolveContext(context.CurrentModule ?? context.Compilation.MainModule, null, context.CurrentTypeDefinition, context.CurrentMember);
 			}
 			return ResolveType(new CSharpResolver(ctx));

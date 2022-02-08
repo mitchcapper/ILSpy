@@ -18,6 +18,8 @@
 
 using System;
 using System.Linq;
+
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 
@@ -30,7 +32,7 @@ namespace ICSharpCode.Decompiler.Documentation
 	/// The type parameter count only applies to the innermost type, all outer types must be non-generic.
 	/// </summary>
 	[Serializable]
-	class GetPotentiallyNestedClassTypeReference : ITypeReference
+	public class GetPotentiallyNestedClassTypeReference : ITypeReference
 	{
 		readonly string typeName;
 		readonly int typeParameterCount;
@@ -44,16 +46,19 @@ namespace ICSharpCode.Decompiler.Documentation
 		public IType Resolve(ITypeResolveContext context)
 		{
 			string[] parts = typeName.Split('.');
-			var assemblies = new [] { context.CurrentModule }.Concat(context.Compilation.Modules);
-			for (int i = parts.Length - 1; i >= 0; i--) {
+			var assemblies = new[] { context.CurrentModule }.Concat(context.Compilation.Modules);
+			for (int i = parts.Length - 1; i >= 0; i--)
+			{
 				string ns = string.Join(".", parts, 0, i);
 				string name = parts[i];
 				int topLevelTPC = (i == parts.Length - 1 ? typeParameterCount : 0);
-				foreach (var asm in assemblies) {
+				foreach (var asm in assemblies)
+				{
 					if (asm == null)
 						continue;
 					ITypeDefinition typeDef = asm.GetTypeDefinition(new TopLevelTypeName(ns, name, topLevelTPC));
-					for (int j = i + 1; j < parts.Length && typeDef != null; j++) {
+					for (int j = i + 1; j < parts.Length && typeDef != null; j++)
+					{
 						int tpc = (j == parts.Length - 1 ? typeParameterCount : 0);
 						typeDef = typeDef.NestedTypes.FirstOrDefault(n => n.Name == parts[j] && n.TypeParameterCount == tpc);
 					}
@@ -65,7 +70,7 @@ namespace ICSharpCode.Decompiler.Documentation
 			if (idx < 0)
 				return new UnknownType("", typeName, typeParameterCount);
 			// give back a guessed namespace/type name
-			return  new UnknownType(typeName.Substring(0, idx), typeName.Substring(idx + 1), typeParameterCount);
+			return new UnknownType(typeName.Substring(0, idx), typeName.Substring(idx + 1), typeParameterCount);
 		}
 	}
 }

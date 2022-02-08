@@ -127,7 +127,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public override bool Equals(object obj)
 		{
-			if (obj is MetadataEvent ev) {
+			if (obj is MetadataEvent ev)
+			{
 				return handle == ev.handle && module.PEFile == ev.module.PEFile;
 			}
 			return false;

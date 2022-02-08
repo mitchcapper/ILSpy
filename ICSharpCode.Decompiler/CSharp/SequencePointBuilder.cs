@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
+
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.IL;
@@ -96,7 +97,8 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		void VisitAsSequencePoint(AstNode node)
 		{
-			if (node.IsNull) return;
+			if (node.IsNull)
+				return;
 			StartSequencePoint(node);
 			node.AcceptVisitor(this);
 			EndSequencePoint(node.StartLocation, node.EndLocation);
@@ -149,7 +151,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 			}
 
-			foreach (var stmt in blockStatement.Statements) {
+			foreach (var stmt in blockStatement.Statements)
+			{
 				VisitAsSequencePoint(stmt);
 			}
 			var implicitReturn = blockStatement.Annotation<ImplicitReturnAnnotation>();
@@ -164,11 +167,13 @@ namespace ICSharpCode.Decompiler.CSharp
 		public override void VisitForStatement(ForStatement forStatement)
 		{
 			// Every element of a for-statement is its own sequence point.
-			foreach (var init in forStatement.Initializers) {
+			foreach (var init in forStatement.Initializers)
+			{
 				VisitAsSequencePoint(init);
 			}
 			VisitAsSequencePoint(forStatement.Condition);
-			foreach (var inc in forStatement.Iterators) {
+			foreach (var inc in forStatement.Iterators)
+			{
 				VisitAsSequencePoint(inc);
 			}
 			VisitAsSequencePoint(forStatement.EmbeddedStatement);
@@ -178,7 +183,8 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			StartSequencePoint(switchStatement);
 			switchStatement.Expression.AcceptVisitor(this);
-			foreach (var section in switchStatement.SwitchSections) {
+			foreach (var section in switchStatement.SwitchSections)
+			{
 				// note: sections will not contribute to the current sequence point
 				section.AcceptVisitor(this);
 			}
@@ -191,7 +197,8 @@ namespace ICSharpCode.Decompiler.CSharp
 		public override void VisitSwitchSection(Syntax.SwitchSection switchSection)
 		{
 			// every statement in the switch section is its own sequence point
-			foreach (var stmt in switchSection.Statements) {
+			foreach (var stmt in switchSection.Statements)
+			{
 				VisitAsSequencePoint(stmt);
 			}
 		}
@@ -210,10 +217,13 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		public override void VisitQueryFromClause(QueryFromClause queryFromClause)
 		{
-			if (queryFromClause.Parent.FirstChild != queryFromClause) {
+			if (queryFromClause.Parent.FirstChild != queryFromClause)
+			{
 				AddToSequencePoint(queryFromClause);
 				VisitAsSequencePoint(queryFromClause.Expression);
-			} else {
+			}
+			else
+			{
 				base.VisitQueryFromClause(queryFromClause);
 			}
 		}
@@ -271,7 +281,8 @@ namespace ICSharpCode.Decompiler.CSharp
 		public override void VisitForeachStatement(ForeachStatement foreachStatement)
 		{
 			var foreachInfo = foreachStatement.Annotation<ForeachAnnotation>();
-			if (foreachInfo == null) {
+			if (foreachInfo == null)
+			{
 				base.VisitForeachStatement(foreachStatement);
 				return;
 			}
@@ -284,11 +295,11 @@ namespace ICSharpCode.Decompiler.CSharp
 			StartSequencePoint(foreachStatement);
 			AddToSequencePoint(foreachInfo.MoveNextCall);
 			EndSequencePoint(foreachStatement.InToken.StartLocation, foreachStatement.InToken.EndLocation);
-			
+
 			StartSequencePoint(foreachStatement);
 			AddToSequencePoint(foreachInfo.GetCurrentCall);
 			EndSequencePoint(foreachStatement.VariableType.StartLocation, foreachStatement.VariableDesignation.EndLocation);
-			
+
 			VisitAsSequencePoint(foreachStatement.EmbeddedStatement);
 		}
 
@@ -331,7 +342,8 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		public override void VisitFixedStatement(FixedStatement fixedStatement)
 		{
-			foreach (var v in fixedStatement.Variables) {
+			foreach (var v in fixedStatement.Variables)
+			{
 				VisitAsSequencePoint(v);
 			}
 			VisitAsSequencePoint(fixedStatement.EmbeddedStatement);
@@ -340,7 +352,8 @@ namespace ICSharpCode.Decompiler.CSharp
 		public override void VisitTryCatchStatement(TryCatchStatement tryCatchStatement)
 		{
 			VisitAsSequencePoint(tryCatchStatement.TryBlock);
-			foreach (var c in tryCatchStatement.CatchClauses) {
+			foreach (var c in tryCatchStatement.CatchClauses)
+			{
 				VisitAsSequencePoint(c);
 			}
 			VisitAsSequencePoint(tryCatchStatement.FinallyBlock);
@@ -348,15 +361,19 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		public override void VisitCatchClause(CatchClause catchClause)
 		{
-			if (catchClause.Condition.IsNull) {
+			if (catchClause.Condition.IsNull)
+			{
 				var tryCatchHandler = catchClause.Annotation<TryCatchHandler>();
-				if (tryCatchHandler != null && !tryCatchHandler.ExceptionSpecifierILRange.IsEmpty) {
+				if (tryCatchHandler != null && !tryCatchHandler.ExceptionSpecifierILRange.IsEmpty)
+				{
 					StartSequencePoint(catchClause.CatchToken);
 					var function = tryCatchHandler.Ancestors.OfType<ILFunction>().FirstOrDefault();
 					AddToSequencePointRaw(function, new[] { tryCatchHandler.ExceptionSpecifierILRange });
 					EndSequencePoint(catchClause.CatchToken.StartLocation, catchClause.RParToken.IsNull ? catchClause.CatchToken.EndLocation : catchClause.RParToken.EndLocation);
 				}
-			} else {
+			}
+			else
+			{
 				StartSequencePoint(catchClause.WhenToken);
 				AddToSequencePoint(catchClause.Condition);
 				EndSequencePoint(catchClause.WhenToken.StartLocation, catchClause.CondRParToken.EndLocation);
@@ -377,7 +394,8 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			Debug.Assert(!startLocation.IsEmpty, "missing startLocation");
 			Debug.Assert(!endLocation.IsEmpty, "missing endLocation");
-			if (current.Intervals.Count > 0 && current.Function != null) {
+			if (current.Intervals.Count > 0 && current.Function != null)
+			{
 				// use LongSet to deduplicate and merge the intervals
 				var longSet = new LongSet(current.Intervals.Select(i => new LongInterval(i.Start, i.End)));
 				Debug.Assert(!longSet.IsEmpty);
@@ -406,19 +424,22 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// </summary>
 		void AddToSequencePoint(AstNode node)
 		{
-			foreach (var inst in node.Annotations.OfType<ILInstruction>()) {
+			foreach (var inst in node.Annotations.OfType<ILInstruction>())
+			{
 				AddToSequencePoint(inst);
 			}
 		}
 
 		void AddToSequencePoint(ILInstruction inst)
 		{
-			if (!mappedInstructions.Add(inst)) {
+			if (!mappedInstructions.Add(inst))
+			{
 				// inst was already used by a nested sequence point within this sequence point
 				return;
 			}
 			// Add the IL range associated with this instruction to the current sequence point.
-			if (HasUsableILRange(inst) && current.Intervals != null) {
+			if (HasUsableILRange(inst) && current.Intervals != null)
+			{
 				current.Intervals.AddRange(inst.ILRanges);
 				var function = inst.Parent.Ancestors.OfType<ILFunction>().FirstOrDefault();
 				Debug.Assert(current.Function == null || current.Function == function);
@@ -431,7 +452,8 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			// Also add the child IL instructions, unless they were already processed by
 			// another C# expression.
-			foreach (var child in inst.Children) {
+			foreach (var child in inst.Children)
+			{
 				AddToSequencePoint(child);
 			}
 		}
@@ -451,27 +473,36 @@ namespace ICSharpCode.Decompiler.CSharp
 		internal Dictionary<ILFunction, List<DebugInfo.SequencePoint>> GetSequencePoints()
 		{
 			var dict = new Dictionary<ILFunction, List<DebugInfo.SequencePoint>>();
-			foreach (var (function, sequencePoint) in this.sequencePoints) {
-				if (!dict.TryGetValue(function, out var list)) {
+			foreach (var (function, sequencePoint) in this.sequencePoints)
+			{
+				if (!dict.TryGetValue(function, out var list))
+				{
 					dict.Add(function, list = new List<DebugInfo.SequencePoint>());
 				}
 				list.Add(sequencePoint);
 			}
 
-			foreach (var (function, list) in dict.ToList()) {
+			foreach (var (function, list) in dict.ToList())
+			{
 				// For each function, sort sequence points and fix overlaps
 				var newList = new List<DebugInfo.SequencePoint>();
 				int pos = 0;
 				IOrderedEnumerable<DebugInfo.SequencePoint> currFunctionSequencePoints = list.OrderBy(sp => sp.Offset).ThenBy(sp => sp.EndOffset);
-				foreach (DebugInfo.SequencePoint sequencePoint in currFunctionSequencePoints) {
-					if (sequencePoint.Offset < pos) {
+				foreach (DebugInfo.SequencePoint sequencePoint in currFunctionSequencePoints)
+				{
+					if (sequencePoint.Offset < pos)
+					{
 						// overlapping sequence point?
 						// delete previous sequence points that are after sequencePoint.Offset
-						while (newList.Count > 0 && newList.Last().EndOffset > sequencePoint.Offset) {
+						while (newList.Count > 0 && newList.Last().EndOffset > sequencePoint.Offset)
+						{
 							var last = newList.Last();
-							if (last.Offset >= sequencePoint.Offset) {
+							if (last.Offset >= sequencePoint.Offset)
+							{
 								newList.RemoveAt(newList.Count - 1);
-							} else {
+							}
+							else
+							{
 								last.EndOffset = sequencePoint.Offset;
 								newList[newList.Count - 1] = last;
 							}
@@ -482,7 +513,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					pos = sequencePoint.EndOffset;
 				}
 				// Add a hidden sequence point to account for the epilog of the function
-				if (pos < function.CodeSize) {
+				if (pos < function.CodeSize)
+				{
 					var hidden = new DebugInfo.SequencePoint();
 					hidden.Offset = pos;
 					hidden.EndOffset = function.CodeSize;
@@ -494,7 +526,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				List<int> sequencePointCandidates = function.SequencePointCandidates;
 				int currSPCandidateIndex = 0;
 
-				for (int i = 0; i < newList.Count - 1; i++) {
+				for (int i = 0; i < newList.Count - 1; i++)
+				{
 					DebugInfo.SequencePoint currSequencePoint = newList[i];
 					DebugInfo.SequencePoint nextSequencePoint = newList[i + 1];
 
@@ -503,33 +536,38 @@ namespace ICSharpCode.Decompiler.CSharp
 					// point is not required as it is 0 for the first sequence point and is moved during the last 
 					// iteration for all others.
 					while (currSPCandidateIndex < sequencePointCandidates.Count &&
-						sequencePointCandidates[currSPCandidateIndex] < currSequencePoint.EndOffset) {
+						sequencePointCandidates[currSPCandidateIndex] < currSequencePoint.EndOffset)
+					{
 						currSPCandidateIndex++;
 					}
-					if (currSPCandidateIndex < sequencePointCandidates.Count && sequencePointCandidates[currSPCandidateIndex] <= nextSequencePoint.Offset) {
+					if (currSPCandidateIndex < sequencePointCandidates.Count && sequencePointCandidates[currSPCandidateIndex] <= nextSequencePoint.Offset)
+					{
 						currSequencePoint.EndOffset = sequencePointCandidates[currSPCandidateIndex];
 					}
 
 					// Adjust the start offset of the next sequence point to the closest previous sequence point candidate
 					// but do not create an overlapping sequence point. 
 					while (currSPCandidateIndex < sequencePointCandidates.Count &&
-						sequencePointCandidates[currSPCandidateIndex] < nextSequencePoint.Offset) {
+						sequencePointCandidates[currSPCandidateIndex] < nextSequencePoint.Offset)
+					{
 						currSPCandidateIndex++;
 					}
-					if (currSPCandidateIndex < sequencePointCandidates.Count && sequencePointCandidates[currSPCandidateIndex - 1] >= currSequencePoint.EndOffset) {
+					if (currSPCandidateIndex < sequencePointCandidates.Count && sequencePointCandidates[currSPCandidateIndex - 1] >= currSequencePoint.EndOffset)
+					{
 						nextSequencePoint.Offset = sequencePointCandidates[currSPCandidateIndex - 1];
 						currSPCandidateIndex--;
 					}
 
 					// Fill in any gaps with a hidden sequence point
-					if (currSequencePoint.EndOffset != nextSequencePoint.Offset) {
+					if (currSequencePoint.EndOffset != nextSequencePoint.Offset)
+					{
 						SequencePoint newSP = new SequencePoint() { Offset = currSequencePoint.EndOffset, EndOffset = nextSequencePoint.Offset };
 						newSP.SetHidden();
 						newList.Insert(++i, newSP);
 					}
 				}
 				dict[function] = newList;
-			}			
+			}
 
 			return dict;
 		}

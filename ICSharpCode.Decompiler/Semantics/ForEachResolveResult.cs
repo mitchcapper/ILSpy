@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.Semantics
@@ -64,13 +65,13 @@ namespace ICSharpCode.Decompiler.Semantics
 			: base(voidType)
 		{
 			if (getEnumeratorCall == null)
-				throw new ArgumentNullException("getEnumeratorCall");
+				throw new ArgumentNullException(nameof(getEnumeratorCall));
 			if (collectionType == null)
-				throw new ArgumentNullException("collectionType");
+				throw new ArgumentNullException(nameof(collectionType));
 			if (enumeratorType == null)
-				throw new ArgumentNullException("enumeratorType");
+				throw new ArgumentNullException(nameof(enumeratorType));
 			if (elementType == null)
-				throw new ArgumentNullException("elementType");
+				throw new ArgumentNullException(nameof(elementType));
 			this.GetEnumeratorCall = getEnumeratorCall;
 			this.CollectionType = collectionType;
 			this.EnumeratorType = enumeratorType;

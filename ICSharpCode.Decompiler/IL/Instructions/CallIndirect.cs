@@ -1,5 +1,6 @@
-﻿// Copyright (c) 2017 Daniel Grunwald
-//
+﻿#nullable enable
+// Copyright (c) 2017 Daniel Grunwald
+// 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
 // without restriction, including without limitation the rights to use, copy, modify, merge,
@@ -19,6 +20,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL
@@ -30,7 +32,7 @@ namespace ICSharpCode.Decompiler.IL
 		public static readonly SlotInfo FunctionPointerSlot = new SlotInfo("FunctionPointer", canInlineInto: true);
 		public static readonly SlotInfo ArgumentSlot = new SlotInfo("Argument", canInlineInto: true, isCollection: true);
 
-		ILInstruction functionPointer;
+		ILInstruction functionPointer = null!;
 		public readonly InstructionCollection<ILInstruction> Arguments;
 		public bool IsInstance { get; }
 		public bool HasExplicitThis { get; }
@@ -80,7 +82,8 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write('(');
 			functionPointer.WriteTo(output, options);
 			int firstArgument = IsInstance ? 1 : 0;
-			if (firstArgument == 1) {
+			if (firstArgument == 1)
+			{
 				output.Write(", ");
 				Arguments[0].WriteTo(output, options);
 			}
@@ -127,7 +130,8 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			var flags = this.DirectFlags;
 			flags |= functionPointer.Flags;
-			foreach (var inst in Arguments) {
+			foreach (var inst in Arguments)
+			{
 				flags |= inst.Flags;
 			}
 			return flags;

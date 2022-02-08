@@ -16,21 +16,24 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void Test(NonGeneric c)
 		{
-			foreach (object item in c) {
+			foreach (object item in c)
+			{
 				Console.WriteLine(item);
 			}
 		}
 
 		public void Test(Generic<int> c)
 		{
-			foreach (int item in c) {
+			foreach (int item in c)
+			{
 				Console.WriteLine(item);
 			}
 		}
 
 		public async void TestAsync(Generic<int> c)
 		{
-			await foreach (int item in c) {
+			await foreach (int item in c)
+			{
 				Console.WriteLine(item);
 			}
 		}

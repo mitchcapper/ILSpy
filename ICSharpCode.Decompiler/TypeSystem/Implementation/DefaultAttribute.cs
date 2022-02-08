@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.Util;
 
@@ -41,7 +42,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			ImmutableArray<CustomAttributeNamedArgument<IType>> namedArguments)
 		{
 			if (attributeType == null)
-				throw new ArgumentNullException("attributeType");
+				throw new ArgumentNullException(nameof(attributeType));
 			this.attributeType = attributeType;
 			this.FixedArguments = fixedArguments;
 			this.NamedArguments = namedArguments;
@@ -52,12 +53,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			ImmutableArray<CustomAttributeNamedArgument<IType>> namedArguments)
 		{
 			if (constructor == null)
-				throw new ArgumentNullException("constructor");
+				throw new ArgumentNullException(nameof(constructor));
 			this.constructor = constructor;
 			this.attributeType = constructor.DeclaringType ?? SpecialType.UnknownType;
 			this.FixedArguments = fixedArguments;
 			this.NamedArguments = namedArguments;
-			if (fixedArguments.Length != constructor.Parameters.Count) {
+			if (fixedArguments.Length != constructor.Parameters.Count)
+			{
 				throw new ArgumentException("Positional argument count must match the constructor's parameter count");
 			}
 		}
@@ -71,9 +73,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public IMethod Constructor {
 			get {
 				IMethod ctor = this.constructor;
-				if (ctor == null) {
-					foreach (IMethod candidate in this.AttributeType.GetConstructors(m => m.Parameters.Count == FixedArguments.Length)) {
-						if (candidate.Parameters.Select(p => p.Type).SequenceEqual(this.FixedArguments.Select(a => a.Type))) {
+				if (ctor == null)
+				{
+					foreach (IMethod candidate in this.AttributeType.GetConstructors(m => m.Parameters.Count == FixedArguments.Length))
+					{
+						if (candidate.Parameters.Select(p => p.Type).SequenceEqual(this.FixedArguments.Select(a => a.Type)))
+						{
 							ctor = candidate;
 							break;
 						}

@@ -100,7 +100,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public async void TwoAwaitsWithDifferentAwaiterTypes()
 		{
 			Console.WriteLine("Before");
-			if (await SimpleBoolTaskMethod()) {
+			if (await SimpleBoolTaskMethod())
+			{
 				await Task.Delay(TimeSpan.FromSeconds(1.0));
 			}
 			Console.WriteLine("After");
@@ -108,7 +109,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public async void AwaitInLoopCondition()
 		{
-			while (await SimpleBoolTaskMethod()) {
+			while (await SimpleBoolTaskMethod())
+			{
 				Console.WriteLine("Body");
 			}
 		}
@@ -116,14 +118,20 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 #if CS60
 		public async Task AwaitInCatch(bool b, Task<int> task1, Task<int> task2)
 		{
-			try {
+			try
+			{
 				Console.WriteLine("Start try");
 				await task1;
 				Console.WriteLine("End try");
-			} catch (Exception) {
-				if (!b) {
+			}
+			catch (Exception)
+			{
+				if (!b)
+				{
 					await task2;
-				} else {
+				}
+				else
+				{
 					Console.WriteLine("No await");
 				}
 			}
@@ -131,14 +139,20 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public async Task AwaitInFinally(bool b, Task<int> task1, Task<int> task2)
 		{
-			try {
+			try
+			{
 				Console.WriteLine("Start try");
 				await task1;
 				Console.WriteLine("End try");
-			} finally {
-				if (!b) {
+			}
+			finally
+			{
+				if (!b)
+				{
 					await task2;
-				} else {
+				}
+				else
+				{
 					Console.WriteLine("No await");
 				}
 			}
@@ -146,9 +160,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public async Task AnonymousThrow()
 		{
-			try {
+			try
+			{
 				await Task.Delay(0);
-			} catch {
+			}
+			catch
+			{
 				await Task.Delay(0);
 				throw;
 			}
@@ -156,9 +173,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public async Task DeclaredException()
 		{
-			try {
+			try
+			{
 				await Task.Delay(0);
-			} catch (Exception) {
+			}
+			catch (Exception)
+			{
 				await Task.Delay(0);
 				throw;
 			}
@@ -166,9 +186,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public async Task RethrowDeclared()
 		{
-			try {
+			try
+			{
 				await Task.Delay(0);
-			} catch (Exception ex) {
+			}
+			catch (Exception ex)
+			{
 				await Task.Delay(0);
 				throw ex;
 			}
@@ -176,9 +199,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public async Task RethrowDeclaredWithFilter()
 		{
-			try {
+			try
+			{
 				await Task.Delay(0);
-			} catch (Exception ex) when (ex.GetType().FullName.Contains("asdf")) {
+			}
+			catch (Exception ex) when (ex.GetType().FullName.Contains("asdf"))
+			{
 				await Task.Delay(0);
 				throw;
 			}
@@ -186,10 +212,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public async Task ComplexCatchBlock()
 		{
-			try {
+			try
+			{
 				await Task.Delay(0);
-			} catch (Exception ex) {
-				if (ex.GetHashCode() != 0) {
+			}
+			catch (Exception ex)
+			{
+				if (ex.GetHashCode() != 0)
+				{
 					throw;
 				}
 				await Task.Delay(0);
@@ -198,10 +228,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public async Task ComplexCatchBlockWithFilter()
 		{
-			try {
+			try
+			{
 				await Task.Delay(0);
-			} catch (Exception ex) when (ex.GetType().FullName.Contains("asdf")) {
-				if (ex.GetHashCode() != 0) {
+			}
+			catch (Exception ex) when (ex.GetType().FullName.Contains("asdf"))
+			{
+				if (ex.GetHashCode() != 0)
+				{
 					throw;
 				}
 				await Task.Delay(0);
@@ -210,44 +244,63 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public async Task LoadsToCatch(int i)
 		{
-			try {
+			try
+			{
 				throw null;
-			} catch (Exception ex2) when (i == 0) {
+			}
+			catch (Exception ex2) when (i == 0)
+			{
 				Console.WriteLine("First!");
-				if (i == 1) {
+				if (i == 1)
+				{
 					throw;
 				}
 				await Task.Yield();
 				Console.WriteLine(ex2.StackTrace);
-			} catch (Exception ex3) when (True()) {
+			}
+			catch (Exception ex3) when (True())
+			{
 				Console.WriteLine("Second!");
-				if (i == 1) {
+				if (i == 1)
+				{
 					throw;
 				}
 				await Task.Yield();
 				Console.WriteLine(ex3.StackTrace);
-			} catch (Exception ex) {
+			}
+			catch (Exception ex)
+			{
 				Console.WriteLine("Third!");
-				if (i == 1) {
+				if (i == 1)
+				{
 					throw;
 				}
 				await Task.Yield();
 				Console.WriteLine(ex.StackTrace);
-			} catch when (i == 0) {
+			}
+			catch when (i == 0)
+			{
 				Console.WriteLine("Fourth!");
-				if (i == 1) {
+				if (i == 1)
+				{
 					throw;
 				}
 				await Task.Yield();
-			} catch when (True()) {
+			}
+			catch when (True())
+			{
 				Console.WriteLine("Fifth!");
-				if (i == 1) {
+				if (i == 1)
+				{
 					throw;
 				}
 				await Task.Yield();
-			} catch {
+			}
+			catch
+			{
 				Console.WriteLine("Sixth!");
-				if (i == 1) {
+				if (i == 1)
+				{
 					throw;
 				}
 				await Task.Yield();
@@ -256,34 +309,50 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public async Task Issue2366a()
 		{
-			while (true) {
-				try {
+			while (true)
+			{
+				try
+				{
 					await Task.CompletedTask;
-				} catch {
+				}
+				catch
+				{
 				}
 			}
 		}
 
 		public async Task Issue2366b()
 		{
-			try {
+			try
+			{
 				await Task.CompletedTask;
-			} catch (NullReferenceException) {
+			}
+			catch (NullReferenceException)
+			{
 				await Task.CompletedTask;
-			} catch (InvalidOperationException) {
+			}
+			catch (InvalidOperationException)
+			{
 				await Task.CompletedTask;
-			} catch (ArgumentException) {
+			}
+			catch (ArgumentException)
+			{
 				await Task.CompletedTask;
 			}
 		}
 
 		public async Task<object> Issue2436()
 		{
-			try {
+			try
+			{
 				Console.WriteLine();
-			} catch (Exception result) {
+			}
+			catch (Exception result)
+			{
 				return result;
-			} finally {
+			}
+			finally
+			{
 				await Task.CompletedTask;
 			}
 			return new object();
@@ -294,7 +363,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			await Task.Delay(100);
 			int num = 0;
-			foreach (int item in items) {
+			foreach (int item in items)
+			{
 				num += item;
 			}
 			return num;
@@ -302,11 +372,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static Func<Task<int>> AsyncLambda()
 		{
-			return async () => await GetIntegerSumAsync(new int[3] {
-				1,
-				2,
-				3
-			});
+			return async () => await GetIntegerSumAsync(new int[3] { 1, 2, 3 });
 		}
 
 		public static Func<Task<int>> AsyncDelegate()
@@ -324,13 +390,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static async Task InfiniteLoop()
 		{
-			while (true) {
+			while (true)
+			{
 			}
 		}
 
 		public static async Task InfiniteLoopWithAwait()
 		{
-			while (true) {
+			while (true)
+			{
 				await Task.Delay(10);
 			}
 		}
@@ -385,10 +453,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 	public struct HopToThreadPoolAwaitable : INotifyCompletion
 	{
-		public bool IsCompleted {
-			get;
-			set;
-		}
+		public bool IsCompleted { get; set; }
 
 		public HopToThreadPoolAwaitable GetAwaiter()
 		{

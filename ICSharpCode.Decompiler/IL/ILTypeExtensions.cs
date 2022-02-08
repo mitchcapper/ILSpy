@@ -1,5 +1,6 @@
-﻿// Copyright (c) 2014 Daniel Grunwald
-//
+﻿#nullable enable
+// Copyright (c) 2014 Daniel Grunwald
+// 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
 // without restriction, including without limitation the rights to use, copy, modify, merge,
@@ -22,9 +23,10 @@ namespace ICSharpCode.Decompiler.IL
 {
 	static class ILTypeExtensions
 	{
-		public static StackType GetStackType(this PrimitiveType typeCode)
+		public static StackType GetStackType(this PrimitiveType primitiveType)
 		{
-			switch (typeCode) {
+			switch (primitiveType)
+			{
 				case PrimitiveType.I1:
 				case PrimitiveType.U1:
 				case PrimitiveType.I2:
@@ -54,7 +56,8 @@ namespace ICSharpCode.Decompiler.IL
 
 		public static Sign GetSign(this PrimitiveType primitiveType)
 		{
-			switch (primitiveType) {
+			switch (primitiveType)
+			{
 				case PrimitiveType.I1:
 				case PrimitiveType.I2:
 				case PrimitiveType.I4:
@@ -83,7 +86,8 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public static int GetSize(this PrimitiveType type)
 		{
-			switch (type) {
+			switch (type)
+			{
 				case PrimitiveType.I1:
 				case PrimitiveType.U1:
 					return 1;
@@ -126,7 +130,8 @@ namespace ICSharpCode.Decompiler.IL
 
 		public static bool IsFloatType(this PrimitiveType type)
 		{
-			switch (type) {
+			switch (type)
+			{
 				case PrimitiveType.R4:
 				case PrimitiveType.R8:
 				case PrimitiveType.R:
@@ -141,11 +146,12 @@ namespace ICSharpCode.Decompiler.IL
 		///
 		/// Returns SpecialType.UnknownType for unsupported instructions.
 		/// </summary>
-		public static IType InferType(this ILInstruction inst, ICompilation compilation)
+		public static IType InferType(this ILInstruction inst, ICompilation? compilation)
 		{
-			switch (inst) {
+			switch (inst)
+			{
 				case NewObj newObj:
-					return newObj.Method.DeclaringType;
+					return newObj.Method.DeclaringType ?? SpecialType.UnknownType;
 				case NewArr newArr:
 					if (compilation != null)
 						return new ArrayType(compilation, newArr.Type, newArr.Indices.Count);
@@ -174,8 +180,10 @@ namespace ICSharpCode.Decompiler.IL
 				case LdsFlda ldsflda:
 					return new ByReferenceType(ldsflda.Field.Type);
 				case LdElema ldelema:
-					if (ldelema.Array.InferType(compilation) is ArrayType arrayType) {
-						if (TypeUtils.IsCompatibleTypeForMemoryAccess(arrayType.ElementType, ldelema.Type)) {
+					if (ldelema.Array.InferType(compilation) is ArrayType arrayType)
+					{
+						if (TypeUtils.IsCompatibleTypeForMemoryAccess(arrayType.ElementType, ldelema.Type))
+						{
 							return new ByReferenceType(arrayType.ElementType);
 						}
 					}
@@ -183,7 +191,8 @@ namespace ICSharpCode.Decompiler.IL
 				case Comp comp:
 					if (compilation == null)
 						return SpecialType.UnknownType;
-					switch (comp.LiftingKind) {
+					switch (comp.LiftingKind)
+					{
 						case ComparisonLiftingKind.None:
 						case ComparisonLiftingKind.CSharp:
 							return compilation.FindType(KnownTypeCode.Boolean);
@@ -195,7 +204,8 @@ namespace ICSharpCode.Decompiler.IL
 				case BinaryNumericInstruction bni:
 					if (bni.IsLifted)
 						return SpecialType.UnknownType;
-					switch (bni.Operator) {
+					switch (bni.Operator)
+					{
 						case BinaryNumericOperator.BitAnd:
 						case BinaryNumericOperator.BitOr:
 						case BinaryNumericOperator.BitXor:

@@ -4,30 +4,18 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.StaticAbstractInterfaceM
 {
 	public interface I
 	{
-		abstract static int Capacity {
-			get;
-		}
-		abstract static int Count {
-			get;
-			set;
-		}
-		abstract static int SetterOnly {
-			set;
-		}
+		abstract static int Capacity { get; }
+		abstract static int Count { get; set; }
+		abstract static int SetterOnly { set; }
 		abstract static event EventHandler E;
 		abstract static I CreateI();
 	}
 
 	public class X : I
 	{
-		public static int Capacity {
-			get;
-		}
+		public static int Capacity { get; }
 
-		public static int Count {
-			get;
-			set;
-		}
+		public static int Count { get; set; }
 
 		public static int SetterOnly {
 			set {

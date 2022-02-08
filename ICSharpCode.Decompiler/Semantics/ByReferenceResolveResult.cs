@@ -19,6 +19,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.Semantics
@@ -34,7 +35,7 @@ namespace ICSharpCode.Decompiler.Semantics
 		public bool IsIn => ReferenceKind == ReferenceKind.In;
 
 		public readonly ResolveResult ElementResult;
-		
+
 		public ByReferenceResolveResult(ResolveResult elementResult, ReferenceKind kind)
 			: this(elementResult.Type, kind)
 		{
@@ -49,11 +50,11 @@ namespace ICSharpCode.Decompiler.Semantics
 		{
 			this.ReferenceKind = kind;
 		}
-		
+
 		public IType ElementType {
 			get { return ((ByReferenceType)this.Type).ElementType; }
 		}
-		
+
 		public override IEnumerable<ResolveResult> GetChildResults()
 		{
 			if (ElementResult != null)
@@ -61,7 +62,7 @@ namespace ICSharpCode.Decompiler.Semantics
 			else
 				return Enumerable.Empty<ResolveResult>();
 		}
-		
+
 		public override string ToString()
 		{
 			return string.Format(CultureInfo.InvariantCulture, "[{0} {1} {2}]", GetType().Name, ReferenceKind.ToString().ToLowerInvariant(), ElementType);

@@ -1,14 +1,14 @@
 ﻿// Copyright (c) 2020 Siegfried Pammer
-//
+// 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
 // without restriction, including without limitation the rights to use, copy, modify, merge,
 // publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
 // to whom the Software is furnished to do so, subject to the following conditions:
-//
+// 
 // The above copyright notice and this permission notice shall be included in all copies or
 // substantial portions of the Software.
-//
+// 
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
 // INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
 // PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
@@ -49,10 +49,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		private class DeconstructionSource<T, T2>
 		{
-			public int Dummy {
-				get;
-				set;
-			}
+			public int Dummy { get; set; }
 
 			public void Deconstruct(out T a, out T2 b)
 			{
@@ -63,10 +60,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		private class DeconstructionSource<T, T2, T3>
 		{
-			public int Dummy {
-				get;
-				set;
-			}
+			public int Dummy { get; set; }
 
 			public void Deconstruct(out T a, out T2 b, out T3 c)
 			{
@@ -97,70 +91,31 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 			public MyInt? NullableMyIntField;
 
-			public int Int {
-				get;
-				set;
-			}
+			public int Int { get; set; }
 
-			public long Long {
-				get;
-				set;
-			}
+			public long Long { get; set; }
 
-			public float Float {
-				get;
-				set;
-			}
+			public float Float { get; set; }
 
-			public double Double {
-				get;
-				set;
-			}
+			public double Double { get; set; }
 
-			public decimal Decimal {
-				get;
-				set;
-			}
+			public decimal Decimal { get; set; }
 
-			public string String {
-				get;
-				set;
-			}
+			public string String { get; set; }
 
-			public object Object {
-				get;
-				set;
-			}
+			public object Object { get; set; }
 
-			public dynamic Dynamic {
-				get;
-				set;
-			}
+			public dynamic Dynamic { get; set; }
 
-			public int? NInt {
-				get;
-				set;
-			}
+			public int? NInt { get; set; }
 
-			public MyInt My {
-				get;
-				set;
-			}
+			public MyInt My { get; set; }
 
-			public MyInt? NMy {
-				get;
-				set;
-			}
+			public MyInt? NMy { get; set; }
 
-			public static MyInt StaticMy {
-				get;
-				set;
-			}
+			public static MyInt StaticMy { get; set; }
 
-			public static MyInt? StaticNMy {
-				get;
-				set;
-			}
+			public static MyInt? StaticNMy { get; set; }
 		}
 
 		private DeconstructionSource<T, T2> GetSource<T, T2>()
@@ -597,14 +552,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void DeconstructDictionaryForEach(Dictionary<string, int> dictionary)
 		{
-			foreach (var (text2, num2) in dictionary) {
+			foreach (var (text2, num2) in dictionary)
+			{
 				Console.WriteLine(text2 + ": " + num2);
 			}
 		}
 
 		public void DeconstructTupleListForEach(List<(string, int)> tuples)
 		{
-			foreach (var (text, num) in tuples) {
+			foreach (var (text, num) in tuples)
+			{
 				Console.WriteLine(text + ": " + num);
 			}
 		}

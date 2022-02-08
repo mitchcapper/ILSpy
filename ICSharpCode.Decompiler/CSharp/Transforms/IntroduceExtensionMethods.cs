@@ -19,6 +19,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+
 using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.TypeSystem;
@@ -50,8 +51,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		void InitializeContext(UsingScope usingScope)
 		{
 			this.resolveContextStack = new Stack<CSharpTypeResolveContext>();
-			if (!string.IsNullOrEmpty(context.CurrentTypeDefinition?.Namespace)) {
-				foreach (string ns in context.CurrentTypeDefinition.Namespace.Split('.')) {
+			if (!string.IsNullOrEmpty(context.CurrentTypeDefinition?.Namespace))
+			{
+				foreach (string ns in context.CurrentTypeDefinition.Namespace.Split('.'))
+				{
 					usingScope = new UsingScope(usingScope, ns);
 				}
 			}
@@ -64,15 +67,19 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			var previousContext = resolveContextStack.Peek();
 			var usingScope = previousContext.CurrentUsingScope.UnresolvedUsingScope;
-			foreach (string ident in namespaceDeclaration.Identifiers) {
+			foreach (string ident in namespaceDeclaration.Identifiers)
+			{
 				usingScope = new UsingScope(usingScope, ident);
 			}
 			var currentContext = new CSharpTypeResolveContext(previousContext.CurrentModule, usingScope.Resolve(previousContext.Compilation));
 			resolveContextStack.Push(currentContext);
-			try {
+			try
+			{
 				this.resolver = new CSharpResolver(currentContext);
 				base.VisitNamespaceDeclaration(namespaceDeclaration);
-			} finally {
+			}
+			finally
+			{
 				this.resolver = new CSharpResolver(previousContext);
 				resolveContextStack.Pop();
 			}
@@ -83,10 +90,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			var previousContext = resolveContextStack.Peek();
 			var currentContext = previousContext.WithCurrentTypeDefinition(typeDeclaration.GetSymbol() as ITypeDefinition);
 			resolveContextStack.Push(currentContext);
-			try {
+			try
+			{
 				this.resolver = new CSharpResolver(currentContext);
 				base.VisitTypeDeclaration(typeDeclaration);
-			} finally {
+			}
+			finally
+			{
 				this.resolver = new CSharpResolver(previousContext);
 				resolveContextStack.Pop();
 			}
@@ -222,7 +232,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		public static bool CanTransformToExtensionMethodCall(IMethod method, CSharpTypeResolveContext resolveContext, bool ignoreTypeArguments = false, bool ignoreArgumentNames = true)
 		{
-			if (method.Parameters.Count == 0) return false;
+			if (method.Parameters.Count == 0)
+				return false;
 			var targetType = method.Parameters.Select(p => new ResolveResult(p.Type)).First();
 			var paramTypes = method.Parameters.Skip(1).Select(p => new ResolveResult(p.Type)).ToArray();
 			var paramNames = ignoreArgumentNames ? null : method.Parameters.SelectReadOnlyArray(p => p.Name);

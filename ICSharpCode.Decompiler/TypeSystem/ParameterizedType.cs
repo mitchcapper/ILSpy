@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 
 namespace ICSharpCode.Decompiler.TypeSystem
@@ -43,9 +44,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public ParameterizedType(IType genericType, IEnumerable<IType> typeArguments)
 		{
 			if (genericType == null)
-				throw new ArgumentNullException("genericType");
+				throw new ArgumentNullException(nameof(genericType));
 			if (typeArguments == null)
-				throw new ArgumentNullException("typeArguments");
+				throw new ArgumentNullException(nameof(typeArguments));
 			this.genericType = genericType;
 			this.typeArguments = typeArguments.ToArray(); // copy input array to ensure it isn't modified
 			if (this.typeArguments.Length == 0)
@@ -53,7 +54,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			if (genericType.TypeParameterCount != this.typeArguments.Length)
 				throw new ArgumentException("Number of type arguments must match the type definition's number of type parameters");
 			ICompilationProvider gp = genericType as ICompilationProvider;
-			for (int i = 0; i < this.typeArguments.Length; i++) {
+			for (int i = 0; i < this.typeArguments.Length; i++)
+			{
 				if (this.typeArguments[i] == null)
 					throw new ArgumentNullException("typeArguments[" + i + "]");
 				ICompilationProvider p = this.typeArguments[i] as ICompilationProvider;
@@ -98,7 +100,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			get {
 				IType declaringType = genericType.DeclaringType;
 				if (declaringType != null && declaringType.TypeParameterCount > 0
-				    && declaringType.TypeParameterCount <= genericType.TypeParameterCount)
+					&& declaringType.TypeParameterCount <= genericType.TypeParameterCount)
 				{
 					IType[] newTypeArgs = new IType[declaringType.TypeParameterCount];
 					Array.Copy(this.typeArguments, 0, newTypeArgs, 0, newTypeArgs.Length);
@@ -128,7 +130,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			get {
 				StringBuilder b = new StringBuilder(genericType.ReflectionName);
 				b.Append('[');
-				for (int i = 0; i < typeArguments.Length; i++) {
+				for (int i = 0; i < typeArguments.Length; i++)
+				{
 					if (i > 0)
 						b.Append(',');
 					b.Append('[');
@@ -144,7 +147,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			StringBuilder b = new StringBuilder(genericType.ToString());
 			b.Append('[');
-			for (int i = 0; i < typeArguments.Length; i++) {
+			for (int i = 0; i < typeArguments.Length; i++)
+			{
 				if (i > 0)
 					b.Append(',');
 				b.Append('[');
@@ -294,7 +298,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			ParameterizedType c = other as ParameterizedType;
 			if (c == null || !genericType.Equals(c.genericType) || typeArguments.Length != c.typeArguments.Length)
 				return false;
-			for (int i = 0; i < typeArguments.Length; i++) {
+			for (int i = 0; i < typeArguments.Length; i++)
+			{
 				if (!typeArguments[i].Equals(c.typeArguments[i]))
 					return false;
 			}
@@ -304,8 +309,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public override int GetHashCode()
 		{
 			int hashCode = genericType.GetHashCode();
-			unchecked {
-				foreach (var ta in typeArguments) {
+			unchecked
+			{
+				foreach (var ta in typeArguments)
+				{
 					hashCode *= 1000000007;
 					hashCode += 1000000009 * ta.GetHashCode();
 				}
@@ -323,14 +330,17 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			IType g = genericType.AcceptVisitor(visitor);
 			// Keep ta == null as long as no elements changed, allocate the array only if necessary.
 			IType[] ta = (g != genericType) ? new IType[typeArguments.Length] : null;
-			for (int i = 0; i < typeArguments.Length; i++) {
+			for (int i = 0; i < typeArguments.Length; i++)
+			{
 				IType r = typeArguments[i].AcceptVisitor(visitor);
 				if (r == null)
 					throw new NullReferenceException("TypeVisitor.Visit-method returned null");
-				if (ta == null && r != typeArguments[i]) {
+				if (ta == null && r != typeArguments[i])
+				{
 					// we found a difference, so we need to allocate the array
 					ta = new IType[typeArguments.Length];
-					for (int j = 0; j < i; j++) {
+					for (int j = 0; j < i; j++)
+					{
 						ta[j] = typeArguments[j];
 					}
 				}
@@ -357,12 +367,13 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public ParameterizedTypeReference(ITypeReference genericType, IEnumerable<ITypeReference> typeArguments)
 		{
 			if (genericType == null)
-				throw new ArgumentNullException("genericType");
+				throw new ArgumentNullException(nameof(genericType));
 			if (typeArguments == null)
-				throw new ArgumentNullException("typeArguments");
+				throw new ArgumentNullException(nameof(typeArguments));
 			this.genericType = genericType;
 			this.typeArguments = typeArguments.ToArray();
-			for (int i = 0; i < this.typeArguments.Length; i++) {
+			for (int i = 0; i < this.typeArguments.Length; i++)
+			{
 				if (this.typeArguments[i] == null)
 					throw new ArgumentNullException("typeArguments[" + i + "]");
 			}
@@ -385,7 +396,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			if (tpc == 0)
 				return baseType;
 			IType[] resolvedTypes = new IType[tpc];
-			for (int i = 0; i < resolvedTypes.Length; i++) {
+			for (int i = 0; i < resolvedTypes.Length; i++)
+			{
 				if (i < typeArguments.Length)
 					resolvedTypes[i] = typeArguments[i].Resolve(context);
 				else
@@ -398,7 +410,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			StringBuilder b = new StringBuilder(genericType.ToString());
 			b.Append('[');
-			for (int i = 0; i < typeArguments.Length; i++) {
+			for (int i = 0; i < typeArguments.Length; i++)
+			{
 				if (i > 0)
 					b.Append(',');
 				b.Append('[');
@@ -412,8 +425,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		int ISupportsInterning.GetHashCodeForInterning()
 		{
 			int hashCode = genericType.GetHashCode();
-			unchecked {
-				foreach (ITypeReference t in typeArguments) {
+			unchecked
+			{
+				foreach (ITypeReference t in typeArguments)
+				{
 					hashCode *= 27;
 					hashCode += t.GetHashCode();
 				}
@@ -424,8 +439,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
 		{
 			ParameterizedTypeReference o = other as ParameterizedTypeReference;
-			if (o != null && genericType == o.genericType && typeArguments.Length == o.typeArguments.Length) {
-				for (int i = 0; i < typeArguments.Length; i++) {
+			if (o != null && genericType == o.genericType && typeArguments.Length == o.typeArguments.Length)
+			{
+				for (int i = 0; i < typeArguments.Length; i++)
+				{
 					if (typeArguments[i] != o.typeArguments[i])
 						return false;
 				}

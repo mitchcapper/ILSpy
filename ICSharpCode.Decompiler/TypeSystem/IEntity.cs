@@ -16,7 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
+#nullable enable
+
 using System.Collections.Generic;
 using dnlib.DotNet;
 
@@ -35,7 +36,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Token may be 0 if this is a generated member.
 		/// Note: specialized members will return the token of the member definition.
 		/// </remarks>
-		IMemberDef MetadataToken { get; }
+		IMemberDef? MetadataToken { get; }
 
 		/// <summary>
 		/// Gets the short name of the entity.
@@ -47,14 +48,14 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// For members, this is the class that contains the member.
 		/// For nested classes, this is the outer class. For top-level entities, this property returns null.
 		/// </summary>
-		ITypeDefinition DeclaringTypeDefinition { get; }
+		ITypeDefinition? DeclaringTypeDefinition { get; }
 
 		/// <summary>
 		/// Gets/Sets the declaring type (incl. type arguments, if any).
 		/// This property will return null for top-level entities.
 		/// If this is not a specialized member, the value returned is equal to <see cref="DeclaringTypeDefinition"/>.
 		/// </summary>
-		IType DeclaringType { get; }
+		IType? DeclaringType { get; }
 
 		/// <summary>
 		/// The module in which this entity is defined.
