@@ -21,7 +21,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
+
 using Humanizer.Inflections;
+
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
@@ -73,27 +75,38 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			localFunctionMapping = new Dictionary<dnlib.DotNet.MethodDef, string>();
 			loopCounters = CollectLoopCounters(function);
-			foreach (var f in function.Descendants.OfType<ILFunction>()) {
-				if (f.Method != null) {
-					if (IsSetOrEventAccessor(f.Method) && f.Method.Parameters.Count > 0) {
-						for (int i = 0; i < f.Method.Parameters.Count - 1; i++) {
+			foreach (var f in function.Descendants.OfType<ILFunction>())
+			{
+				if (f.Method != null)
+				{
+					if (IsSetOrEventAccessor(f.Method) && f.Method.Parameters.Count > 0)
+					{
+						for (int i = 0; i < f.Method.Parameters.Count - 1; i++)
+						{
 							AddExistingName(reservedVariableNames, f.Method.Parameters[i].Name);
 						}
 						var lastParameter = f.Method.Parameters.Last();
-						switch (f.Method.AccessorOwner) {
+						switch (f.Method.AccessorOwner)
+						{
 							case IProperty prop:
-								if (f.Method.AccessorKind == dnlib.DotNet.MethodSemanticsAttributes.Setter) {
-									if (prop.Parameters.Any(p => p.Name == "value")) {
+								if (f.Method.AccessorKind == dnlib.DotNet.MethodSemanticsAttributes.Setter)
+								{
+									if (prop.Parameters.Any(p => p.Name == "value"))
+									{
 										f.Warnings.Add("Parameter named \"value\" already present in property signature!");
 										break;
 									}
 									var variableForLastParameter = f.Variables.FirstOrDefault(v => v.Function == f
 										&& v.Kind == VariableKind.Parameter
 										&& v.Index == f.Method.Parameters.Count - 1);
-									if (variableForLastParameter == null) {
+									if (variableForLastParameter == null)
+									{
 										AddExistingName(reservedVariableNames, lastParameter.Name);
-									} else {
-										if (variableForLastParameter.Name != "value") {
+									}
+									else
+									{
+										if (variableForLastParameter.Name != "value")
+										{
 											variableForLastParameter.Name = "value";
 										}
 										AddExistingName(reservedVariableNames, variableForLastParameter.Name);
@@ -101,14 +114,19 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 								}
 								break;
 							case IEvent ev:
-								if (f.Method.AccessorKind != dnlib.DotNet.MethodSemanticsAttributes.Fire) {
+								if (f.Method.AccessorKind != dnlib.DotNet.MethodSemanticsAttributes.Fire)
+								{
 									var variableForLastParameter = f.Variables.FirstOrDefault(v => v.Function == f
 										&& v.Kind == VariableKind.Parameter
 										&& v.Index == f.Method.Parameters.Count - 1);
-									if (variableForLastParameter == null) {
+									if (variableForLastParameter == null)
+									{
 										AddExistingName(reservedVariableNames, lastParameter.Name);
-									} else {
-										if (variableForLastParameter.Name != "value") {
+									}
+									else
+									{
+										if (variableForLastParameter.Name != "value")
+										{
 											variableForLastParameter.Name = "value";
 										}
 										AddExistingName(reservedVariableNames, variableForLastParameter.Name);
@@ -119,16 +137,21 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 								AddExistingName(reservedVariableNames, lastParameter.Name);
 								break;
 						}
-					} else {
+					}
+					else
+					{
 						foreach (var p in f.Method.Parameters)
 							AddExistingName(reservedVariableNames, p.Name);
 					}
-				} else {
+				}
+				else
+				{
 					foreach (var p in f.Variables.Where(v => v.Kind == VariableKind.Parameter))
 						AddExistingName(reservedVariableNames, p.Name);
 				}
 			}
-			foreach (ILFunction f in function.Descendants.OfType<ILFunction>().Reverse()) {
+			foreach (ILFunction f in function.Descendants.OfType<ILFunction>().Reverse())
+			{
 				PerformAssignment(f);
 			}
 		}
@@ -158,7 +181,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		bool IsSetOrEventAccessor(IMethod method)
 		{
-			switch (method.AccessorKind) {
+			switch (method.AccessorKind)
+			{
 				case dnlib.DotNet.MethodSemanticsAttributes.Setter:
 				case dnlib.DotNet.MethodSemanticsAttributes.AddOn:
 				case dnlib.DotNet.MethodSemanticsAttributes.RemoveOn:
@@ -174,8 +198,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			function.Variables.RemoveDead();
 			int numDisplayClassLocals = 0;
 			Dictionary<int, string> assignedLocalSignatureIndices = new Dictionary<int, string>();
-			foreach (var v in function.Variables.OrderBy(v => v.Name)) {
-				switch (v.Kind) {
+			foreach (var v in function.Variables.OrderBy(v => v.Name))
+			{
+				switch (v.Kind)
+				{
 					case VariableKind.Parameter: // ignore
 						break;
 					case VariableKind.InitializerTarget: // keep generated names
@@ -185,11 +211,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						v.Name = "CS$<>8__locals" + (numDisplayClassLocals++);
 						break;
 					case VariableKind.Local when v.Index != null:
-						if (assignedLocalSignatureIndices.TryGetValue(v.Index.Value, out string name)) {
+						if (assignedLocalSignatureIndices.TryGetValue(v.Index.Value, out string name))
+						{
 							// make sure all local ILVariables that refer to the same slot in the locals signature
 							// are assigned the same name.
 							v.Name = name;
-						} else {
+						}
+						else
+						{
 							AssignName();
 							// Remember the newly assigned name:
 							assignedLocalSignatureIndices.Add(v.Index.Value, v.Name);
@@ -202,17 +231,21 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 				void AssignName()
 				{
-					if (v.HasGeneratedName || !IsValidName(v.Name) || ConflictWithLocal(v)) {
+					if (v.HasGeneratedName || !IsValidName(v.Name) || ConflictWithLocal(v))
+					{
 						// don't use the name from the debug symbols if it looks like a generated name
 						v.Name = null;
-					} else {
+					}
+					else
+					{
 						// use the name from the debug symbols
 						// (but ensure we don't use the same name for two variables)
 						v.Name = GetAlternativeName(v.Name);
 					}
 				}
 			}
-			foreach (var localFunction in function.LocalFunctions) {
+			foreach (var localFunction in function.LocalFunctions)
+			{
 				if (!LocalFunctionDecompiler.ParseLocalFunctionName(localFunction.Name, out _, out var newName) || !IsValidName(newName))
 					newName = null;
 				localFunction.Name = newName;
@@ -220,28 +253,36 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			// Now generate names:
 			var mapping = new Dictionary<ILVariable, string>(ILVariableEqualityComparer.Instance);
-			foreach (var inst in function.Descendants.OfType<IInstructionWithVariableOperand>()) {
+			foreach (var inst in function.Descendants.OfType<IInstructionWithVariableOperand>())
+			{
 				var v = inst.Variable;
-				if (!mapping.TryGetValue(v, out string name)) {
+				if (!mapping.TryGetValue(v, out string name))
+				{
 					if (string.IsNullOrEmpty(v.Name))
 						v.Name = GenerateNameForVariable(v);
 					mapping.Add(v, v.Name);
-				} else {
+				}
+				else
+				{
 					v.Name = name;
 				}
 			}
-			foreach (var localFunction in function.LocalFunctions) {
+			foreach (var localFunction in function.LocalFunctions)
+			{
 				var newName = localFunction.Name;
-				if (newName == null) {
+				if (newName == null)
+				{
 					newName = GetAlternativeName("f");
 				}
 				localFunction.Name = newName;
 				localFunction.ReducedMethod.Name = newName;
 				localFunctionMapping[(dnlib.DotNet.MethodDef)localFunction.ReducedMethod.MetadataToken] = newName;
 			}
-			foreach (var inst in function.Descendants) {
+			foreach (var inst in function.Descendants)
+			{
 				LocalFunctionMethod localFunction;
-				switch (inst) {
+				switch (inst)
+				{
 					case Call call:
 						localFunction = call.Method as LocalFunctionMethod;
 						break;
@@ -277,7 +318,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		bool ConflictWithLocal(ILVariable v)
 		{
-			if (v.Kind == VariableKind.UsingLocal || v.Kind == VariableKind.ForeachLocal) {
+			if (v.Kind == VariableKind.UsingLocal || v.Kind == VariableKind.ForeachLocal)
+			{
 				if (reservedVariableNames.ContainsKey(v.Name))
 					return true;
 			}
@@ -290,7 +332,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!(char.IsLetter(varName[0]) || varName[0] == '_'))
 				return false;
-			for (int i = 1; i < varName.Length; i++) {
+			for (int i = 1; i < varName.Length; i++)
+			{
 				if (!(char.IsLetterOrDigit(varName[i]) || varName[i] == '_'))
 					return false;
 			}
@@ -299,9 +342,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		public string GetAlternativeName(string oldVariableName)
 		{
-			if (oldVariableName.Length == 1 && oldVariableName[0] >= 'i' && oldVariableName[0] <= maxLoopVariableName) {
-				for (char c = 'i'; c <= maxLoopVariableName; c++) {
-					if (!reservedVariableNames.ContainsKey(c.ToString())) {
+			if (oldVariableName.Length == 1 && oldVariableName[0] >= 'i' && oldVariableName[0] <= maxLoopVariableName)
+			{
+				for (char c = 'i'; c <= maxLoopVariableName; c++)
+				{
+					if (!reservedVariableNames.ContainsKey(c.ToString()))
+					{
 						reservedVariableNames.Add(c.ToString(), 1);
 						return c.ToString();
 					}
@@ -310,17 +356,22 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			string nameWithoutDigits = SplitName(oldVariableName, out int number);
 
-			if (!reservedVariableNames.ContainsKey(nameWithoutDigits)) {
+			if (!reservedVariableNames.ContainsKey(nameWithoutDigits))
+			{
 				reservedVariableNames.Add(nameWithoutDigits, number - 1);
 			}
 			int count = ++reservedVariableNames[nameWithoutDigits];
 			string nameWithDigits = nameWithoutDigits + count.ToString();
-			if (oldVariableName == nameWithDigits) {
+			if (oldVariableName == nameWithDigits)
+			{
 				return oldVariableName;
 			}
-			if (count != 1) {
+			if (count != 1)
+			{
 				return nameWithDigits;
-			} else {
+			}
+			else
+			{
 				return nameWithoutDigits;
 			}
 		}
@@ -329,9 +380,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			var loopCounters = new HashSet<ILVariable>();
 
-			foreach (BlockContainer possibleLoop in function.Descendants.OfType<BlockContainer>()) {
-				if (possibleLoop.Kind != ContainerKind.For) continue;
-				foreach (var inst in possibleLoop.Blocks.Last().Instructions) {
+			foreach (BlockContainer possibleLoop in function.Descendants.OfType<BlockContainer>())
+			{
+				if (possibleLoop.Kind != ContainerKind.For)
+					continue;
+				foreach (var inst in possibleLoop.Blocks.Last().Instructions)
+				{
 					if (HighLevelLoopTransform.MatchIncrement(inst, out var variable))
 						loopCounters.Add(variable);
 				}
@@ -343,12 +397,16 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		string GenerateNameForVariable(ILVariable variable)
 		{
 			string proposedName = null;
-			if (variable.Type.IsKnownType(KnownTypeCode.Int32)) {
+			if (variable.Type.IsKnownType(KnownTypeCode.Int32))
+			{
 				// test whether the variable might be a loop counter
-				if (loopCounters.Contains(variable)) {
+				if (loopCounters.Contains(variable))
+				{
 					// For loop variables, use i,j,k,l,m,n
-					for (char c = 'i'; c <= maxLoopVariableName; c++) {
-						if (!reservedVariableNames.ContainsKey(c.ToString())) {
+					for (char c = 'i'; c <= maxLoopVariableName; c++)
+					{
+						if (!reservedVariableNames.ContainsKey(c.ToString()))
+						{
 							proposedName = c.ToString();
 							break;
 						}
@@ -357,20 +415,23 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			// The ComponentResourceManager inside InitializeComponent must be named "resources",
 			// otherwise the WinForms designer won't load the Form.
-			if (CSharp.CSharpDecompiler.IsWindowsFormsInitializeComponentMethod(context.Function.Method) && variable.Type.FullName == "System.ComponentModel.ComponentResourceManager") {
+			if (CSharp.CSharpDecompiler.IsWindowsFormsInitializeComponentMethod(context.Function.Method) && variable.Type.FullName == "System.ComponentModel.ComponentResourceManager")
+			{
 				proposedName = "resources";
 			}
-			if (string.IsNullOrEmpty(proposedName)) {
+			if (string.IsNullOrEmpty(proposedName))
+			{
 				var proposedNameForAddress = variable.AddressInstructions.OfType<LdLoca>()
-					.Select(arg => arg.Parent is CallInstruction c ? c.GetParameter(arg.ChildIndex)?.Name : null)
-					.Where(arg => !string.IsNullOrWhiteSpace(arg))
-					.Except(currentLowerCaseTypeOrMemberNames).ToList();
+													 .Select(arg => arg.Parent is CallInstruction c ? c.GetParameter(arg.ChildIndex)?.Name : null)
+													 .Where(arg => !string.IsNullOrWhiteSpace(arg))
+													 .Except(currentLowerCaseTypeOrMemberNames).ToList();
 				if (proposedNameForAddress.Count > 0)
 				{
 					proposedName = proposedNameForAddress[0];
 				}
 			}
-			if (string.IsNullOrEmpty(proposedName)) {
+			if (string.IsNullOrEmpty(proposedName))
+			{
 				var proposedNameForStores = variable.StoreInstructions.OfType<StLoc>()
 					.Select(expr => GetNameFromInstruction(expr.Value))
 					.Except(currentLowerCaseTypeOrMemberNames).ToList();
@@ -379,7 +440,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					proposedName = proposedNameForStores[0];
 				}
 			}
-			if (string.IsNullOrEmpty(proposedName)) {
+			if (string.IsNullOrEmpty(proposedName))
+			{
 				var proposedNameForLoads = variable.LoadInstructions
 					.Select(arg => GetNameForArgument(arg.Parent, arg.ChildIndex))
 					.Except(currentLowerCaseTypeOrMemberNames).ToList();
@@ -388,7 +450,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					proposedName = proposedNameForLoads[0];
 				}
 			}
-			if (string.IsNullOrEmpty(proposedName) && variable.Kind == VariableKind.StackSlot) {
+			if (string.IsNullOrEmpty(proposedName) && variable.Kind == VariableKind.StackSlot)
+			{
 				var proposedNameForStoresFromNewObj = variable.StoreInstructions.OfType<StLoc>()
 					.Select(expr => GetNameByType(GuessType(variable.Type, expr.Value, context)))
 					.Except(currentLowerCaseTypeOrMemberNames).ToList();
@@ -397,14 +460,16 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					proposedName = proposedNameForStoresFromNewObj[0];
 				}
 			}
-			if (string.IsNullOrEmpty(proposedName)) {
+			if (string.IsNullOrEmpty(proposedName))
+			{
 				proposedName = GetNameByType(variable.Type);
 			}
 
 			// remove any numbers from the proposed name
 			proposedName = SplitName(proposedName, out int number);
 
-			if (!reservedVariableNames.ContainsKey(proposedName)) {
+			if (!reservedVariableNames.ContainsKey(proposedName))
+			{
 				reservedVariableNames.Add(proposedName, 0);
 			}
 			int count = ++reservedVariableNames[proposedName];
@@ -412,14 +477,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (count > 1)
 			{
 				return proposedName + count.ToString();
-			} else {
+			}
+			else
+			{
 				return proposedName;
 			}
 		}
 
 		static string GetNameFromInstruction(ILInstruction inst)
 		{
-			switch (inst) {
+			switch (inst)
+			{
 				case LdObj ldobj:
 					return GetNameFromInstruction(ldobj.Target);
 				case LdFlda ldflda:
@@ -427,7 +495,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				case LdsFlda ldsflda:
 					return CleanUpVariableName(ldsflda.Field.Name);
 				case CallInstruction call:
-					if (call is NewObj) break;
+					if (call is NewObj)
+						break;
 					IMethod m = call.Method;
 					if (ExcludeMethodFromCandidates(m))
 						break;
@@ -435,7 +504,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					{
 						// use name from properties, but not from indexers
 						return CleanUpVariableName(m.Name.Substring(4));
-					} else if (m.Name.StartsWith("Get", StringComparison.OrdinalIgnoreCase) && m.Name.Length >= 4 && char.IsUpper(m.Name[3])) {
+					}
+					else if (m.Name.StartsWith("Get", StringComparison.OrdinalIgnoreCase) && m.Name.Length >= 4 && char.IsUpper(m.Name[3]))
+					{
 						// use name from Get-methods
 						return CleanUpVariableName(m.Name.Substring(3));
 					}
@@ -454,7 +525,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		static string GetNameForArgument(ILInstruction parent, int i)
 		{
-			switch (parent) {
+			switch (parent)
+			{
 				case StObj stobj:
 					IField field;
 					if (stobj.Target is LdFlda ldflda)
@@ -471,9 +543,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					if (m.Parameters.Count == 1 && i == call.Arguments.Count - 1)
 					{
 						// argument might be value of a setter
-						if (m.Name.StartsWith("set_", StringComparison.OrdinalIgnoreCase)) {
+						if (m.Name.StartsWith("set_", StringComparison.OrdinalIgnoreCase))
+						{
 							return CleanUpVariableName(m.Name.Substring(4));
-						} else if (m.Name.StartsWith("Set", StringComparison.OrdinalIgnoreCase) && m.Name.Length >= 4 && char.IsUpper(m.Name[3])) {
+						}
+						else if (m.Name.StartsWith("Set", StringComparison.OrdinalIgnoreCase) && m.Name.Length >= 4 && char.IsUpper(m.Name[3]))
+						{
 							return CleanUpVariableName(m.Name.Substring(3));
 						}
 					}
@@ -501,12 +576,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		static string GetNameByType(IType type)
 		{
 			type = NullableType.GetUnderlyingType(type);
-			while (type is ModifiedType || type is PinnedType) {
+			while (type is ModifiedType || type is PinnedType)
+			{
 				type = NullableType.GetUnderlyingType(((TypeWithElementType)type).ElementType);
 			}
 
-			string name = type.Kind switch
-			{
+			string name = type.Kind switch {
 				TypeKind.Array => "array",
 				TypeKind.Pointer => "ptr",
 				TypeKind.TypeParameter => "val",
@@ -518,16 +593,24 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				TypeKind.NUInt => "num",
 				_ => null
 			};
-			if (name != null) {
+			if (name != null)
+			{
 				return name;
 			}
-			if (type.IsAnonymousType()) {
+			if (type.IsAnonymousType())
+			{
 				name = "anon";
-			} else if (type.Name.EndsWith("Exception", StringComparison.Ordinal)) {
+			}
+			else if (type.Name.EndsWith("Exception", StringComparison.Ordinal))
+			{
 				name = "ex";
-			} else if (type.IsCSharpNativeIntegerType()) {
+			}
+			else if (type.IsCSharpNativeIntegerType())
+			{
 				name = "num";
-			} else if (!typeNameToVariableNameDict.TryGetValue(type.FullName, out name)) {
+			}
+			else if (!typeNameToVariableNameDict.TryGetValue(type.FullName, out name))
+			{
 				name = type.Name;
 				// remove the 'I' for interfaces
 				if (name.Length >= 3 && name[0] == 'I' && char.IsUpper(name[1]) && char.IsLower(name[2]))
@@ -542,9 +625,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (string.IsNullOrEmpty(name))
 				return;
 			string nameWithoutDigits = SplitName(name, out int number);
-			if (reservedVariableNames.TryGetValue(nameWithoutDigits, out int existingNumber)) {
+			if (reservedVariableNames.TryGetValue(nameWithoutDigits, out int existingNumber))
+			{
 				reservedVariableNames[nameWithoutDigits] = Math.Max(number, existingNumber);
-			} else {
+			}
+			else
+			{
 				reservedVariableNames.Add(nameWithoutDigits, number);
 			}
 		}
@@ -555,8 +641,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			int pos = name.Length;
 			while (pos > 0 && name[pos - 1] >= '0' && name[pos - 1] <= '9')
 				pos--;
-			if (pos < name.Length) {
-				if (int.TryParse(name.Substring(pos), out number)) {
+			if (pos < name.Length)
+			{
+				if (int.TryParse(name.Substring(pos), out number))
+				{
 					return name.Substring(0, pos);
 				}
 			}
@@ -577,7 +665,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			else if (name.Length > 1 && name[0] == '_' && (char.IsLetter(name[1]) || name[1] == '_'))
 				name = name.Substring(1);
 
-			if (TextWriterTokenWriter.ContainsNonPrintableIdentifierChar(name)) {
+			if (TextWriterTokenWriter.ContainsNonPrintableIdentifierChar(name))
+			{
 				return null;
 			}
 
@@ -604,11 +693,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			var reservedVariableNames = new Dictionary<string, int>();
 			var rootFunction = function.Ancestors.OfType<ILFunction>().Single(f => f.Parent == null);
-			foreach (var f in rootFunction.Descendants.OfType<ILFunction>()) {
-				foreach (var p in rootFunction.Parameters) {
+			foreach (var f in rootFunction.Descendants.OfType<ILFunction>())
+			{
+				foreach (var p in rootFunction.Parameters)
+				{
 					AddExistingName(reservedVariableNames, p.Name);
 				}
-				foreach (var v in f.Variables.Where(v => v.Kind != VariableKind.Parameter)) {
+				foreach (var v in f.Variables.Where(v => v.Kind != VariableKind.Parameter))
+				{
 					if (v != existingVariable)
 						AddExistingName(reservedVariableNames, v.Name);
 				}
@@ -628,26 +720,36 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			if (function == null)
 				throw new ArgumentNullException(nameof(function));
-			if (existingVariable != null && !existingVariable.HasGeneratedName) {
+			if (existingVariable != null && !existingVariable.HasGeneratedName)
+			{
 				return existingVariable.Name;
 			}
 			var reservedVariableNames = CollectReservedVariableNames(function, existingVariable, mustResolveConflicts);
 
 			string baseName = GetNameFromInstruction(valueContext);
-			if (string.IsNullOrEmpty(baseName)) {
-				if (valueContext is LdLoc ldloc && ldloc.Variable.Kind == VariableKind.Parameter) {
+			if (string.IsNullOrEmpty(baseName))
+			{
+				if (valueContext is LdLoc ldloc && ldloc.Variable.Kind == VariableKind.Parameter)
+				{
 					baseName = ldloc.Variable.Name;
 				}
 			}
 			string proposedName = "item";
 
-			if (!string.IsNullOrEmpty(baseName)) {
-				if (!IsPlural(baseName, ref proposedName)) {
-					if (baseName.Length > 4 && baseName.EndsWith("List", StringComparison.Ordinal)) {
+			if (!string.IsNullOrEmpty(baseName))
+			{
+				if (!IsPlural(baseName, ref proposedName))
+				{
+					if (baseName.Length > 4 && baseName.EndsWith("List", StringComparison.Ordinal))
+					{
 						proposedName = baseName.Substring(0, baseName.Length - 4);
-					} else if (baseName.Equals("list", StringComparison.OrdinalIgnoreCase)) {
+					}
+					else if (baseName.Equals("list", StringComparison.OrdinalIgnoreCase))
+					{
 						proposedName = "item";
-					} else if (baseName.EndsWith("children", StringComparison.OrdinalIgnoreCase)) {
+					}
+					else if (baseName.EndsWith("children", StringComparison.OrdinalIgnoreCase))
+					{
 						proposedName = baseName.Remove(baseName.Length - 3);
 					}
 				}
@@ -656,7 +758,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// remove any numbers from the proposed name
 			proposedName = SplitName(proposedName, out int number);
 
-			if (!reservedVariableNames.ContainsKey(proposedName)) {
+			if (!reservedVariableNames.ContainsKey(proposedName))
+			{
 				reservedVariableNames.Add(proposedName, 0);
 			}
 			int count = ++reservedVariableNames[proposedName];
@@ -664,7 +767,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (count > 1)
 			{
 				return proposedName + count.ToString();
-			} else {
+			}
+			else
+			{
 				return proposedName;
 			}
 		}
@@ -680,15 +785,24 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			string baseName = valueContext != null ? GetNameFromInstruction(valueContext) ?? GetNameByType(type) : GetNameByType(type);
 			string proposedName = "obj";
 
-			if (!string.IsNullOrEmpty(baseName)) {
-				if (!IsPlural(baseName, ref proposedName)) {
-					if (baseName.Length > 4 && baseName.EndsWith("List", StringComparison.Ordinal)) {
+			if (!string.IsNullOrEmpty(baseName))
+			{
+				if (!IsPlural(baseName, ref proposedName))
+				{
+					if (baseName.Length > 4 && baseName.EndsWith("List", StringComparison.Ordinal))
+					{
 						proposedName = baseName.Substring(0, baseName.Length - 4);
-					} else if (baseName.Equals("list", StringComparison.OrdinalIgnoreCase)) {
+					}
+					else if (baseName.Equals("list", StringComparison.OrdinalIgnoreCase))
+					{
 						proposedName = "item";
-					} else if (baseName.EndsWith("children", StringComparison.OrdinalIgnoreCase)) {
+					}
+					else if (baseName.EndsWith("children", StringComparison.OrdinalIgnoreCase))
+					{
 						proposedName = baseName.Remove(baseName.Length - 3);
-					} else {
+					}
+					else
+					{
 						proposedName = baseName;
 					}
 				}
@@ -697,7 +811,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// remove any numbers from the proposed name
 			proposedName = SplitName(proposedName, out int number);
 
-			if (!reservedVariableNames.ContainsKey(proposedName)) {
+			if (!reservedVariableNames.ContainsKey(proposedName))
+			{
 				reservedVariableNames.Add(proposedName, 0);
 			}
 			int count = ++reservedVariableNames[proposedName];
@@ -705,7 +820,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (count > 1)
 			{
 				return proposedName + count.ToString();
-			} else {
+			}
+			else
+			{
 				return proposedName;
 			}
 		}

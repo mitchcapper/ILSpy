@@ -1083,7 +1083,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			// Use CombineExitsTransform so that "return other != null && ...;" is a single statement even in release builds
 			transforms.Add(new CombineExitsTransform());
 			il.RunTransforms(transforms,
-				new ILTransformContext(il, typeSystem, settings) {
+				new ILTransformContext(il, typeSystem, debugInfo: null, settings) {
 					CancellationToken = cancellationToken
 				});
 			if (il.Body is BlockContainer container)

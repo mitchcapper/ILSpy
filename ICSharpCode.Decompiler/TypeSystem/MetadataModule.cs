@@ -23,6 +23,8 @@ using System.Diagnostics;
 using System.Linq;
 using dnlib.DotNet;
 using dnlib.DotNet.MD;
+
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
 
@@ -121,9 +123,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public ITypeDefinition GetTypeDefinition(TopLevelTypeName topLevelTypeName)
 		{
 			var typeDefHandle = PEFile.GetTypeDefinition(topLevelTypeName);
-			if (typeDefHandle == null) {
+			if (typeDefHandle == null)
+			{
 				var forwarderHandle = PEFile.GetTypeForwarder(topLevelTypeName);
-				if (forwarderHandle != null) {
+				if (forwarderHandle != null)
+				{
 					var forwarder = forwarderHandle;
 					return ResolveForwardedType(forwarder).GetDefinition();
 				}
@@ -137,7 +141,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if (this == module)
 				return true;
-			foreach (string shortName in GetInternalsVisibleTo()) {
+			foreach (string shortName in GetInternalsVisibleTo())
+			{
 				if (string.Equals(module.AssemblyName, shortName, StringComparison.OrdinalIgnoreCase))
 					return true;
 			}
@@ -164,7 +169,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					}
 				}
 				result = list.ToArray();
-			} else {
+			}
+			else
+			{
 				result = Empty<string>.Array;
 			}
 			return LazyInit.GetOrSet(ref this.internalsVisibleTo, result);
@@ -413,7 +420,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 						methods = declaringTypeDefinition.Methods.Where(m => m.IsConstructor && m.IsStatic);
 					} else {
 						methods = declaringTypeDefinition.GetMethods(m => m.Name == name, GetMemberOptions.IgnoreInheritedMembers)
-							.Concat(declaringTypeDefinition.GetAccessors(m => m.Name == name, GetMemberOptions.IgnoreInheritedMembers));
+														 .Concat(declaringTypeDefinition.GetAccessors(m => m.Name == name, GetMemberOptions.IgnoreInheritedMembers));
 					}
 					// Determine the expected parameters from the signature:
 					ImmutableArray<IType> parameterTypes;
@@ -471,7 +478,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if (parameterTypes.Length != parameters.Count)
 				return false;
-			for (int i = 0; i < parameterTypes.Length; i++) {
+			for (int i = 0; i < parameterTypes.Length; i++)
+			{
 				if (!CompareTypes(parameterTypes[i], parameters[i].Type))
 					return false;
 			}

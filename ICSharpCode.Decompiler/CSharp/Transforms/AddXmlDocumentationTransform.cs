@@ -20,6 +20,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Xml;
+
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.Documentation;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -33,33 +34,24 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	{
 		public void Run(AstNode rootNode, TransformContext context)
 		{
-			if (!context.Settings.ShowXmlDocumentation)
+			if (!context.Settings.ShowXmlDocumentation || context.DecompileRun.DocumentationProvider == null)
 				return;
-			try {
-				var xmldoc = XmlDocLoader.LoadDocumentation(context.TypeSystem.MainModule.metadata);
-				if (xmldoc == null)
-					return;
-				foreach (var entity in rootNode.DescendantsAndSelf.OfType<EntityDeclaration>()) {
-					var symbol = entity.GetSymbol();
-					dnlib.DotNet.IMemberRef mr;
-					switch (symbol) {
-						case IMember member:
-							mr = member.MetadataToken;
-							break;
-						case IType type:
-							mr = type.GetDefinition()?.MetadataToken;
-							break;
-						default:
-							continue;
-					}
-					if (mr == null)
+			try
+			{
+				var provider = context.DecompileRun.DocumentationProvider;
+				foreach (var entityDecl in rootNode.DescendantsAndSelf.OfType<EntityDeclaration>())
+				{
+					if (!(entityDecl.GetSymbol() is IEntity entity))
 						continue;
-					string doc = xmldoc.GetDocumentation(XmlDocKeyProvider.GetKey(mr));
-					if (doc != null) {
-						InsertXmlDocumentation(entity, new StringReader(doc));
+					string doc = provider.GetDocumentation(entity);
+					if (doc != null)
+					{
+						InsertXmlDocumentation(entityDecl, new StringReader(doc));
 					}
 				}
-			} catch (XmlException ex) {
+			}
+			catch (XmlException ex)
+			{
 				string[] msg = (" Exception while reading XmlDoc: " + ex).Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
 				var insertionPoint = rootNode.FirstChild;
 				for (int i = 0; i < msg.Length; i++)
@@ -71,7 +63,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			// Find the first non-empty line:
 			string firstLine;
-			do {
+			do
+			{
 				firstLine = r.ReadLine();
 				if (firstLine == null)
 					return;
@@ -80,11 +73,16 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			string line = firstLine;
 			int skippedWhitespaceLines = 0;
 			// Copy all lines from input to output, except for empty lines at the end.
-			while (line != null) {
-				if (string.IsNullOrWhiteSpace(line)) {
+			while (line != null)
+			{
+				if (string.IsNullOrWhiteSpace(line))
+				{
 					skippedWhitespaceLines++;
-				} else {
-					while (skippedWhitespaceLines > 0) {
+				}
+				else
+				{
+					while (skippedWhitespaceLines > 0)
+					{
 						Comment emptyLine = new Comment(string.Empty, CommentType.Documentation);
 						emptyLine.AddAnnotation(node.GetResolveResult());
 						node.Parent.InsertChildBefore(node, emptyLine, Roles.Comment);

@@ -1,8 +1,26 @@
-﻿using System;
+﻿// Copyright (c) 2019 Daniel Grunwald
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this
+// software and associated documentation files (the "Software"), to deal in the Software
+// without restriction, including without limitation the rights to use, copy, modify, merge,
+// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
+// to whom the Software is furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all copies or
+// substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+// INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+// FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
+
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Threading;
+
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
@@ -26,7 +44,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		/// <summary>
 		/// List of actions to be executed when performing the extraction.
-		///
+		/// 
 		/// Each function in this list has the side-effect of replacing the instruction-to-be-moved
 		/// with a load of a fresh temporary variable; and returns the the store to the temporary variable,
 		/// which will be inserted at block-level.
@@ -53,7 +71,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		internal void RegisterMoveIfNecessary(ILInstruction predecessor)
 		{
-			if (!CanReorderWithInstructionsBeingMoved(predecessor)) {
+			if (!CanReorderWithInstructionsBeingMoved(predecessor))
+			{
 				RegisterMove(predecessor);
 			}
 		}
@@ -75,7 +94,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// Extracts the specified instruction:
 		///   The instruction is replaced with a load of a new temporary variable;
 		///   and the instruction is moved to a store to said variable at block-level.
-		///
+		/// 
 		/// May return null if extraction is not possible.
 		/// </summary>
 		public static ILVariable Extract(ILInstruction instToExtract, ILTransformContext context)
@@ -84,10 +103,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			ExtractionContext ctx = new ExtractionContext(function, context);
 			ctx.FlagsBeingMoved = instToExtract.Flags;
 			ILInstruction inst = instToExtract;
-			while (inst != null) {
-				if (inst.Parent is IfInstruction ifInst && inst.SlotInfo != IfInstruction.ConditionSlot) {
+			while (inst != null)
+			{
+				if (inst.Parent is IfInstruction ifInst && inst.SlotInfo != IfInstruction.ConditionSlot)
+				{
 					// this context doesn't support extraction, but maybe we can create a block here?
-					if (ifInst.ResultType == StackType.Void) {
+					if (ifInst.ResultType == StackType.Void)
+					{
 						Block newBlock = new Block();
 						inst.ReplaceWith(newBlock);
 						newBlock.Instructions.Add(inst);
@@ -146,7 +168,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					instToExtract.ReplaceWith(new LdLoc(v));
 					block.Instructions.Insert(insertIndex, new StLoc(v, instToExtract));
 					// Apply the other move actions:
-					foreach (var moveAction in ctx.MoveActions) {
+					foreach (var moveAction in ctx.MoveActions)
+					{
 						block.Instructions.Insert(insertIndex, moveAction());
 					}
 					return v;

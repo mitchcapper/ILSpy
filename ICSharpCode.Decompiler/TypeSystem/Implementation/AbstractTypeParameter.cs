@@ -1,14 +1,14 @@
-// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
-//
+﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
+// 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
 // without restriction, including without limitation the rights to use, copy, modify, merge,
 // publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
 // to whom the Software is furnished to do so, subject to the following conditions:
-//
+// 
 // The above copyright notice and this permission notice shall be included in all copies or
 // substantial portions of the Software.
-//
+// 
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
 // INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
 // PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.TypeSystem.Implementation
@@ -36,7 +37,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		protected AbstractTypeParameter(IEntity owner, int index, string name, VarianceModifier variance)
 		{
 			if (owner == null)
-				throw new ArgumentNullException("owner");
+				throw new ArgumentNullException(nameof(owner));
 			this.owner = owner;
 			this.compilation = owner.Compilation;
 			this.ownerType = owner.SymbolKind;
@@ -48,7 +49,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		protected AbstractTypeParameter(ICompilation compilation, SymbolKind ownerType, int index, string name, VarianceModifier variance)
 		{
 			if (compilation == null)
-				throw new ArgumentNullException("compilation");
+				throw new ArgumentNullException(nameof(compilation));
 			this.compilation = compilation;
 			this.ownerType = ownerType;
 			this.index = index;
@@ -86,9 +87,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public IType EffectiveBaseClass {
 			get {
-				if (effectiveBaseClass == null) {
+				if (effectiveBaseClass == null)
+				{
 					// protect against cyclic type parameters
-					using (var busyLock = BusyManager.Enter(this)) {
+					using (var busyLock = BusyManager.Enter(this))
+					{
 						if (!busyLock.Success)
 							return SpecialType.UnknownType; // don't cache this error
 						effectiveBaseClass = CalculateEffectiveBaseClass();
@@ -104,10 +107,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return this.Compilation.FindType(KnownTypeCode.ValueType);
 
 			List<IType> classTypeConstraints = new List<IType>();
-			foreach (IType constraint in this.DirectBaseTypes) {
-				if (constraint.Kind == TypeKind.Class) {
+			foreach (IType constraint in this.DirectBaseTypes)
+			{
+				if (constraint.Kind == TypeKind.Class)
+				{
 					classTypeConstraints.Add(constraint);
-				} else if (constraint.Kind == TypeKind.TypeParameter) {
+				}
+				else if (constraint.Kind == TypeKind.TypeParameter)
+				{
 					IType baseClass = ((ITypeParameter)constraint).EffectiveBaseClass;
 					if (baseClass.Kind == TypeKind.Class)
 						classTypeConstraints.Add(baseClass);
@@ -117,7 +124,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return this.Compilation.FindType(KnownTypeCode.Object);
 			// Find the derived-most type in the resulting set:
 			IType result = classTypeConstraints[0];
-			for (int i = 1; i < classTypeConstraints.Count; i++) {
+			for (int i = 1; i < classTypeConstraints.Count; i++)
+			{
 				if (classTypeConstraints[i].GetDefinition().IsDerivedFrom(result.GetDefinition()))
 					result = classTypeConstraints[i];
 			}
@@ -129,11 +137,15 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public IReadOnlyCollection<IType> EffectiveInterfaceSet {
 			get {
 				var result = LazyInit.VolatileRead(ref effectiveInterfaceSet);
-				if (result != null) {
+				if (result != null)
+				{
 					return result;
-				} else {
+				}
+				else
+				{
 					// protect against cyclic type parameters
-					using (var busyLock = BusyManager.Enter(this)) {
+					using (var busyLock = BusyManager.Enter(this))
+					{
 						if (!busyLock.Success)
 							return EmptyList<IType>.Instance; // don't cache this error
 						return LazyInit.GetOrSet(ref effectiveInterfaceSet, CalculateEffectiveInterfaceSet());
@@ -145,10 +157,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		IReadOnlyCollection<IType> CalculateEffectiveInterfaceSet()
 		{
 			HashSet<IType> result = new HashSet<IType>();
-			foreach (IType constraint in this.DirectBaseTypes) {
-				if (constraint.Kind == TypeKind.Interface) {
+			foreach (IType constraint in this.DirectBaseTypes)
+			{
+				if (constraint.Kind == TypeKind.Interface)
+				{
 					result.Add(constraint);
-				} else if (constraint.Kind == TypeKind.TypeParameter) {
+				}
+				else if (constraint.Kind == TypeKind.TypeParameter)
+				{
 					result.UnionWith(((ITypeParameter)constraint).EffectiveInterfaceSet);
 				}
 			}
@@ -175,10 +191,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				// A type parameter is known to be a reference type if it has the reference type constraint
 				// or its effective base class is not object or System.ValueType.
 				IType effectiveBaseClass = this.EffectiveBaseClass;
-				if (effectiveBaseClass.Kind == TypeKind.Class || effectiveBaseClass.Kind == TypeKind.Delegate) {
+				if (effectiveBaseClass.Kind == TypeKind.Class || effectiveBaseClass.Kind == TypeKind.Delegate)
+				{
 					ITypeDefinition effectiveBaseClassDef = effectiveBaseClass.GetDefinition();
-					if (effectiveBaseClassDef != null) {
-						switch (effectiveBaseClassDef.KnownTypeCode) {
+					if (effectiveBaseClassDef != null)
+					{
+						switch (effectiveBaseClassDef.KnownTypeCode)
+						{
 							case KnownTypeCode.Object:
 							case KnownTypeCode.ValueType:
 							case KnownTypeCode.Enum:
@@ -186,7 +205,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 						}
 					}
 					return true;
-				} else if (effectiveBaseClass.Kind == TypeKind.Struct || effectiveBaseClass.Kind == TypeKind.Enum) {
+				}
+				else if (effectiveBaseClass.Kind == TypeKind.Struct || effectiveBaseClass.Kind == TypeKind.Enum)
+				{
 					return false;
 				}
 				return null;
@@ -271,15 +292,20 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public IEnumerable<IMethod> GetConstructors(Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.IgnoreInheritedMembers)
 		{
-			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers) {
-				if (this.HasDefaultConstructorConstraint || this.HasValueTypeConstraint) {
+			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)
+			{
+				if (this.HasDefaultConstructorConstraint || this.HasValueTypeConstraint)
+				{
 					var dummyCtor = FakeMethod.CreateDummyConstructor(compilation, this);
-					if (filter == null || filter(dummyCtor)) {
-						return new [] { dummyCtor };
+					if (filter == null || filter(dummyCtor))
+					{
+						return new[] { dummyCtor };
 					}
 				}
 				return EmptyList<IMethod>.Instance;
-			} else {
+			}
+			else
+			{
 				return GetMembersHelper.GetConstructors(this, filter, options);
 			}
 		}

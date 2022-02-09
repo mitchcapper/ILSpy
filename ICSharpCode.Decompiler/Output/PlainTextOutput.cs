@@ -19,7 +19,10 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+
 using ICSharpCode.Decompiler.CSharp.Syntax;
+using ICSharpCode.Decompiler.Disassembler;
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler
@@ -70,9 +73,11 @@ namespace ICSharpCode.Decompiler
 
 		void WriteIndent()
 		{
-			if (needsIndent) {
+			if (needsIndent)
+			{
 				needsIndent = false;
-				for (int i = 0; i < indent; i++) {
+				for (int i = 0; i < indent; i++)
+				{
 					writer.Write(IndentationString);
 				}
 				column += indent;

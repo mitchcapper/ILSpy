@@ -25,6 +25,8 @@ using dnlib.DotNet;
 using dnlib.DotNet.MD;
 using ICSharpCode.Decompiler.Documentation;
 
+using ICSharpCode.Decompiler.Metadata;
+
 namespace ICSharpCode.Decompiler.Documentation
 {
 	/// <summary>
@@ -59,10 +61,13 @@ namespace ICSharpCode.Decompiler.Documentation
 					if (xmlDocFile == null) {
 						xmlDocFile = FindXmlDocumentation(Path.GetFileName(module.Location), module.RuntimeVersion);
 					}
-					if (xmlDocFile != null) {
+					if (xmlDocFile != null)
+					{
 						xmlDoc = new XmlDocumentationProvider(xmlDocFile);
 						cache.Add(module, xmlDoc);
-					} else {
+					}
+					else
+					{
 						cache.Add(module, null); // add missing documentation files as well
 						xmlDoc = null;
 					}
@@ -132,17 +137,21 @@ namespace ICSharpCode.Decompiler.Documentation
 			string localizedXmlDocFile = GetLocalizedName(xmlFileName, currentCulture);
 
 			Debug.WriteLine("Try find XMLDoc @" + localizedXmlDocFile);
-			if (File.Exists(localizedXmlDocFile)) {
+			if (File.Exists(localizedXmlDocFile))
+			{
 				return localizedXmlDocFile;
 			}
 			Debug.WriteLine("Try find XMLDoc @" + xmlFileName);
-			if (File.Exists(xmlFileName)) {
+			if (File.Exists(xmlFileName))
+			{
 				return xmlFileName;
 			}
-			if (currentCulture != "en") {
+			if (currentCulture != "en")
+			{
 				string englishXmlDocFile = GetLocalizedName(xmlFileName, "en");
 				Debug.WriteLine("Try find XMLDoc @" + englishXmlDocFile);
-				if (File.Exists(englishXmlDocFile)) {
+				if (File.Exists(englishXmlDocFile))
+				{
 					return englishXmlDocFile;
 				}
 			}

@@ -15,6 +15,7 @@
 // FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
+#nullable enable
 
 using System;
 using System.Collections;
@@ -27,11 +28,11 @@ namespace ICSharpCode.Decompiler.Util
 	{
 		public static readonly EmptyList<T> Instance = new EmptyList<T>();
 
-		private EmptyList() {}
+		private EmptyList() { }
 
 		public T this[int index] {
-			get { throw new ArgumentOutOfRangeException("index"); }
-			set { throw new ArgumentOutOfRangeException("index"); }
+			get { throw new ArgumentOutOfRangeException(nameof(index)); }
+			set { throw new ArgumentOutOfRangeException(nameof(index)); }
 		}
 
 		public int Count {
@@ -91,11 +92,11 @@ namespace ICSharpCode.Decompiler.Util
 		}
 
 		T IEnumerator<T>.Current {
-			get { return default(T); }
+			get { throw new NotSupportedException(); }
 		}
 
 		object IEnumerator.Current {
-			get { return default(T); }
+			get { throw new NotSupportedException(); }
 		}
 
 		void IDisposable.Dispose()
@@ -114,7 +115,7 @@ namespace ICSharpCode.Decompiler.Util
 
 	public static class Empty<T>
 	{
-		public static readonly T[] Array = new T[0];
+		public static readonly T[] Array = System.Array.Empty<T>();
 	}
 
 	public struct Unit { }

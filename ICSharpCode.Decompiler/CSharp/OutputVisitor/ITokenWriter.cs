@@ -18,6 +18,7 @@
 
 using System;
 using System.IO;
+
 using ICSharpCode.Decompiler.CSharp.Syntax;
 
 namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
@@ -89,16 +90,17 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 	public interface ILocatable
 	{
 		TextLocation Location { get; }
+		int Length { get; }
 	}
 
 	public abstract class DecoratingTokenWriter : TokenWriter
 	{
-		TokenWriter decoratedWriter;
+		readonly TokenWriter decoratedWriter;
 
 		protected DecoratingTokenWriter(TokenWriter decoratedWriter)
 		{
 			if (decoratedWriter == null)
-				throw new ArgumentNullException("decoratedWriter");
+				throw new ArgumentNullException(nameof(decoratedWriter));
 			this.decoratedWriter = decoratedWriter;
 		}
 

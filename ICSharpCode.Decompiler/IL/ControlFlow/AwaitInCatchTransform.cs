@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.TypeSystem;
 
@@ -56,7 +57,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			HashSet<Block> removedBlocks = new HashSet<Block>();
 
 			// analyze all try-catch statements in the function
-			foreach (var tryCatch in function.Descendants.OfType<TryCatch>().ToArray()) {
+			foreach (var tryCatch in function.Descendants.OfType<TryCatch>().ToArray())
+			{
 				if (!(tryCatch.Parent?.Parent is BlockContainer container))
 					continue;
 				// Detect all handlers that contain an await expression
@@ -136,15 +138,18 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 					// Remove unreachable pattern blocks
 					// TODO : sanity check
-					if (result.NextBlockOrExitContainer is Block nextBlock && nextBlock.IncomingEdgeCount == 0) {
+					if (result.NextBlockOrExitContainer is Block nextBlock && nextBlock.IncomingEdgeCount == 0)
+					{
 						List<Block> dependentBlocks = new List<Block>();
 						Block current = nextBlock;
-						
-						do {
-							foreach (var branch in current.Descendants.OfType<Branch>()) {
+
+						do
+						{
+							foreach (var branch in current.Descendants.OfType<Branch>())
+							{
 								dependentBlocks.Add(branch.TargetBlock);
 							}
-							
+
 							current.Remove();
 							dependentBlocks.Remove(current);
 							current = dependentBlocks.FirstOrDefault(b => b.IncomingEdgeCount == 0);

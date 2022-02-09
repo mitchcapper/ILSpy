@@ -21,6 +21,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+
 using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.Semantics;
@@ -44,15 +45,18 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 		public ResolvedUsingScope(CSharpTypeResolveContext context, UsingScope usingScope)
 		{
 			if (context == null)
-				throw new ArgumentNullException("context");
+				throw new ArgumentNullException(nameof(context));
 			if (usingScope == null)
-				throw new ArgumentNullException("usingScope");
+				throw new ArgumentNullException(nameof(usingScope));
 			this.parentContext = context;
 			this.usingScope = usingScope;
-			if (usingScope.Parent != null) {
+			if (usingScope.Parent != null)
+			{
 				if (context.CurrentUsingScope == null)
 					throw new InvalidOperationException();
-			} else {
+			}
+			else
+			{
 				if (context.CurrentUsingScope != null)
 					throw new InvalidOperationException();
 			}
@@ -67,14 +71,20 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 		public INamespace Namespace {
 			get {
 				INamespace result = LazyInit.VolatileRead(ref this.@namespace);
-				if (result != null) {
+				if (result != null)
+				{
 					return result;
-				} else {
-					if (parentContext.CurrentUsingScope != null) {
+				}
+				else
+				{
+					if (parentContext.CurrentUsingScope != null)
+					{
 						result = parentContext.CurrentUsingScope.Namespace.GetChildNamespace(usingScope.ShortNamespaceName);
 						if (result == null)
 							result = new DummyNamespace(parentContext.CurrentUsingScope.Namespace, usingScope.ShortNamespaceName);
-					} else {
+					}
+					else
+					{
 						result = parentContext.Compilation.RootNamespace;
 					}
 					Debug.Assert(result != null);
@@ -92,12 +102,16 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 		public IList<INamespace> Usings {
 			get {
 				var result = LazyInit.VolatileRead(ref this.usings);
-				if (result != null) {
+				if (result != null)
+				{
 					return result;
-				} else {
+				}
+				else
+				{
 					result = new List<INamespace>();
 					CSharpResolver resolver = new CSharpResolver(parentContext.WithUsingScope(this));
-					foreach (var u in usingScope.Usings) {
+					foreach (var u in usingScope.Usings)
+					{
 						INamespace ns = u.ResolveNamespace(resolver);
 						if (ns != null && !result.Contains(ns))
 							result.Add(ns);
@@ -112,17 +126,24 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 		public IList<KeyValuePair<string, ResolveResult>> UsingAliases {
 			get {
 				var result = LazyInit.VolatileRead(ref this.usingAliases);
-				if (result != null) {
+				if (result != null)
+				{
 					return result;
-				} else {
+				}
+				else
+				{
 					CSharpResolver resolver = new CSharpResolver(parentContext.WithUsingScope(this));
 					result = new KeyValuePair<string, ResolveResult>[usingScope.UsingAliases.Count];
-					for (int i = 0; i < result.Count; i++) {
+					for (int i = 0; i < result.Count; i++)
+					{
 						var rr = usingScope.UsingAliases[i].Value.Resolve(resolver);
-						if (rr is TypeResolveResult) {
-							rr = new AliasTypeResolveResult (usingScope.UsingAliases[i].Key, (TypeResolveResult)rr);
-						} else if (rr is NamespaceResolveResult) {
-							rr = new AliasNamespaceResolveResult (usingScope.UsingAliases[i].Key, (NamespaceResolveResult)rr);
+						if (rr is TypeResolveResult)
+						{
+							rr = new AliasTypeResolveResult(usingScope.UsingAliases[i].Key, (TypeResolveResult)rr);
+						}
+						else if (rr is NamespaceResolveResult)
+						{
+							rr = new AliasNamespaceResolveResult(usingScope.UsingAliases[i].Key, (NamespaceResolveResult)rr);
 						}
 						result[i] = new KeyValuePair<string, ResolveResult>(
 							usingScope.UsingAliases[i].Key,

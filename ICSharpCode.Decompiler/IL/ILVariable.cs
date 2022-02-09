@@ -1,4 +1,5 @@
-﻿// Copyright (c) 2014 Daniel Grunwald
+﻿#nullable enable
+// Copyright (c) 2014 Daniel Grunwald
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -18,9 +19,10 @@
 
 using System;
 using System.Collections.Generic;
-using ICSharpCode.Decompiler.TypeSystem;
 using System.Diagnostics;
 using System.Linq;
+
+using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL
 {
@@ -94,7 +96,8 @@ namespace ICSharpCode.Decompiler.IL
 
 		public static bool IsLocal(this VariableKind kind)
 		{
-			switch (kind) {
+			switch (kind)
+			{
 				case VariableKind.Local:
 				case VariableKind.ExceptionLocal:
 				case VariableKind.ForeachLocal:
@@ -122,7 +125,8 @@ namespace ICSharpCode.Decompiler.IL
 			internal set {
 				if (kind == VariableKind.Parameter)
 					throw new InvalidOperationException("Kind=Parameter cannot be changed!");
-				if (Index != null && value.IsLocal() && !kind.IsLocal()) {
+				if (Index != null && value.IsLocal() && !kind.IsLocal())
+				{
 					// For variables, Index has different meaning than for stack slots,
 					// so we need to reset it to null.
 					// StackSlot -> ForeachLocal can happen sometimes (e.g. PST.TransformForeachOnArray)
@@ -167,7 +171,8 @@ namespace ICSharpCode.Decompiler.IL
 		[Conditional("DEBUG")]
 		internal void CheckInvariant()
 		{
-			switch (kind) {
+			switch (kind)
+			{
 				case VariableKind.Local:
 				case VariableKind.ForeachLocal:
 				case VariableKind.PatternLocal:
@@ -190,7 +195,7 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		public string Name { get; set; }
+		public string? Name { get; set; }
 
 		public bool HasGeneratedName { get; set; }
 
@@ -200,7 +205,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// <remarks>
 		/// This property is set automatically when the variable is added to the <c>ILFunction.Variables</c> collection.
 		/// </remarks>
-		public ILFunction Function { get; internal set; }
+		public ILFunction? Function { get; internal set; }
 
 		/// <summary>
 		/// Gets the block container in which this variable is captured.
@@ -210,7 +215,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// <remarks>
 		/// This property returns null for variables that are not captured.
 		/// </remarks>
-		public BlockContainer CaptureScope { get; internal set; }
+		public BlockContainer? CaptureScope { get; internal set; }
 
 		/// <summary>
 		/// Gets the index of this variable within the <c>Function.Variables</c> collection.
@@ -307,7 +312,7 @@ namespace ICSharpCode.Decompiler.IL
 			return list.Count - 1;
 		}
 
-		void RemoveInstruction<T>(List<T> list, int index, T inst) where T : class, IInstructionWithVariableOperand
+		void RemoveInstruction<T>(List<T> list, int index, T? inst) where T : class, IInstructionWithVariableOperand
 		{
 			Debug.Assert(list[index] == inst);
 			int indexToMove = list.Count - 1;
@@ -427,7 +432,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// The field which was converted to a local variable.
 		/// Set when the variable is from a 'yield return' or 'async' state machine.
 		/// </summary>
-		public IField StateMachineField;
+		public IField? StateMachineField;
 
 		/// <summary>
 		/// If enabled, remove dead stores to this variable as if the "Remove dead code" option is enabled.
@@ -466,17 +471,19 @@ namespace ICSharpCode.Decompiler.IL
 			CheckInvariant();
 		}
 
-		public override string ToString()
+		public override string? ToString()
 		{
 			return Name;
 		}
 
 		internal void WriteDefinitionTo(ITextOutput output)
 		{
-			if (IsRefReadOnly) {
+			if (IsRefReadOnly)
+			{
 				output.Write("readonly ");
 			}
-			switch (Kind) {
+			switch (Kind)
+			{
 				case VariableKind.Local:
 					output.Write("local ");
 					break;
@@ -526,7 +533,8 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(" : ");
 			Type.WriteTo(output);
 			output.Write('(');
-			if (Kind == VariableKind.Parameter || Kind == VariableKind.Local || Kind == VariableKind.PinnedLocal || Kind == VariableKind.PinnedRegionLocal) {
+			if (Kind == VariableKind.Parameter || Kind == VariableKind.Local || Kind == VariableKind.PinnedLocal || Kind == VariableKind.PinnedRegionLocal)
+			{
 				output.Write("Index={0}, ", Index);
 			}
 			output.Write("LoadCount={0}, AddressCount={1}, StoreCount={2})", LoadCount, AddressCount, StoreCount);
@@ -549,11 +557,13 @@ namespace ICSharpCode.Decompiler.IL
 					output.Write(" unused");
 				}
 			}
-			if (CaptureScope != null) {
+			if (CaptureScope != null)
+			{
 				output.Write(" captured in ");
 				output.WriteReference(CaptureScope.EntryPoint.Label, CaptureScope, true);
 			}
-			if (StateMachineField != null) {
+			if (StateMachineField != null)
+			{
 				output.Write(" from state-machine");
 			}
 		}
@@ -568,10 +578,12 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		internal bool IsUsedWithin(ILInstruction inst)
 		{
-			if (inst is IInstructionWithVariableOperand iwvo && iwvo.Variable == this) {
+			if (inst is IInstructionWithVariableOperand iwvo && iwvo.Variable == this)
+			{
 				return true;
 			}
-			foreach (var child in inst.Children) {
+			foreach (var child in inst.Children)
+			{
 				if (IsUsedWithin(child))
 					return true;
 			}
@@ -604,7 +616,7 @@ namespace ICSharpCode.Decompiler.IL
 	{
 		public static readonly ILVariableEqualityComparer Instance = new ILVariableEqualityComparer();
 
-		public bool Equals(ILVariable x, ILVariable y)
+		public bool Equals(ILVariable? x, ILVariable? y)
 		{
 			if (x == y)
 				return true;

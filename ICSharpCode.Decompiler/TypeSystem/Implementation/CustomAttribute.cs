@@ -23,6 +23,8 @@ using System.Diagnostics;
 using System.Linq;
 using dnlib.DotNet;
 
+using ICSharpCode.Decompiler.Metadata;
+
 namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
 	/// <summary>
@@ -119,7 +121,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		internal static IMember MemberForNamedArgument(IType attributeType, CustomAttributeNamedArgument<IType> namedArgument)
 		{
-			switch (namedArgument.Kind) {
+			switch (namedArgument.Kind)
+			{
 				case CustomAttributeNamedArgumentKind.Field:
 					return attributeType.GetFields(f => f.Name == namedArgument.Name).LastOrDefault();
 				case CustomAttributeNamedArgumentKind.Property:

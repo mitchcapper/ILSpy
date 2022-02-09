@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
@@ -67,9 +68,9 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 		public UsingScope(UsingScope parent, string shortName)
 		{
 			if (parent == null)
-				throw new ArgumentNullException("parent");
+				throw new ArgumentNullException(nameof(parent));
 			if (shortName == null)
-				throw new ArgumentNullException("shortName");
+				throw new ArgumentNullException(nameof(shortName));
 			this.parent = parent;
 			this.shortName = shortName;
 		}
@@ -91,12 +92,12 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 				else
 					return shortName;
 			}
-//			set {
-//				if (value == null)
-//					throw new ArgumentNullException("NamespaceName");
-//				FreezableHelper.ThrowIfFrozen(this);
-//				namespaceName = value;
-//			}
+			//			set {
+			//				if (value == null)
+			//					throw new ArgumentNullException("NamespaceName");
+			//				FreezableHelper.ThrowIfFrozen(this);
+			//				namespaceName = value;
+			//			}
 		}
 
 		public IList<TypeOrNamespaceReference> Usings {
@@ -123,13 +124,13 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 			}
 		}
 
-//		public IList<UsingScope> ChildScopes {
-//			get {
-//				if (childScopes == null)
-//					childScopes = new List<UsingScope>();
-//				return childScopes;
-//			}
-//		}
+		//		public IList<UsingScope> ChildScopes {
+		//			get {
+		//				if (childScopes == null)
+		//					childScopes = new List<UsingScope>();
+		//				return childScopes;
+		//			}
+		//		}
 
 		/// <summary>
 		/// Gets whether this using scope has an alias (either using or extern)
@@ -137,8 +138,10 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 		/// </summary>
 		public bool HasAlias(string identifier)
 		{
-			if (usingAliases != null) {
-				foreach (var pair in usingAliases) {
+			if (usingAliases != null)
+			{
+				foreach (var pair in usingAliases)
+				{
 					if (pair.Key == identifier)
 						return true;
 				}
@@ -153,7 +156,8 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 		{
 			CacheManager cache = compilation.CacheManager;
 			ResolvedUsingScope resolved = cache.GetShared(this) as ResolvedUsingScope;
-			if (resolved == null) {
+			if (resolved == null)
+			{
 				var csContext = new CSharpTypeResolveContext(compilation.MainModule, parent != null ? parent.Resolve(compilation) : null);
 				resolved = (ResolvedUsingScope)cache.GetOrAddShared(this, new ResolvedUsingScope(csContext, this));
 			}

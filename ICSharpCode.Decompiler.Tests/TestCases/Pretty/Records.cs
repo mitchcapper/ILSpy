@@ -32,20 +32,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 	public record Pair<A, B>
 	{
-		public A First {
-			get;
-			init;
-		}
-		public B Second {
-			get;
-			init;
-		}
+		public A First { get; init; }
+		public B Second { get; init; }
 	}
 
 	public record PairWithPrimaryCtor<A, B>(A First, B Second);
 
 	public record PrimaryCtor(int A, string B);
-	public record PrimaryCtorWithAttribute([RecordTest("param")] [property: RecordTest("property")] [field: RecordTest("field")] int a);
+	public record PrimaryCtorWithAttribute([RecordTest("param")] [property: RecordTest("property")][field: RecordTest("field")] int a);
 	public record PrimaryCtorWithField(int A, string B)
 	{
 		public double C = 1.0;
@@ -54,38 +48,18 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 	public record PrimaryCtorWithInParameter(in int A, in string B);
 	public record PrimaryCtorWithProperty(int A, string B)
 	{
-		public double C {
-			get;
-			init;
-		} = 1.0;
-
-		public string D {
-			get;
-		} = A + B;
+		public double C { get; init; } = 1.0;
+		public string D { get; } = A + B;
 	}
 
 	public record Properties
 	{
-		public int A {
-			get;
-			set;
-		}
-		public int B {
-			get;
-		}
+		public int A { get; set; }
+		public int B { get; }
 		public int C => 43;
-		public object O {
-			get;
-			set;
-		}
-		public string S {
-			get;
-			set;
-		}
-		public dynamic D {
-			get;
-			set;
-		}
+		public object O { get; set; }
+		public string S { get; set; }
+		public dynamic D { get; set; }
 
 		public Properties()
 		{
@@ -138,10 +112,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			public override string AbstractProp => "B";
 
-			public int? Value {
-				get;
-				set;
-			}
+			public int? Value { get; set; }
 		}
 
 		public record DerivedGeneric<T> : Pair<T, T?> where T : struct
@@ -149,9 +120,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			public bool Flag;
 		}
 
-		public abstract string AbstractProp {
-			get;
-		}
+		public abstract string AbstractProp { get; }
 	}
 }
 namespace System.Runtime.CompilerServices

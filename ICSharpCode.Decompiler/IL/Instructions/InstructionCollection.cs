@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.IL
 		readonly ILInstruction parentInstruction;
 		readonly int firstChildIndex;
 		readonly List<T> list = new List<T>();
-		
+
 		public InstructionCollection(ILInstruction parentInstruction, int firstChildIndex)
 		{
 			if (parentInstruction == null)
@@ -37,16 +37,17 @@ namespace ICSharpCode.Decompiler.IL
 			this.parentInstruction = parentInstruction;
 			this.firstChildIndex = firstChildIndex;
 		}
-		
+
 		public int Count {
 			get { return list.Count; }
 		}
-		
+
 		public T this[int index] {
 			get { return list[index]; }
 			set {
 				T oldValue = list[index];
-				if (!(oldValue == value && value.Parent == parentInstruction && value.ChildIndex == index)) {
+				if (!(oldValue == value && value.Parent == parentInstruction && value.ChildIndex == index))
+				{
 					list[index] = value;
 					value.ChildIndex = index + firstChildIndex;
 					parentInstruction.InstructionCollectionAdded(value);
@@ -61,7 +62,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return new Enumerator(this);
 		}
-		
+
 		/// <summary>
 		/// Custom enumerator for InstructionCollection.
 		/// Unlike List{T}.Enumerator, this enumerator allows replacing an item during the enumeration.
@@ -78,17 +79,17 @@ namespace ICSharpCode.Decompiler.IL
 #endif
 			readonly List<T> list;
 			int pos;
-			
+
 			public Enumerator(InstructionCollection<T> col)
 			{
 				this.list = col.list;
 				this.pos = -1;
-				#if DEBUG
+#if DEBUG
 				this.parentInstruction = col.parentInstruction;
 				col.parentInstruction.StartEnumerator();
-				#endif
+#endif
 			}
-			
+
 			[DebuggerStepThrough]
 			public bool MoveNext()
 			{
@@ -103,24 +104,25 @@ namespace ICSharpCode.Decompiler.IL
 			[DebuggerStepThrough]
 			public void Dispose()
 			{
-				#if DEBUG
-				if (parentInstruction != null) {
+#if DEBUG
+				if (parentInstruction != null)
+				{
 					parentInstruction.StopEnumerator();
 					parentInstruction = null;
 				}
-				#endif
+#endif
 			}
 
 			void System.Collections.IEnumerator.Reset()
 			{
 				pos = -1;
 			}
-			
+
 			object System.Collections.IEnumerator.Current {
 				get { return this.Current; }
 			}
 		}
-		
+
 		IEnumerator<T> IEnumerable<T>.GetEnumerator()
 		{
 			return GetEnumerator();
@@ -131,7 +133,7 @@ namespace ICSharpCode.Decompiler.IL
 			return GetEnumerator();
 		}
 		#endregion
-		
+
 		/// <summary>
 		/// Gets the index of the instruction in this collection.
 		/// Returns -1 if the instruction does not exist in the collection.
@@ -142,7 +144,8 @@ namespace ICSharpCode.Decompiler.IL
 		/// </remarks>
 		public int IndexOf(T? item)
 		{
-			if (item == null) {
+			if (item == null)
+			{
 				// InstructionCollection can't contain nulls
 				return -1;
 			}
@@ -175,7 +178,7 @@ namespace ICSharpCode.Decompiler.IL
 		bool ICollection<T>.IsReadOnly {
 			get { return false; }
 		}
-		
+
 		public void Add(T value)
 		{
 			parentInstruction.AssertNoEnumerators();
@@ -184,18 +187,19 @@ namespace ICSharpCode.Decompiler.IL
 			parentInstruction.InstructionCollectionAdded(value);
 			parentInstruction.InstructionCollectionUpdateComplete();
 		}
-		
+
 		public void AddRange(IEnumerable<T> values)
 		{
 			parentInstruction.AssertNoEnumerators();
-			foreach (T value in values) {
+			foreach (T value in values)
+			{
 				value.ChildIndex = list.Count + firstChildIndex;
 				list.Add(value);
 				parentInstruction.InstructionCollectionAdded(value);
 			}
 			parentInstruction.InstructionCollectionUpdateComplete();
 		}
-		
+
 		/// <summary>
 		/// Replaces all entries in the InstructionCollection with the newList.
 		/// </summary>
@@ -206,20 +210,25 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			parentInstruction.AssertNoEnumerators();
 			int index = 0;
-			foreach (T value in newList) {
+			foreach (T value in newList)
+			{
 				value.ChildIndex = index + firstChildIndex;
-				if (index < list.Count) {
+				if (index < list.Count)
+				{
 					T oldValue = list[index];
 					list[index] = value;
 					parentInstruction.InstructionCollectionAdded(value);
 					parentInstruction.InstructionCollectionRemoved(oldValue);
-				} else {
+				}
+				else
+				{
 					list.Add(value);
 					parentInstruction.InstructionCollectionAdded(value);
 				}
 				index++;
 			}
-			for (int i = index; i < list.Count; i++) {
+			for (int i = index; i < list.Count; i++)
+			{
 				parentInstruction.InstructionCollectionRemoved(list[i]);
 			}
 			list.RemoveRange(index, list.Count - index);
@@ -232,7 +241,8 @@ namespace ICSharpCode.Decompiler.IL
 			list.Insert(index, item);
 			item.ChildIndex = index;
 			parentInstruction.InstructionCollectionAdded(item);
-			for (int i = index + 1; i < list.Count; i++) {
+			for (int i = index + 1; i < list.Count; i++)
+			{
 				T other_item = list[i];
 				// Update ChildIndex of items after the inserted one, but only if
 				// that's their 'primary position' (in case of multiple parents)
@@ -247,14 +257,15 @@ namespace ICSharpCode.Decompiler.IL
 			parentInstruction.AssertNoEnumerators();
 			parentInstruction.InstructionCollectionRemoved(list[index]);
 			list.RemoveAt(index);
-			for (int i = index; i < list.Count; i++) {
+			for (int i = index; i < list.Count; i++)
+			{
 				var other_item = list[i];
 				if (other_item.Parent == parentInstruction && other_item.ChildIndex == i + firstChildIndex + 1)
 					other_item.ChildIndex = i + firstChildIndex;
 			}
 			parentInstruction.InstructionCollectionUpdateComplete();
 		}
-		
+
 		/// <summary>
 		/// Remove item at index <c>index</c> in O(1) by swapping it with the last element in the collection.
 		/// </summary>
@@ -273,7 +284,8 @@ namespace ICSharpCode.Decompiler.IL
 		public void Clear()
 		{
 			parentInstruction.AssertNoEnumerators();
-			foreach (var entry in list) {
+			foreach (var entry in list)
+			{
 				parentInstruction.InstructionCollectionRemoved(entry);
 			}
 			list.Clear();
@@ -283,21 +295,24 @@ namespace ICSharpCode.Decompiler.IL
 		public bool Remove(T item)
 		{
 			int index = IndexOf(item);
-			if (index >= 0) {
+			if (index >= 0)
+			{
 				RemoveAt(index);
 				return true;
 			}
 			return false;
 		}
-		
+
 		public void RemoveRange(int index, int count)
 		{
 			parentInstruction.AssertNoEnumerators();
-			for (int i = 0; i < count; i++) {
+			for (int i = 0; i < count; i++)
+			{
 				parentInstruction.InstructionCollectionRemoved(list[index + i]);
 			}
 			list.RemoveRange(index, count);
-			for (int i = index; i < list.Count; i++) {
+			for (int i = index; i < list.Count; i++)
+			{
 				var other_item = list[i];
 				if (other_item.Parent == parentInstruction && other_item.ChildIndex == i + firstChildIndex + count)
 					other_item.ChildIndex = i + firstChildIndex;
@@ -316,11 +331,15 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			parentInstruction.AssertNoEnumerators();
 			int j = 0;
-			for (int i = 0; i < list.Count; i++) {
+			for (int i = 0; i < list.Count; i++)
+			{
 				T item = list[i];
-				if (predicate(item)) {
+				if (predicate(item))
+				{
 					parentInstruction.InstructionCollectionRemoved(item);
-				} else {
+				}
+				else
+				{
 					// keep the item
 					if (item.Parent == parentInstruction && item.ChildIndex == i + firstChildIndex)
 						item.ChildIndex = j + firstChildIndex;
@@ -329,7 +348,8 @@ namespace ICSharpCode.Decompiler.IL
 				}
 			}
 			int removed = list.Count - j;
-			if (removed > 0) {
+			if (removed > 0)
+			{
 				list.RemoveRange(j, removed);
 				parentInstruction.InstructionCollectionUpdateComplete();
 			}
@@ -351,7 +371,8 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			parentInstruction.AssertNoEnumerators();
 			int oldIndex = IndexOf(item);
-			if (oldIndex >= 0) {
+			if (oldIndex >= 0)
+			{
 				Insert(newIndex, item);
 				if (oldIndex < newIndex)
 					RemoveAt(oldIndex);

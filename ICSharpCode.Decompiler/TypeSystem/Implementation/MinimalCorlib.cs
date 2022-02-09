@@ -21,6 +21,8 @@ using System.Collections.Generic;
 using System.Linq;
 using dnlib.DotNet;
 using dnlib.DotNet.MD;
+
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.TypeSystem.Implementation
@@ -172,7 +174,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 			bool? IType.IsReferenceType {
 				get {
-					switch (typeKind) {
+					switch (typeKind)
+					{
 						case TypeKind.Class:
 						case TypeKind.Interface:
 							return true;

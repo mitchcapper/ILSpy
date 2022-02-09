@@ -111,32 +111,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 		private class Data
 		{
 			public List<MyEnum2> FieldList = new List<MyEnum2>();
-			public MyEnum a {
-				get;
-				set;
-			}
-			public MyEnum b {
-				get;
-				set;
-			}
-			public List<MyEnum2> PropertyList {
-				get;
-				set;
-			}
+			public MyEnum a { get; set; }
+			public MyEnum b { get; set; }
+			public List<MyEnum2> PropertyList { get; set; }
 #if CS60
-			public List<MyEnum2> ReadOnlyPropertyList {
-				get;
-			}
+			public List<MyEnum2> ReadOnlyPropertyList { get; }
 #endif
-			public Data MoreData {
-				get;
-				set;
-			}
+			public Data MoreData { get; set; }
 
-			public StructData NestedStruct {
-				get;
-				set;
-			}
+			public StructData NestedStruct { get; set; }
 
 			public Data this[int i] {
 				get {
@@ -160,15 +143,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 		private struct StructData
 		{
 			public int Field;
-			public int Property {
-				get;
-				set;
-			}
+			public int Property { get; set; }
 
-			public Data MoreData {
-				get;
-				set;
-			}
+			public Data MoreData { get; set; }
 
 			public StructData(int initialValue)
 			{
@@ -180,94 +157,47 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 
 		public class Item
 		{
-			public string Text {
-				get;
-				set;
-			}
+			public string Text { get; set; }
 
-			public decimal Value {
-				get;
-				set;
-			}
+			public decimal Value { get; set; }
 
-			public decimal Value2 {
-				get;
-				set;
-			}
+			public decimal Value2 { get; set; }
 
-			public string Value3 {
-				get;
-				set;
-			}
+			public string Value3 { get; set; }
 
-			public string Value4 {
-				get;
-				set;
-			}
+			public string Value4 { get; set; }
 
-			public string Value5 {
-				get;
-				set;
-			}
+			public string Value5 { get; set; }
 
-			public string Value6 {
-				get;
-				set;
-			}
+			public string Value6 { get; set; }
 
 #if CS90
-			public Fields Value7 {
-				get;
-				set;
-			}
+			public Fields Value7 { get; set; }
 #endif
 		}
 
 		public class OtherItem
 		{
-			public decimal Value {
-				get;
-				set;
-			}
+			public decimal Value { get; set; }
 
-			public decimal Value2 {
-				get;
-				set;
-			}
+			public decimal Value2 { get; set; }
 
-			public decimal? Nullable {
-				get;
-				set;
-			}
+			public decimal? Nullable { get; set; }
 
-			public decimal? Nullable2 {
-				get;
-				set;
-			}
+			public decimal? Nullable2 { get; set; }
 
-			public decimal? Nullable3 {
-				get;
-				set;
-			}
+			public decimal? Nullable3 { get; set; }
 
-			public decimal? Nullable4 {
-				get;
-				set;
-			}
+			public decimal? Nullable4 { get; set; }
 		}
 
 		public class OtherItem2
 		{
 			public readonly OtherItem Data;
 
-			public OtherItem Data2 {
-				get;
-				private set;
-			}
+			public OtherItem Data2 { get; private set; }
 #if CS60
-			public OtherItem Data3 {
-				get;
-			}
+			public OtherItem Data3 { get; }
 #endif
 		}
 
@@ -299,10 +229,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 
 		public interface IData
 		{
-			int Property {
-				get;
-				set;
-			}
+			int Property { get; set; }
 		}
 		#endregion
 
@@ -444,39 +371,17 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 		};
 
 		private static int[,] Issue1336_rg2 = new int[3, 3] {
-			{
-				1,
-				1,
-				1
-			},
-			{
-				1,
-				1,
-				1
-			},
-			{
-				1,
-				1,
-				1
-			}
+			{ 1, 1, 1 },
+			{ 1, 1, 1 },
+			{ 1, 1, 1 }
 		};
 
 #if CS73
-		public static ReadOnlySpan<byte> StaticData1 => new byte[1] {
-			0
-		};
+		public static ReadOnlySpan<byte> StaticData1 => new byte[1] { 0 };
 
-		public static ReadOnlySpan<byte> StaticData3 => new byte[3] {
-			1,
-			2,
-			3
-		};
+		public static ReadOnlySpan<byte> StaticData3 => new byte[3] { 1, 2, 3 };
 
-		public static Span<byte> StaticData3Span => new byte[3] {
-			1,
-			2,
-			3
-		};
+		public static Span<byte> StaticData3Span => new byte[3] { 1, 2, 3 };
 #endif
 		#endregion
 
@@ -524,59 +429,20 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 		#region Array initializers
 		public static void Array1()
 		{
-			X(Y(), new int[10] {
-				1,
-				2,
-				3,
-				4,
-				5,
-				6,
-				7,
-				8,
-				9,
-				10
-			});
+			X(Y(), new int[10] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 });
 		}
 
 		public static void Array2(int a, int b, int c)
 		{
-			X(Y(), new int[5] {
-				a,
-				0,
-				b,
-				0,
-				c
-			});
+			X(Y(), new int[5] { a, 0, b, 0, c });
 		}
 
 		public static void NestedArray(int a, int b, int c)
 		{
 			X(Y(), new int[3][] {
-				new int[10] {
-					1,
-					2,
-					3,
-					4,
-					5,
-					6,
-					7,
-					8,
-					9,
-					10
-				},
-				new int[3] {
-					a,
-					b,
-					c
-				},
-				new int[6] {
-					1,
-					2,
-					3,
-					4,
-					5,
-					6
-				}
+				new int[10] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 },
+				new int[3] { a, b, c },
+				new int[6] { 1, 2, 3, 4, 5, 6 }
 			});
 		}
 
@@ -584,42 +450,18 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 		{
 			X(Y(), new int?[3][] {
 				new int?[11] {
-					1,
-					2,
-					3,
-					4,
-					5,
-					6,
-					7,
-					8,
-					9,
-					10,
+					1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
 					null
 				},
-				new int?[4] {
-						a,
-					b,
-					c,
-					null
-				},
-				new int?[7] {
-					1,
-					2,
-					3,
-					4,
-					5,
-					6,
-					null
-				}
+				new int?[4] { a, b, c, null },
+				new int?[7] { 1, 2, 3, 4, 5, 6, null }
 			  });
 		}
 
 		public unsafe static void NestedPointerArray(int a, int b, int c)
 		{
 			X(Y(), new void*[3][] {
-				new void*[1] {
-					null
-				},
+				new void*[1] { null },
 				new void*[2] {
 					(void*)200,
 					null
@@ -633,128 +475,47 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 
 		public static void ArrayBoolean()
 		{
-			X(Y(), new bool[8] {
-				true,
-				false,
-				true,
-				false,
-				false,
-				false,
-				true,
-				true
-			});
+			X(Y(), new bool[8] { true, false, true, false, false, false, true, true });
 		}
 
 		public static void ArrayByte()
 		{
-			X(Y(), new byte[10] {
-				1,
-				2,
-				3,
-				4,
-				5,
-				6,
-				7,
-				8,
-				254,
-				255
-			});
+			X(Y(), new byte[10] { 1, 2, 3, 4, 5, 6, 7, 8, 254, 255 });
 		}
 
 		public static void ArraySByte()
 		{
-			X(Y(), new sbyte[8] {
-				-128,
-				-127,
-				0,
-				1,
-				2,
-				3,
-				4,
-				127
-			});
+			X(Y(), new sbyte[8] { -128, -127, 0, 1, 2, 3, 4, 127 });
 		}
 
 		public static void ArrayShort()
 		{
-			X(Y(), new short[5] {
-				-32768,
-				-1,
-				0,
-				1,
-				32767
-			});
+			X(Y(), new short[5] { -32768, -1, 0, 1, 32767 });
 		}
 
 		public static void ArrayUShort()
 		{
-			X(Y(), new ushort[6] {
-				0,
-				1,
-				32767,
-				32768,
-				65534,
-				65535
-			});
+			X(Y(), new ushort[6] { 0, 1, 32767, 32768, 65534, 65535 });
 		}
 
 		public static void ArrayInt()
 		{
-			X(Y(), new int[10] {
-				1,
-				-2,
-				2000000000,
-				4,
-				5,
-				-6,
-				7,
-				8,
-				9,
-				10
-			});
+			X(Y(), new int[10] { 1, -2, 2000000000, 4, 5, -6, 7, 8, 9, 10 });
 		}
 
 		public static void ArrayUInt()
 		{
-			X(Y(), new uint[10] {
-				1u,
-				2000000000u,
-				3000000000u,
-				4u,
-				5u,
-				6u,
-				7u,
-				8u,
-				9u,
-				10u
-			});
+			X(Y(), new uint[10] { 1u, 2000000000u, 3000000000u, 4u, 5u, 6u, 7u, 8u, 9u, 10u });
 		}
 
 		public static void ArrayLong()
 		{
-			X(Y(), new long[5] {
-				-4999999999999999999L,
-				-1L,
-				0L,
-				1L,
-				4999999999999999999L
-			});
+			X(Y(), new long[5] { -4999999999999999999L, -1L, 0L, 1L, 4999999999999999999L });
 		}
 
 		public static void ArrayULong()
 		{
-			X(Y(), new ulong[10] {
-				1uL,
-				2000000000uL,
-				3000000000uL,
-				4uL,
-				5uL,
-				6uL,
-				7uL,
-				8uL,
-				4999999999999999999uL,
-				9999999999999999999uL
-			});
+			X(Y(), new ulong[10] { 1uL, 2000000000uL, 3000000000uL, 4uL, 5uL, 6uL, 7uL, 8uL, 4999999999999999999uL, 9999999999999999999uL });
 		}
 
 		public static void ArrayFloat()
@@ -783,24 +544,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 
 		public static void ArrayDecimal()
 		{
-			X(Y(), new decimal[6] {
-				-100m,
-				0m,
-				100m,
-				-79228162514264337593543950335m,
-				79228162514264337593543950335m,
-				0.0000001m
-			});
+			X(Y(), new decimal[6] { -100m, 0m, 100m, -79228162514264337593543950335m, 79228162514264337593543950335m, 0.0000001m });
 		}
 
 		public static void ArrayString()
 		{
-			X(Y(), new string[4] {
-				"",
-				null,
-				"Hello",
-				"World"
-			});
+			X(Y(), new string[4] { "", null, "Hello", "World" });
 		}
 
 		public static void ArrayEnum()
@@ -816,117 +565,22 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 		public int[,] MultidimensionalInit()
 		{
 			return new int[16, 4] {
-				{
-					0,
-					0,
-					0,
-					0
-				},
-
-				{
-					1,
-					1,
-					1,
-					1
-				},
-
-				{
-					0,
-					0,
-					0,
-					0
-				},
-
-				{
-					0,
-					0,
-					0,
-					0
-				},
-
-				{
-					0,
-					0,
-					1,
-					0
-				},
-
-				{
-					0,
-					0,
-					1,
-					0
-				},
-
-				{
-					0,
-					0,
-					1,
-					0
-				},
-
-				{
-					0,
-					0,
-					1,
-					0
-				},
-
-				{
-					0,
-					0,
-					0,
-					0
-				},
-
-				{
-					1,
-					1,
-					1,
-					1
-				},
-
-				{
-					0,
-					0,
-					0,
-					0
-				},
-
-				{
-					0,
-					0,
-					0,
-					0
-				},
-
-				{
-					0,
-					0,
-					1,
-					0
-				},
-
-				{
-					0,
-					0,
-					1,
-					0
-				},
-
-				{
-					0,
-					0,
-					1,
-					0
-				},
-
-				{
-					0,
-					0,
-					1,
-					0
-				}
+				{ 0, 0, 0, 0 },
+				{ 1, 1, 1, 1 },
+				{ 0, 0, 0, 0 },
+				{ 0, 0, 0, 0 },
+				{ 0, 0, 1, 0 },
+				{ 0, 0, 1, 0 },
+				{ 0, 0, 1, 0 },
+				{ 0, 0, 1, 0 },
+				{ 0, 0, 0, 0 },
+				{ 1, 1, 1, 1 },
+				{ 0, 0, 0, 0 },
+				{ 0, 0, 0, 0 },
+				{ 0, 0, 1, 0 },
+				{ 0, 0, 1, 0 },
+				{ 0, 0, 1, 0 },
+				{ 0, 0, 1, 0 }
 			};
 		}
 
@@ -934,125 +588,28 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 		{
 			return new int[4][,] {
 				new int[4, 4] {
-					{
-						0,
-						0,
-						0,
-						0
-					},
-
-					{
-						1,
-						1,
-						1,
-						1
-					},
-
-					{
-						0,
-						0,
-						0,
-						0
-					},
-
-					{
-						0,
-						0,
-						0,
-						0
-					}
-
+					{ 0, 0, 0, 0 },
+					{ 1, 1, 1, 1 },
+					{ 0, 0, 0, 0 },
+					{ 0, 0, 0, 0 }
 				},
 				new int[4, 4] {
-
-					{
-						0,
-						0,
-						1,
-						0
-					},
-
-					{
-						0,
-						0,
-						1,
-						0
-					},
-
-					{
-						0,
-						0,
-						1,
-						0
-					},
-
-					{
-						0,
-						0,
-						1,
-						0
-					}
-
+					{ 0, 0, 0, 0 },
+					{ 1, 1, 1, 1 },
+					{ 0, 0, 0, 0 },
+					{ 0, 0, 0, 0 }
 				},
 				new int[4, 4] {
-
-					{
-						0,
-						0,
-						0,
-						0
-					},
-
-					{
-						1,
-						1,
-						1,
-						1
-					},
-
-					{
-						0,
-						0,
-						0,
-						0
-					},
-
-					{
-						0,
-						0,
-						0,
-						0
-					}
+					{ 0, 0, 1, 0 },
+					{ 0, 0, 1, 0 },
+					{ 0, 0, 1, 0 },
+					{ 0, 0, 1, 0 }
 				},
 				new int[4, 4] {
-					{
-						0,
-						0,
-						1,
-						0
-					},
-
-					{
-						0,
-						0,
-						1,
-						0
-					},
-
-					{
-						0,
-						0,
-						1,
-						0
-					},
-
-					{
-						0,
-						0,
-						1,
-						0
-					}
-
+					{ 0, 0, 1, 0 },
+					{ 0, 0, 1, 0 },
+					{ 0, 0, 1, 0 },
+					{ 0, 0, 1, 0 }
 				}
 			};
 		}
@@ -1062,75 +619,26 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 			return new int[2][,,] {
 				new int[2, 3, 3] {
 					{
-						{
-							1,
-							2,
-							3
-						},
-						{
-							4,
-							5,
-							6
-						},
-						{
-							7,
-							8,
-							9
-						}
+						{ 1, 2, 3 },
+						{ 4, 5, 6 },
+						{ 7, 8, 9 }
 					},
 					{
-						{
-							11,
-							12,
-							13
-						},
-						{
-							14,
-							15,
-							16
-						},
-						{
-							17,
-							18,
-							19
-						}
+						{ 11, 12, 13 },
+						{ 14, 15, 16 },
+						{ 17, 18, 19 }
 					}
 				},
-
 				new int[2, 3, 3] {
 					{
-						{
-							21,
-							22,
-							23
-						},
-						{
-							24,
-							25,
-							26
-						},
-						{
-							27,
-							28,
-							29
-						}
+						{ 21, 22, 23 },
+						{ 24, 25, 26 },
+						{ 27, 28, 29 }
 					},
 					{
-						{
-							31,
-							32,
-							33
-						},
-						{
-							34,
-							35,
-							36
-						},
-						{
-							37,
-							38,
-							39
-						}
+						{ 31, 32, 33 },
+						{ 34, 35, 36 },
+						{ 37, 38, 39 }
 					}
 				}
 			};
@@ -1181,19 +689,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 
 		public static void Issue953_MissingNullableSpecifierForArrayInitializer()
 		{
-			NoOp(new Guid?[1] {
-				Guid.Empty
-			});
+			NoOp(new Guid?[1] { Guid.Empty });
 		}
 
 		private void Issue907_Test3(string text)
 		{
-			X(Y(), new Dictionary<string, object> {
-				{
-					"",
-					text
-				}
-			});
+			X(Y(), new Dictionary<string, object> { { "", text } });
 		}
 
 		private int[] Issue1383(int i, int[] array)
@@ -1207,65 +708,32 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 		private string[,] Issue1382a()
 		{
 			return new string[4, 4] {
-				{
-					null,
-					"test",
-					"hello",
-					"world"
-				},
-				{
-					"test",
-					null,
-					"hello",
-					"world"
-				},
-				{
-					"test",
-					"hello",
-					null,
-					"world"
-				},
-				{
-					"test",
-					"hello",
-					"world",
-					null
-				}
+				{ null, "test", "hello", "world" },
+				{ "test", null, "hello", "world" },
+				{ "test", "hello", null, "world" },
+				{ "test", "hello", "world", null }
 			};
 		}
 
 		private string[,] Issue1382b()
 		{
 			return new string[4, 4] {
-				{
-					"test",
-					"hello",
-					"world",
-					null
-				},
-				{
-					"test",
-					"hello",
-					null,
-					"world"
-				},
-				{
-					"test",
-					null,
-					"hello",
-					"world"
-				},
-				{
-					null,
-					"test",
-					"hello",
-					"world"
-				}
+				{ "test", "hello", "world", null },
+				{ "test", "hello", null, "world" },
+				{ "test", null, "hello", "world" },
+				{ null, "test", "hello", "world" }
 			};
 		}
-#endregion
 
-#region Object initializers
+		private static void OutOfMemory()
+		{
+			byte[] array = new byte[int.MaxValue];
+			array[0] = 1;
+			Console.WriteLine(array.Length);
+		}
+		#endregion
+
+		#region Object initializers
 		public C Test1()
 		{
 			C c = new C();
@@ -1426,9 +894,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 				MoreData = new Data {
 					a = MyEnum.a,
 					b = MyEnum.b,
-					PropertyList = {
-						MyEnum2.c
-					}
+					PropertyList = { MyEnum2.c }
 				}
 			});
 		}
@@ -1556,12 +1022,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 
 		private byte[] Issue1314()
 		{
-			return new byte[4] {
-				0,
-				1,
-				2,
-				255
-			};
+			return new byte[4] { 0, 1, 2, 255 };
 		}
 
 		private void Issue1251_Test(List<Item> list, OtherItem otherItem)
@@ -1579,7 +1040,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 
 		private Data Issue1279(int p)
 		{
-			if (p == 1) {
+			if (p == 1)
+			{
 				Data data = new Data();
 				data.a = MyEnum.a;
 				data.TestEvent += Data_TestEvent;
@@ -1610,17 +1072,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 		}
 		#endregion
 
-#region Collection initializer
+		#region Collection initializer
 
 		public static void ExtensionMethodInCollectionInitializer()
 		{
 #if CS60
-			X(Y(), new CustomList<int> {
-				{
-					"1",
-					"2"
-				}
-			});
+			X(Y(), new CustomList<int> { { "1", "2" } });
 #else
 			CustomList<int> customList = new CustomList<int>();
 			customList.Add("1", "2");
@@ -1637,29 +1094,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 
 		public static void CollectionInitializerWithParamsMethod()
 		{
-			X(Y(), new CustomList<int> {
-				{
-					1,
-					2,
-					3,
-					4,
-					5,
-					6,
-					7,
-					8,
-					9,
-					10
-				}
-			});
+			X(Y(), new CustomList<int> { { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 } });
 		}
 
 		public static void CollectionInitializerList()
 		{
-			X(Y(), new List<int> {
-				1,
-				2,
-				3
-			});
+			X(Y(), new List<int> { 1, 2, 3 });
 		}
 
 		public static object RecursiveCollectionInitializer()
@@ -1672,18 +1112,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 		public static void CollectionInitializerDictionary()
 		{
 			X(Y(), new Dictionary<string, int> {
-			{
-				"First",
-				1
-			},
-			{
-				"Second",
-				2
-			},
-			{
-				"Third",
-				3
-			}
+				{ "First", 1 },
+				{ "Second", 2 },
+				{ "Third", 3 }
 		  });
 		}
 
@@ -1728,9 +1159,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 					a = MyEnum.a,
 					[GetInt()] = {
 						a = MyEnum.b,
-						FieldList = {
-							MyEnum2.c
-						},
+						FieldList = { MyEnum2.c },
 						[GetInt(), GetString()] = new Data(),
 						[2] = null
 					}
@@ -1741,36 +1170,24 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 		private List<List<int>> NestedListWithIndexInitializer(MyEnum myEnum)
 		{
 			return new List<List<int>> {
-				[0] = {
-					1,
-					2,
-					3
-				},
-				[1] = {
-					(int)myEnum
-				}
+				[0] = { 1, 2, 3 },
+				[1] = { (int)myEnum }
 			};
 		}
 
 		private void Issue1250_Test2(MyEnum value)
 		{
-			X(Y(), new C {
-				[(int)value] = new S((int)value)
-			});
+			X(Y(), new C { [(int)value] = new S((int)value) });
 		}
 
 		private void Issue1250_Test3(int value)
 		{
-			X(Y(), new C {
-				[value] = new S(value)
-			});
+			X(Y(), new C { [value] = new S(value) });
 		}
 
 		private void Issue1250_Test4(int value)
 		{
-			X(Y(), new C {
-				[(object)value] = new S(value)
-			});
+			X(Y(), new C { [(object)value] = new S(value) });
 		}
 
 		public static List<KeyValuePair<string, string>> Issue1390(IEnumerable<string> tokens, bool alwaysAllowAdministrators, char wireDelimiter)
@@ -1795,6 +1212,6 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 		}
 
 #endif
-#endregion
-		}
+		#endregion
+	}
 }

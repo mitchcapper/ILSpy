@@ -17,7 +17,8 @@ internal sealed class ExtraUnsafeTests
 {
 	public unsafe static void PinWithTypeMismatch(ref uint managedPtr)
 	{
-		fixed (ushort* ptr = &Unsafe.As<uint, ushort>(ref managedPtr)) {
+		fixed (ushort* ptr = &Unsafe.As<uint, ushort>(ref managedPtr))
+		{
 		}
 	}
 
@@ -29,7 +30,8 @@ internal sealed class ExtraUnsafeTests
 	public static ref ulong RefAssignTypeMismatch(ref uint a, ref uint b)
 	{
 		ref ushort reference = ref Unsafe.As<uint, ushort>(ref a);
-		if (a != 0) {
+		if (a != 0)
+		{
 			reference = ref Unsafe.As<uint, ushort>(ref b);
 		}
 		Console.WriteLine(reference);
@@ -38,7 +40,8 @@ internal sealed class ExtraUnsafeTests
 
 	public unsafe static byte[] Issue1292(int val, byte[] arr)
 	{
-		fixed (byte* ptr = arr) {
+		fixed (byte* ptr = arr)
+		{
 			*(int*)ptr = val;
 		}
 		return arr;
@@ -48,34 +51,40 @@ internal sealed class ExtraUnsafeTests
 	{
 		//The blocks IL_0016 are reachable both inside and outside the pinned region starting at IL_0007. ILSpy has duplicated these blocks in order to place them both within and outside the `fixed` statement.
 		ref int reference;
-		fixed (int* ptr = &a[0]) {
-			if (*ptr <= 0) {
+		fixed (int* ptr = &a[0])
+		{
+			if (*ptr <= 0)
+			{
 				Unsafe.AddByteOffset(ref *ptr, 4 * 0) = 1;
 				return;
 			}
 			reference = ref *ptr;
 		}
-		fixed (int* ptr = &b[reference]) {
+		fixed (int* ptr = &b[reference])
+		{
 			Unsafe.AddByteOffset(ref *ptr, 4 * 0) = 1;
 		}
 	}
 
 	private static void Issue2148(string[] args)
 	{
-		for (int/*pinned*/ i = 0; i < 100; i++) {
+		for (int/*pinned*/ i = 0; i < 100; i++)
+		{
 			Console.WriteLine("Hello World!");
 		}
 	}
 
 	private unsafe static void Issue2189()
 	{
-		fixed (int* ptr = &Unsafe.AsRef<int>((int*)Unsafe.AsPointer(ref SomeStruct.instance.mtfhist))) {
+		fixed (int* ptr = &Unsafe.AsRef<int>((int*)Unsafe.AsPointer(ref SomeStruct.instance.mtfhist)))
+		{
 			int num = *ptr;
 		}
 	}
 	private unsafe static void PinUnmanagedPtr(int* A_0)
 	{
-		fixed (int* ptr = &Unsafe.AsRef<int>(A_0)) {
+		fixed (int* ptr = &Unsafe.AsRef<int>(A_0))
+		{
 			int num = *ptr;
 		}
 	}

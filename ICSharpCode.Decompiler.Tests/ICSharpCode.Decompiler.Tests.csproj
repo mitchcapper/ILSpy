@@ -3,7 +3,7 @@
 
   <PropertyGroup>
     <TargetFramework>net472</TargetFramework>
-    <LangVersion>8</LangVersion>
+    <LangVersion>8.0</LangVersion>
 
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
 
@@ -42,15 +42,17 @@
   <Import Project="..\packages.props" />
 
   <ItemGroup>
+    <PackageReference Include="dnlib" Version="3.3.3" />
     <PackageReference Include="DiffLib" Version="$(DiffLibVersion)" />
-    <PackageReference Include="Microsoft.Build.Locator" Version="1.2.2" />
-    <PackageReference Include="NuGet.Protocol" Version="5.7.0" />
+    <PackageReference Include="Microsoft.Build.Locator" Version="1.4.1" />
+    <PackageReference Include="NuGet.Protocol" Version="6.0.0" />
     <PackageReference Include="System.Collections.Immutable" Version="$(SystemCollectionsImmutableVersion)" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="$(RoslynVersion)" />
     <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic" Version="$(RoslynVersion)" />
-    <PackageReference Include="Microsoft.DiaSymReader.Converter.Xml" Version="1.1.0-beta1-63314-01" />
+    <PackageReference Include="Microsoft.DiaSymReader.Converter.Xml" Version="$(DSRConverterXmlVersion)" />
     <PackageReference Include="NUnit3TestAdapter" Version="$(NUnitAdapterVersion)" />
     <PackageReference Include="NUnit" Version="$(NUnitVersion)" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(MicrosoftNETTestSdkVersion)" />
     <PackageReference Include="System.Memory" Version="4.5.4" />
     <PackageReference Include="Microsoft.NETCore.ILAsm" Version="$(ILAsmVersion)" />
   </ItemGroup>
@@ -94,6 +96,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="DisassemblerPrettyTestRunner.cs" />
     <Compile Include="Helpers\RoslynToolset.cs" />
     <Compile Include="Output\InsertParenthesesVisitorTests.cs" />
     <Compile Include="TestCases\Correctness\DeconstructionTests.cs" />
@@ -110,6 +113,7 @@
     <None Include="TestCases\ILPretty\Issue2260SwitchString.cs" />
     <None Include="TestCases\Pretty\Records.cs" />
     <Compile Include="TestCases\VBPretty\Issue2192.cs" />
+    <Compile Include="Util\FileUtilityTests.cs" />
     <None Include="TestCases\Pretty\FunctionPointers.cs" />
     <None Include="TestCases\Pretty\CS9_ExtensionGetEnumerator.cs" />
     <None Include="TestCases\Pretty\UsingVariables.cs" />
@@ -153,6 +157,7 @@
     <Compile Include="TestCases\ILPretty\Issue1454.cs" />
     <Compile Include="TestCases\Pretty\Discards.cs" />
     <Compile Include="TestCases\Pretty\MultidimensionalArray.cs" />
+    <Compile Include="Output\CSharpAmbienceTests.cs" />
     <Compile Include="Semantics\ConversionTests.cs" />
     <Compile Include="Semantics\ExplicitConversionTest.cs" />
     <Compile Include="Semantics\OverloadResolutionTests.cs" />
@@ -185,6 +190,7 @@
     <None Include="TestCases\ILPretty\Issue1325.il" />
     <None Include="TestCases\Ugly\NoDecimalConstants.Expected.cs" />
     <Compile Include="TestCases\Ugly\NoDecimalConstants.cs" />
+    <None Include="TestCases\Disassembler\Pretty\SecurityDeclarations.il" />
     <Compile Include="TestCases\Pretty\CustomAttributeConflicts.cs" />
     <Compile Include="TestCases\Pretty\DynamicTests.cs" />
     <Compile Include="TestCases\Pretty\Issue1080.cs" />
@@ -217,7 +223,6 @@
     <Compile Include="TestCases\Pretty\NullPropagation.cs" />
     <Compile Include="TestCases\Pretty\VariableNaming.cs" />
     <Compile Include="TestCases\Pretty\VariableNamingWithoutSymbols.cs" />
-    <Compile Include="DebugInfo\SequencePointTests.cs" />
     <None Include="TestCases\ILPretty\Issue1047.il" />
     <None Include="TestCases\ILPretty\Issue959.cs" />
     <None Include="TestCases\ILPretty\FSharpLoops_Debug.cs" />
@@ -247,7 +252,6 @@
     <Compile Include="TestCases\Pretty\Generics.cs" />
     <Compile Include="TestCases\Pretty\LiftedOperators.cs" />
     <Compile Include="PrettyTestRunner.cs" />
-    <Compile Include="RoundtripAssembly.cs" />
     <Compile Include="TestCases\Correctness\Capturing.cs" />
     <Compile Include="TestCases\Correctness\OverloadResolution.cs" />
     <Compile Include="TestCases\Pretty\AnonymousTypes.cs" />
@@ -290,6 +294,12 @@
     <Compile Include="TestCases\Pretty\AssemblyCustomAttributes.cs" />
     <Compile Include="TestCases\Pretty\CustomAttributeSamples.cs" />
     <Compile Include="TestCases\Pretty\CustomAttributes.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="TestCases\PdbGen\ForLoopTests.xml" />
+    <Content Include="TestCases\PdbGen\HelloWorld.xml" />
+    <Content Include="TestCases\PdbGen\LambdaCapturing.xml" />
   </ItemGroup>
 
   <ItemGroup>

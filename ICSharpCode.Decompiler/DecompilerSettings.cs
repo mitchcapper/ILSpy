@@ -19,6 +19,7 @@
 using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 
 namespace ICSharpCode.Decompiler
@@ -40,8 +41,9 @@ namespace ICSharpCode.Decompiler
 		/// appropriate for the specified language version.
 		/// </summary>
 		/// <remarks>
-		/// This does not imply that the resulting code strictly uses only language features from that version.
-		/// Language constructs like generics or ref locals cannot be removed from the compiled code.
+		/// This does not imply that the resulting code strictly uses only language features from
+		/// that version. Language constructs like generics or ref locals cannot be removed from
+		/// the compiled code.
 		/// </remarks>
 		public DecompilerSettings(CSharp.LanguageVersion languageVersion)
 		{
@@ -55,13 +57,15 @@ namespace ICSharpCode.Decompiler
 		{
 			// By default, all decompiler features are enabled.
 			// Disable some of them based on language version:
-			if (languageVersion < CSharp.LanguageVersion.CSharp2) {
+			if (languageVersion < CSharp.LanguageVersion.CSharp2)
+			{
 				anonymousMethods = false;
 				liftNullables = false;
 				yieldReturn = false;
 				useImplicitMethodGroupConversion = false;
 			}
-			if (languageVersion < CSharp.LanguageVersion.CSharp3) {
+			if (languageVersion < CSharp.LanguageVersion.CSharp3)
+			{
 				anonymousTypes = false;
 				useLambdaSyntax = false;
 				objectCollectionInitializers = false;
@@ -70,15 +74,18 @@ namespace ICSharpCode.Decompiler
 				queryExpressions = false;
 				expressionTrees = false;
 			}
-			if (languageVersion < CSharp.LanguageVersion.CSharp4) {
+			if (languageVersion < CSharp.LanguageVersion.CSharp4)
+			{
 				dynamic = false;
 				namedArguments = false;
 				optionalArguments = false;
 			}
-			if (languageVersion < CSharp.LanguageVersion.CSharp5) {
+			if (languageVersion < CSharp.LanguageVersion.CSharp5)
+			{
 				asyncAwait = false;
 			}
-			if (languageVersion < CSharp.LanguageVersion.CSharp6) {
+			if (languageVersion < CSharp.LanguageVersion.CSharp6)
+			{
 				awaitInCatchFinally = false;
 				useExpressionBodyForCalculatedGetterOnlyProperties = false;
 				nullPropagation = false;
@@ -88,7 +95,8 @@ namespace ICSharpCode.Decompiler
 				useRefLocalsForAccurateOrderOfEvaluation = false;
 				getterOnlyAutomaticProperties = false;
 			}
-			if (languageVersion < CSharp.LanguageVersion.CSharp7) {
+			if (languageVersion < CSharp.LanguageVersion.CSharp7)
+			{
 				outVariables = false;
 				throwExpressions = false;
 				tupleTypes = false;
@@ -98,19 +106,22 @@ namespace ICSharpCode.Decompiler
 				deconstruction = false;
 				patternMatching = false;
 			}
-			if (languageVersion < CSharp.LanguageVersion.CSharp7_2) {
+			if (languageVersion < CSharp.LanguageVersion.CSharp7_2)
+			{
 				introduceReadonlyAndInModifiers = false;
 				introduceRefModifiersOnStructs = false;
 				nonTrailingNamedArguments = false;
 				refExtensionMethods = false;
 			}
-			if (languageVersion < CSharp.LanguageVersion.CSharp7_3) {
+			if (languageVersion < CSharp.LanguageVersion.CSharp7_3)
+			{
 				introduceUnmanagedConstraint = false;
 				stackAllocInitializers = false;
 				tupleComparisons = false;
 				patternBasedFixedStatement = false;
 			}
-			if (languageVersion < CSharp.LanguageVersion.CSharp8_0) {
+			if (languageVersion < CSharp.LanguageVersion.CSharp8_0)
+			{
 				nullableReferenceTypes = false;
 				readOnlyMethods = false;
 				asyncUsingAndForEachStatement = false;
@@ -120,7 +131,8 @@ namespace ICSharpCode.Decompiler
 				ranges = false;
 				switchExpressions = false;
 			}
-			if (languageVersion < CSharp.LanguageVersion.CSharp9_0) {
+			if (languageVersion < CSharp.LanguageVersion.CSharp9_0)
+			{
 				nativeIntegers = false;
 				initAccessors = false;
 				functionPointers = false;
@@ -146,9 +158,11 @@ namespace ICSharpCode.Decompiler
 			if (nullableReferenceTypes || readOnlyMethods || asyncEnumerator || asyncUsingAndForEachStatement
 				|| staticLocalFunctions || ranges || switchExpressions)
 				return CSharp.LanguageVersion.CSharp8_0;
-			if (introduceUnmanagedConstraint || tupleComparisons || stackAllocInitializers || patternBasedFixedStatement)
+			if (introduceUnmanagedConstraint || tupleComparisons || stackAllocInitializers
+				|| patternBasedFixedStatement)
 				return CSharp.LanguageVersion.CSharp7_3;
-			if (introduceRefModifiersOnStructs || introduceReadonlyAndInModifiers || nonTrailingNamedArguments || refExtensionMethods)
+			if (introduceRefModifiersOnStructs || introduceReadonlyAndInModifiers
+				|| nonTrailingNamedArguments || refExtensionMethods)
 				return CSharp.LanguageVersion.CSharp7_2;
 			// C# 7.1 missing
 			if (outVariables || throwExpressions || tupleTypes || tupleConversions
@@ -162,7 +176,8 @@ namespace ICSharpCode.Decompiler
 				return CSharp.LanguageVersion.CSharp5;
 			if (dynamic || namedArguments || optionalArguments)
 				return CSharp.LanguageVersion.CSharp4;
-			if (anonymousTypes || objectCollectionInitializers || automaticProperties || queryExpressions || expressionTrees)
+			if (anonymousTypes || objectCollectionInitializers || automaticProperties
+				|| queryExpressions || expressionTrees)
 				return CSharp.LanguageVersion.CSharp3;
 			if (anonymousMethods || liftNullables || yieldReturn || useImplicitMethodGroupConversion)
 				return CSharp.LanguageVersion.CSharp2;
@@ -179,7 +194,8 @@ namespace ICSharpCode.Decompiler
 		public bool NativeIntegers {
 			get { return nativeIntegers; }
 			set {
-				if (nativeIntegers != value) {
+				if (nativeIntegers != value)
+				{
 					nativeIntegers = value;
 					OnPropertyChanged();
 				}
@@ -214,7 +230,8 @@ namespace ICSharpCode.Decompiler
 		public bool InitAccessors {
 			get { return initAccessors; }
 			set {
-				if (initAccessors != value) {
+				if (initAccessors != value)
+				{
 					initAccessors = value;
 					OnPropertyChanged();
 				}
@@ -304,7 +321,8 @@ namespace ICSharpCode.Decompiler
 		public bool SwitchExpressions {
 			get { return switchExpressions; }
 			set {
-				if (switchExpressions != value) {
+				if (switchExpressions != value)
+				{
 					switchExpressions = value;
 					OnPropertyChanged();
 				}
@@ -335,11 +353,12 @@ namespace ICSharpCode.Decompiler
 		/// Decompile anonymous methods/lambdas.
 		/// </summary>
 		[Category("C# 2.0 / VS 2005")]
-		[Description("Decompile anonymous methods/lambdas")]
+		[Description("DecompilerSettings.DecompileAnonymousMethodsLambdas")]
 		public bool AnonymousMethods {
 			get { return anonymousMethods; }
 			set {
-				if (anonymousMethods != value) {
+				if (anonymousMethods != value)
+				{
 					anonymousMethods = value;
 					OnPropertyChanged();
 				}
@@ -352,11 +371,12 @@ namespace ICSharpCode.Decompiler
 		/// Decompile anonymous types.
 		/// </summary>
 		[Category("C# 3.0 / VS 2008")]
-		[Description("Decompile anonymous types")]
+		[Description("DecompilerSettings.DecompileAnonymousTypes")]
 		public bool AnonymousTypes {
 			get { return anonymousTypes; }
 			set {
-				if (anonymousTypes != value) {
+				if (anonymousTypes != value)
+				{
 					anonymousTypes = value;
 					OnPropertyChanged();
 				}
@@ -369,11 +389,12 @@ namespace ICSharpCode.Decompiler
 		/// Use C# 3 lambda syntax if possible.
 		/// </summary>
 		[Category("C# 3.0 / VS 2008")]
-		[Description("Use lambda syntax, if possible")]
+		[Description("DecompilerSettings.UseLambdaSyntaxIfPossible")]
 		public bool UseLambdaSyntax {
 			get { return useLambdaSyntax; }
 			set {
-				if (useLambdaSyntax != value) {
+				if (useLambdaSyntax != value)
+				{
 					useLambdaSyntax = value;
 					OnPropertyChanged();
 				}
@@ -386,11 +407,12 @@ namespace ICSharpCode.Decompiler
 		/// Decompile expression trees.
 		/// </summary>
 		[Category("C# 3.0 / VS 2008")]
-		[Description("Decompile expression trees")]
+		[Description("DecompilerSettings.DecompileExpressionTrees")]
 		public bool ExpressionTrees {
 			get { return expressionTrees; }
 			set {
-				if (expressionTrees != value) {
+				if (expressionTrees != value)
+				{
 					expressionTrees = value;
 					OnPropertyChanged();
 				}
@@ -403,11 +425,12 @@ namespace ICSharpCode.Decompiler
 		/// Decompile enumerators.
 		/// </summary>
 		[Category("C# 2.0 / VS 2005")]
-		[Description("Decompile enumerators (yield return)")]
+		[Description("DecompilerSettings.DecompileEnumeratorsYieldReturn")]
 		public bool YieldReturn {
 			get { return yieldReturn; }
 			set {
-				if (yieldReturn != value) {
+				if (yieldReturn != value)
+				{
 					yieldReturn = value;
 					OnPropertyChanged();
 				}
@@ -420,11 +443,12 @@ namespace ICSharpCode.Decompiler
 		/// Decompile use of the 'dynamic' type.
 		/// </summary>
 		[Category("C# 4.0 / VS 2010")]
-		[Description("Decompile use of the 'dynamic' type")]
+		[Description("DecompilerSettings.DecompileUseOfTheDynamicType")]
 		public bool Dynamic {
 			get { return dynamic; }
 			set {
-				if (dynamic != value) {
+				if (dynamic != value)
+				{
 					dynamic = value;
 					OnPropertyChanged();
 				}
@@ -437,11 +461,12 @@ namespace ICSharpCode.Decompiler
 		/// Decompile async methods.
 		/// </summary>
 		[Category("C# 5.0 / VS 2012")]
-		[Description("Decompile async methods")]
+		[Description("DecompilerSettings.DecompileAsyncMethods")]
 		public bool AsyncAwait {
 			get { return asyncAwait; }
 			set {
-				if (asyncAwait != value) {
+				if (asyncAwait != value)
+				{
 					asyncAwait = value;
 					OnPropertyChanged();
 				}
@@ -455,11 +480,12 @@ namespace ICSharpCode.Decompiler
 		/// Only has an effect if <see cref="AsyncAwait"/> is enabled.
 		/// </summary>
 		[Category("C# 6.0 / VS 2015")]
-		[Description("Decompile await in catch/finally blocks")]
+		[Description("DecompilerSettings.DecompileAwaitInCatchFinallyBlocks")]
 		public bool AwaitInCatchFinally {
 			get { return awaitInCatchFinally; }
 			set {
-				if (awaitInCatchFinally != value) {
+				if (awaitInCatchFinally != value)
+				{
 					awaitInCatchFinally = value;
 					OnPropertyChanged();
 				}
@@ -477,7 +503,8 @@ namespace ICSharpCode.Decompiler
 		public bool AsyncEnumerator {
 			get { return asyncEnumerator; }
 			set {
-				if (asyncEnumerator != value) {
+				if (asyncEnumerator != value)
+				{
 					asyncEnumerator = value;
 					OnPropertyChanged();
 				}
@@ -490,11 +517,12 @@ namespace ICSharpCode.Decompiler
 		/// Decompile [DecimalConstant(...)] as simple literal values.
 		/// </summary>
 		[Category("C# 1.0 / VS .NET")]
-		[Description("Decompile [DecimalConstant(...)] as simple literal values")]
+		[Description("DecompilerSettings.DecompileDecimalConstantAsSimpleLiteralValues")]
 		public bool DecimalConstants {
 			get { return decimalConstants; }
 			set {
-				if (decimalConstants != value) {
+				if (decimalConstants != value)
+				{
 					decimalConstants = value;
 					OnPropertyChanged();
 				}
@@ -507,11 +535,12 @@ namespace ICSharpCode.Decompiler
 		/// Decompile C# 1.0 'public unsafe fixed int arr[10];' members.
 		/// </summary>
 		[Category("C# 1.0 / VS .NET")]
-		[Description("Decompile C# 1.0 'public unsafe fixed int arr[10];' members")]
+		[Description("DecompilerSettings.DecompileC10PublicUnsafeFixedIntArr10Members")]
 		public bool FixedBuffers {
 			get { return fixedBuffers; }
 			set {
-				if (fixedBuffers != value) {
+				if (fixedBuffers != value)
+				{
 					fixedBuffers = value;
 					OnPropertyChanged();
 				}
@@ -542,11 +571,12 @@ namespace ICSharpCode.Decompiler
 		/// Use lifted operators for nullables.
 		/// </summary>
 		[Category("C# 2.0 / VS 2005")]
-		[Description("Use lifted operators for nullables")]
+		[Description("DecompilerSettings.UseLiftedOperatorsForNullables")]
 		public bool LiftNullables {
 			get { return liftNullables; }
 			set {
-				if (liftNullables != value) {
+				if (liftNullables != value)
+				{
 					liftNullables = value;
 					OnPropertyChanged();
 				}
@@ -563,7 +593,8 @@ namespace ICSharpCode.Decompiler
 		public bool NullPropagation {
 			get { return nullPropagation; }
 			set {
-				if (nullPropagation != value) {
+				if (nullPropagation != value)
+				{
 					nullPropagation = value;
 					OnPropertyChanged();
 				}
@@ -576,11 +607,12 @@ namespace ICSharpCode.Decompiler
 		/// Decompile automatic properties
 		/// </summary>
 		[Category("C# 3.0 / VS 2008")]
-		[Description("Decompile automatic properties")]
+		[Description("DecompilerSettings.DecompileAutomaticProperties")]
 		public bool AutomaticProperties {
 			get { return automaticProperties; }
 			set {
-				if (automaticProperties != value) {
+				if (automaticProperties != value)
+				{
 					automaticProperties = value;
 					OnPropertyChanged();
 				}
@@ -611,11 +643,12 @@ namespace ICSharpCode.Decompiler
 		/// Decompile automatic events
 		/// </summary>
 		[Category("C# 1.0 / VS .NET")]
-		[Description("Decompile automatic events")]
+		[Description("DecompilerSettings.DecompileAutomaticEvents")]
 		public bool AutomaticEvents {
 			get { return automaticEvents; }
 			set {
-				if (automaticEvents != value) {
+				if (automaticEvents != value)
+				{
 					automaticEvents = value;
 					OnPropertyChanged();
 				}
@@ -628,11 +661,12 @@ namespace ICSharpCode.Decompiler
 		/// Decompile using statements.
 		/// </summary>
 		[Category("C# 1.0 / VS .NET")]
-		[Description("Detect using statements")]
+		[Description("DecompilerSettings.DetectUsingStatements")]
 		public bool UsingStatement {
 			get { return usingStatement; }
 			set {
-				if (usingStatement != value) {
+				if (usingStatement != value)
+				{
 					usingStatement = value;
 					OnPropertyChanged();
 				}
@@ -649,7 +683,8 @@ namespace ICSharpCode.Decompiler
 		public bool UseEnhancedUsing {
 			get { return useEnhancedUsing; }
 			set {
-				if (useEnhancedUsing != value) {
+				if (useEnhancedUsing != value)
+				{
 					useEnhancedUsing = value;
 					OnPropertyChanged();
 				}
@@ -661,12 +696,13 @@ namespace ICSharpCode.Decompiler
 		/// <summary>
 		/// Gets/Sets whether to use braces for single-statement-blocks.
 		/// </summary>
-		[Category("Other")]
-		[Description("Always use braces")]
+		[Category("DecompilerSettings.Other")]
+		[Description("DecompilerSettings.AlwaysUseBraces")]
 		public bool AlwaysUseBraces {
 			get { return alwaysUseBraces; }
 			set {
-				if (alwaysUseBraces != value) {
+				if (alwaysUseBraces != value)
+				{
 					alwaysUseBraces = value;
 					OnPropertyChanged();
 				}
@@ -679,11 +715,12 @@ namespace ICSharpCode.Decompiler
 		/// Decompile foreach statements.
 		/// </summary>
 		[Category("C# 1.0 / VS .NET")]
-		[Description("Detect foreach statements")]
+		[Description("DecompilerSettings.DetectForeachStatements")]
 		public bool ForEachStatement {
 			get { return forEachStatement; }
 			set {
-				if (forEachStatement != value) {
+				if (forEachStatement != value)
+				{
 					forEachStatement = value;
 					OnPropertyChanged();
 				}
@@ -714,11 +751,12 @@ namespace ICSharpCode.Decompiler
 		/// Decompile lock statements.
 		/// </summary>
 		[Category("C# 1.0 / VS .NET")]
-		[Description("Detect lock statements")]
+		[Description("DecompilerSettings.DetectLockStatements")]
 		public bool LockStatement {
 			get { return lockStatement; }
 			set {
-				if (lockStatement != value) {
+				if (lockStatement != value)
+				{
 					lockStatement = value;
 					OnPropertyChanged();
 				}
@@ -728,11 +766,12 @@ namespace ICSharpCode.Decompiler
 		bool switchStatementOnString = true;
 
 		[Category("C# 1.0 / VS .NET")]
-		[Description("Detect switch on string")]
+		[Description("DecompilerSettings.DetectSwitchOnString")]
 		public bool SwitchStatementOnString {
 			get { return switchStatementOnString; }
 			set {
-				if (switchStatementOnString != value) {
+				if (switchStatementOnString != value)
+				{
 					switchStatementOnString = value;
 					OnPropertyChanged();
 				}
@@ -757,11 +796,12 @@ namespace ICSharpCode.Decompiler
 		bool usingDeclarations = true;
 
 		[Category("C# 1.0 / VS .NET")]
-		[Description("Insert using declarations")]
+		[Description("DecompilerSettings.InsertUsingDeclarations")]
 		public bool UsingDeclarations {
 			get { return usingDeclarations; }
 			set {
-				if (usingDeclarations != value) {
+				if (usingDeclarations != value)
+				{
 					usingDeclarations = value;
 					OnPropertyChanged();
 				}
@@ -771,26 +811,27 @@ namespace ICSharpCode.Decompiler
 		bool extensionMethods = true;
 
 		[Category("C# 3.0 / VS 2008")]
-		[Description("Use extension method syntax")]
+		[Description("DecompilerSettings.UseExtensionMethodSyntax")]
 		public bool ExtensionMethods {
 			get { return extensionMethods; }
 			set {
-				if (extensionMethods != value) {
+				if (extensionMethods != value)
+				{
 					extensionMethods = value;
 					OnPropertyChanged();
 				}
 			}
 		}
 
-
 		bool queryExpressions = true;
 
 		[Category("C# 3.0 / VS 2008")]
-		[Description("Use LINQ expression syntax")]
+		[Description("DecompilerSettings.UseLINQExpressionSyntax")]
 		public bool QueryExpressions {
 			get { return queryExpressions; }
 			set {
-				if (queryExpressions != value) {
+				if (queryExpressions != value)
+				{
 					queryExpressions = value;
 					OnPropertyChanged();
 				}
@@ -805,11 +846,12 @@ namespace ICSharpCode.Decompiler
 		/// false: <c>EventHandler h = new EventHandler(this.OnClick);</c>
 		/// </summary>
 		[Category("C# 2.0 / VS 2005")]
-		[Description("Use implicit method group conversions")]
+		[Description("DecompilerSettings.UseImplicitMethodGroupConversions")]
 		public bool UseImplicitMethodGroupConversion {
 			get { return useImplicitMethodGroupConversion; }
 			set {
-				if (useImplicitMethodGroupConversion != value) {
+				if (useImplicitMethodGroupConversion != value)
+				{
 					useImplicitMethodGroupConversion = value;
 					OnPropertyChanged();
 				}
@@ -825,11 +867,12 @@ namespace ICSharpCode.Decompiler
 		/// default: false
 		/// </summary>
 		[Category("Other")]
-		[Description("Always cast targets of explicit interface implementation calls")]
+		[Description("DecompilerSettings.AlwaysCastTargetsOfExplicitInterfaceImplementationCalls")]
 		public bool AlwaysCastTargetsOfExplicitInterfaceImplementationCalls {
 			get { return alwaysCastTargetsOfExplicitInterfaceImplementationCalls; }
 			set {
-				if (alwaysCastTargetsOfExplicitInterfaceImplementationCalls != value) {
+				if (alwaysCastTargetsOfExplicitInterfaceImplementationCalls != value)
+				{
 					alwaysCastTargetsOfExplicitInterfaceImplementationCalls = value;
 					OnPropertyChanged();
 				}
@@ -849,7 +892,8 @@ namespace ICSharpCode.Decompiler
 		public bool AlwaysQualifyMemberReferences {
 			get { return alwaysQualifyMemberReferences; }
 			set {
-				if (alwaysQualifyMemberReferences != value) {
+				if (alwaysQualifyMemberReferences != value)
+				{
 					alwaysQualifyMemberReferences = value;
 					OnPropertyChanged();
 				}
@@ -869,7 +913,8 @@ namespace ICSharpCode.Decompiler
 		public bool AlwaysShowEnumMemberValues {
 			get { return alwaysShowEnumMemberValues; }
 			set {
-				if (alwaysShowEnumMemberValues != value) {
+				if (alwaysShowEnumMemberValues != value)
+				{
 					alwaysShowEnumMemberValues = value;
 					OnPropertyChanged();
 				}
@@ -882,11 +927,12 @@ namespace ICSharpCode.Decompiler
 		/// Gets/Sets whether to use variable names from debug symbols, if available.
 		/// </summary>
 		[Category("Other")]
-		[Description("Use variable names from debug symbols, if available")]
+		[Description("DecompilerSettings.UseVariableNamesFromDebugSymbolsIfAvailable")]
 		public bool UseDebugSymbols {
 			get { return useDebugSymbols; }
 			set {
-				if (useDebugSymbols != value) {
+				if (useDebugSymbols != value)
+				{
 					useDebugSymbols = value;
 					OnPropertyChanged();
 				}
@@ -900,12 +946,10 @@ namespace ICSharpCode.Decompiler
 		/// If set to false, might produce non-compilable code.
 		/// </summary>
 		[Category("C# 1.0 / VS .NET")]
-		[Description("Array initializer expressions")]
-		public bool ArrayInitializers
-		{
+		[Description("DecompilerSettings.ArrayInitializerExpressions")]
+		public bool ArrayInitializers {
 			get { return arrayInitializers; }
-			set
-			{
+			set {
 				if (arrayInitializers != value)
 				{
 					arrayInitializers = value;
@@ -920,11 +964,12 @@ namespace ICSharpCode.Decompiler
 		/// Gets/Sets whether to use C# 3.0 object/collection initializers.
 		/// </summary>
 		[Category("C# 3.0 / VS 2008")]
-		[Description("Object/collection initializer expressions")]
+		[Description("DecompilerSettings.ObjectCollectionInitializerExpressions")]
 		public bool ObjectOrCollectionInitializers {
 			get { return objectCollectionInitializers; }
 			set {
-				if (objectCollectionInitializers != value) {
+				if (objectCollectionInitializers != value)
+				{
 					objectCollectionInitializers = value;
 					OnPropertyChanged();
 				}
@@ -938,11 +983,12 @@ namespace ICSharpCode.Decompiler
 		/// Only has an effect if ObjectOrCollectionInitializers is enabled.
 		/// </summary>
 		[Category("C# 6.0 / VS 2015")]
-		[Description("Dictionary initializer expressions")]
+		[Description("DecompilerSettings.DictionaryInitializerExpressions")]
 		public bool DictionaryInitializers {
 			get { return dictionaryInitializers; }
 			set {
-				if (dictionaryInitializers != value) {
+				if (dictionaryInitializers != value)
+				{
 					dictionaryInitializers = value;
 					OnPropertyChanged();
 				}
@@ -956,11 +1002,12 @@ namespace ICSharpCode.Decompiler
 		/// Only has an effect if ObjectOrCollectionInitializers is enabled.
 		/// </summary>
 		[Category("C# 6.0 / VS 2015")]
-		[Description("Allow extension 'Add' methods in collection initializer expressions")]
+		[Description("DecompilerSettings.AllowExtensionAddMethodsInCollectionInitializerExpressions")]
 		public bool ExtensionMethodsInCollectionInitializers {
 			get { return extensionMethodsInCollectionInitializers; }
 			set {
-				if (extensionMethodsInCollectionInitializers != value) {
+				if (extensionMethodsInCollectionInitializers != value)
+				{
 					extensionMethodsInCollectionInitializers = value;
 					OnPropertyChanged();
 				}
@@ -996,7 +1043,8 @@ namespace ICSharpCode.Decompiler
 		public bool RefExtensionMethods {
 			get { return refExtensionMethods; }
 			set {
-				if (refExtensionMethods != value) {
+				if (refExtensionMethods != value)
+				{
 					refExtensionMethods = value;
 					OnPropertyChanged();
 				}
@@ -1009,11 +1057,12 @@ namespace ICSharpCode.Decompiler
 		/// Gets/Sets whether to use C# 6.0 string interpolation
 		/// </summary>
 		[Category("C# 6.0 / VS 2015")]
-		[Description("Use string interpolation")]
+		[Description("DecompilerSettings.UseStringInterpolation")]
 		public bool StringInterpolation {
 			get { return stringInterpolation; }
 			set {
-				if (stringInterpolation != value) {
+				if (stringInterpolation != value)
+				{
 					stringInterpolation = value;
 					OnPropertyChanged();
 				}
@@ -1025,12 +1074,13 @@ namespace ICSharpCode.Decompiler
 		/// <summary>
 		/// Gets/Sets whether to include XML documentation comments in the decompiled code.
 		/// </summary>
-		[Category("Other")]
-		[Description("Include XML documentation comments in the decompiled code")]
+		[Category("DecompilerSettings.Other")]
+		[Description("DecompilerSettings.IncludeXMLDocumentationCommentsInTheDecompiledCode")]
 		public bool ShowXmlDocumentation {
 			get { return showXmlDocumentation; }
 			set {
-				if (showXmlDocumentation != value) {
+				if (showXmlDocumentation != value)
+				{
 					showXmlDocumentation = value;
 					OnPropertyChanged();
 				}
@@ -1043,7 +1093,8 @@ namespace ICSharpCode.Decompiler
 		public bool FoldBraces {
 			get { return foldBraces; }
 			set {
-				if (foldBraces != value) {
+				if (foldBraces != value)
+				{
 					foldBraces = value;
 					OnPropertyChanged();
 				}
@@ -1056,7 +1107,8 @@ namespace ICSharpCode.Decompiler
 		public bool ExpandMemberDefinitions {
 			get { return expandMemberDefinitions; }
 			set {
-				if (expandMemberDefinitions != value) {
+				if (expandMemberDefinitions != value)
+				{
 					expandMemberDefinitions = value;
 					OnPropertyChanged();
 				}
@@ -1069,7 +1121,8 @@ namespace ICSharpCode.Decompiler
 		public bool ExpandUsingDeclarations {
 			get { return expandUsingDeclarations; }
 			set {
-				if (expandUsingDeclarations != value) {
+				if (expandUsingDeclarations != value)
+				{
 					expandUsingDeclarations = value;
 					OnPropertyChanged();
 				}
@@ -1081,12 +1134,13 @@ namespace ICSharpCode.Decompiler
 		/// <summary>
 		/// Gets/Sets whether member bodies should be decompiled.
 		/// </summary>
-		[Category("Other")]
+		[Category("DecompilerSettings.Other")]
 		[Browsable(false)]
 		public bool DecompileMemberBodies {
 			get { return decompileMemberBodies; }
 			set {
-				if (decompileMemberBodies != value) {
+				if (decompileMemberBodies != value)
+				{
 					decompileMemberBodies = value;
 					OnPropertyChanged();
 				}
@@ -1096,14 +1150,16 @@ namespace ICSharpCode.Decompiler
 		bool useExpressionBodyForCalculatedGetterOnlyProperties = true;
 
 		/// <summary>
-		/// Gets/Sets whether simple calculated getter-only property declarations should use expression body syntax.
+		/// Gets/Sets whether simple calculated getter-only property declarations
+		/// should use expression body syntax.
 		/// </summary>
 		[Category("C# 6.0 / VS 2015")]
-		[Description("Use expression-bodied member syntax for get-only properties")]
+		[Description("DecompilerSettings.UseExpressionBodiedMemberSyntaxForGetOnlyProperties")]
 		public bool UseExpressionBodyForCalculatedGetterOnlyProperties {
 			get { return useExpressionBodyForCalculatedGetterOnlyProperties; }
 			set {
-				if (useExpressionBodyForCalculatedGetterOnlyProperties != value) {
+				if (useExpressionBodyForCalculatedGetterOnlyProperties != value)
+				{
 					useExpressionBodyForCalculatedGetterOnlyProperties = value;
 					OnPropertyChanged();
 				}
@@ -1116,11 +1172,12 @@ namespace ICSharpCode.Decompiler
 		/// Gets/Sets whether out variable declarations should be used when possible.
 		/// </summary>
 		[Category("C# 7.0 / VS 2017")]
-		[Description("Use out variable declarations")]
+		[Description("DecompilerSettings.UseOutVariableDeclarations")]
 		public bool OutVariables {
 			get { return outVariables; }
 			set {
-				if (outVariables != value) {
+				if (outVariables != value)
+				{
 					outVariables = value;
 					OnPropertyChanged();
 				}
@@ -1134,11 +1191,12 @@ namespace ICSharpCode.Decompiler
 		/// Only has an effect if <see cref="OutVariables"/> is enabled.
 		/// </summary>
 		[Category("C# 7.0 / VS 2017")]
-		[Description("Use discards")]
+		[Description("DecompilerSettings.UseDiscards")]
 		public bool Discards {
 			get { return discards; }
 			set {
-				if (discards != value) {
+				if (discards != value)
+				{
 					discards = value;
 					OnPropertyChanged();
 				}
@@ -1151,11 +1209,12 @@ namespace ICSharpCode.Decompiler
 		/// Gets/Sets whether IsByRefLikeAttribute should be replaced with 'ref' modifiers on structs.
 		/// </summary>
 		[Category("C# 7.2 / VS 2017.4")]
-		[Description("IsByRefLikeAttribute should be replaced with 'ref' modifiers on structs")]
+		[Description("DecompilerSettings.IsByRefLikeAttributeShouldBeReplacedWithRefModifiersOnStructs")]
 		public bool IntroduceRefModifiersOnStructs {
 			get { return introduceRefModifiersOnStructs; }
 			set {
-				if (introduceRefModifiersOnStructs != value) {
+				if (introduceRefModifiersOnStructs != value)
+				{
 					introduceRefModifiersOnStructs = value;
 					OnPropertyChanged();
 				}
@@ -1169,11 +1228,13 @@ namespace ICSharpCode.Decompiler
 		/// and with the 'in' modifier on parameters.
 		/// </summary>
 		[Category("C# 7.2 / VS 2017.4")]
-		[Description("IsReadOnlyAttribute should be replaced with 'readonly'/'in' modifiers on structs/parameters")]
+		[Description("DecompilerSettings." +
+			"IsReadOnlyAttributeShouldBeReplacedWithReadonlyInModifiersOnStructsParameters")]
 		public bool IntroduceReadonlyAndInModifiers {
 			get { return introduceReadonlyAndInModifiers; }
 			set {
-				if (introduceReadonlyAndInModifiers != value) {
+				if (introduceReadonlyAndInModifiers != value)
+				{
 					introduceReadonlyAndInModifiers = value;
 					OnPropertyChanged();
 				}
@@ -1187,7 +1248,8 @@ namespace ICSharpCode.Decompiler
 		public bool ReadOnlyMethods {
 			get { return readOnlyMethods; }
 			set {
-				if (readOnlyMethods != value) {
+				if (readOnlyMethods != value)
+				{
 					readOnlyMethods = value;
 					OnPropertyChanged();
 				}
@@ -1201,7 +1263,8 @@ namespace ICSharpCode.Decompiler
 		public bool AsyncUsingAndForEachStatement {
 			get { return asyncUsingAndForEachStatement; }
 			set {
-				if (asyncUsingAndForEachStatement != value) {
+				if (asyncUsingAndForEachStatement != value)
+				{
 					asyncUsingAndForEachStatement = value;
 					OnPropertyChanged();
 				}
@@ -1215,11 +1278,13 @@ namespace ICSharpCode.Decompiler
 		/// is replaced with "T : unmanaged" constraints.
 		/// </summary>
 		[Category("C# 7.3 / VS 2017.7")]
-		[Description("IsUnmanagedAttribute on type parameters should be replaced with 'unmanaged' constraints")]
+		[Description("DecompilerSettings." +
+			"IsUnmanagedAttributeOnTypeParametersShouldBeReplacedWithUnmanagedConstraints")]
 		public bool IntroduceUnmanagedConstraint {
 			get { return introduceUnmanagedConstraint; }
 			set {
-				if (introduceUnmanagedConstraint != value) {
+				if (introduceUnmanagedConstraint != value)
+				{
 					introduceUnmanagedConstraint = value;
 					OnPropertyChanged();
 				}
@@ -1232,11 +1297,12 @@ namespace ICSharpCode.Decompiler
 		/// Gets/Sets whether C# 7.3 stackalloc initializers should be used.
 		/// </summary>
 		[Category("C# 7.3 / VS 2017.7")]
-		[Description("Use stackalloc initializer syntax")]
+		[Description("DecompilerSettings.UseStackallocInitializerSyntax")]
 		public bool StackAllocInitializers {
 			get { return stackAllocInitializers; }
 			set {
-				if (stackAllocInitializers != value) {
+				if (stackAllocInitializers != value)
+				{
 					stackAllocInitializers = value;
 					OnPropertyChanged();
 				}
@@ -1253,7 +1319,8 @@ namespace ICSharpCode.Decompiler
 		public bool PatternBasedFixedStatement {
 			get { return patternBasedFixedStatement; }
 			set {
-				if (patternBasedFixedStatement != value) {
+				if (patternBasedFixedStatement != value)
+				{
 					patternBasedFixedStatement = value;
 					OnPropertyChanged();
 				}
@@ -1267,11 +1334,12 @@ namespace ICSharpCode.Decompiler
 		/// should be used for <c>System.ValueTuple</c>.
 		/// </summary>
 		[Category("C# 7.0 / VS 2017")]
-		[Description("Use tuple type syntax")]
+		[Description("DecompilerSettings.UseTupleTypeSyntax")]
 		public bool TupleTypes {
 			get { return tupleTypes; }
 			set {
-				if (tupleTypes != value) {
+				if (tupleTypes != value)
+				{
 					tupleTypes = value;
 					OnPropertyChanged();
 				}
@@ -1288,7 +1356,8 @@ namespace ICSharpCode.Decompiler
 		public bool ThrowExpressions {
 			get { return throwExpressions; }
 			set {
-				if (throwExpressions != value) {
+				if (throwExpressions != value)
+				{
 					throwExpressions = value;
 					OnPropertyChanged();
 				}
@@ -1302,11 +1371,12 @@ namespace ICSharpCode.Decompiler
 		/// should be used in the decompiled output.
 		/// </summary>
 		[Category("C# 7.0 / VS 2017")]
-		[Description("Use implicit conversions between tuple types")]
+		[Description("DecompilerSettings.UseImplicitConversionsBetweenTupleTypes")]
 		public bool TupleConversions {
 			get { return tupleConversions; }
 			set {
-				if (tupleConversions != value) {
+				if (tupleConversions != value)
+				{
 					tupleConversions = value;
 					OnPropertyChanged();
 				}
@@ -1319,11 +1389,12 @@ namespace ICSharpCode.Decompiler
 		/// Gets/Sets whether tuple comparisons should be detected.
 		/// </summary>
 		[Category("C# 7.3 / VS 2017.7")]
-		[Description("Detect tuple comparisons")]
+		[Description("DecompilerSettings.DetectTupleComparisons")]
 		public bool TupleComparisons {
 			get { return tupleComparisons; }
 			set {
-				if (tupleComparisons != value) {
+				if (tupleComparisons != value)
+				{
 					tupleComparisons = value;
 					OnPropertyChanged();
 				}
@@ -1336,11 +1407,12 @@ namespace ICSharpCode.Decompiler
 		/// Gets/Sets whether named arguments should be used.
 		/// </summary>
 		[Category("C# 4.0 / VS 2010")]
-		[Description("Use named arguments")]
+		[Description("DecompilerSettings.UseNamedArguments")]
 		public bool NamedArguments {
 			get { return namedArguments; }
 			set {
-				if (namedArguments != value) {
+				if (namedArguments != value)
+				{
 					namedArguments = value;
 					OnPropertyChanged();
 				}
@@ -1353,11 +1425,12 @@ namespace ICSharpCode.Decompiler
 		/// Gets/Sets whether C# 7.2 non-trailing named arguments should be used.
 		/// </summary>
 		[Category("C# 7.2 / VS 2017.4")]
-		[Description("Use non-trailing named arguments")]
+		[Description("DecompilerSettings.UseNonTrailingNamedArguments")]
 		public bool NonTrailingNamedArguments {
 			get { return nonTrailingNamedArguments; }
 			set {
-				if (nonTrailingNamedArguments != value) {
+				if (nonTrailingNamedArguments != value)
+				{
 					nonTrailingNamedArguments = value;
 					OnPropertyChanged();
 				}
@@ -1370,11 +1443,12 @@ namespace ICSharpCode.Decompiler
 		/// Gets/Sets whether optional arguments should be removed, if possible.
 		/// </summary>
 		[Category("C# 4.0 / VS 2010")]
-		[Description("Remove optional arguments, if possible")]
+		[Description("DecompilerSettings.RemoveOptionalArgumentsIfPossible")]
 		public bool OptionalArguments {
 			get { return optionalArguments; }
 			set {
-				if (optionalArguments != value) {
+				if (optionalArguments != value)
+				{
 					optionalArguments = value;
 					OnPropertyChanged();
 				}
@@ -1391,7 +1465,8 @@ namespace ICSharpCode.Decompiler
 		public bool LocalFunctions {
 			get { return localFunctions; }
 			set {
-				if (localFunctions != value) {
+				if (localFunctions != value)
+				{
 					localFunctions = value;
 					OnPropertyChanged();
 				}
@@ -1408,7 +1483,8 @@ namespace ICSharpCode.Decompiler
 		public bool Deconstruction {
 			get { return deconstruction; }
 			set {
-				if (deconstruction != value) {
+				if (deconstruction != value)
+				{
 					deconstruction = value;
 					OnPropertyChanged();
 				}
@@ -1443,7 +1519,8 @@ namespace ICSharpCode.Decompiler
 		public bool StaticLocalFunctions {
 			get { return staticLocalFunctions; }
 			set {
-				if (staticLocalFunctions != value) {
+				if (staticLocalFunctions != value)
+				{
 					staticLocalFunctions = value;
 					OnPropertyChanged();
 				}
@@ -1460,7 +1537,8 @@ namespace ICSharpCode.Decompiler
 		public bool Ranges {
 			get { return ranges; }
 			set {
-				if (ranges != value) {
+				if (ranges != value)
+				{
 					ranges = value;
 					OnPropertyChanged();
 				}
@@ -1473,11 +1551,12 @@ namespace ICSharpCode.Decompiler
 		/// Gets/Sets whether C# 8.0 nullable reference types are enabled.
 		/// </summary>
 		[Category("C# 8.0 / VS 2019")]
-		[Description("Nullable reference types")]
+		[Description("DecompilerSettings.NullableReferenceTypes")]
 		public bool NullableReferenceTypes {
 			get { return nullableReferenceTypes; }
 			set {
-				if (nullableReferenceTypes != value) {
+				if (nullableReferenceTypes != value)
+				{
 					nullableReferenceTypes = value;
 					OnPropertyChanged();
 				}
@@ -1486,13 +1565,14 @@ namespace ICSharpCode.Decompiler
 
 		bool showDebugInfo;
 
-		[Category("Other")]
-		[Description("Show info from debug symbols, if available")]
+		[Category("DecompilerSettings.Other")]
+		[Description("DecompilerSettings.ShowInfoFromDebugSymbolsIfAvailable")]
 		[Browsable(false)]
 		public bool ShowDebugInfo {
 			get { return showDebugInfo; }
 			set {
-				if (showDebugInfo != value) {
+				if (showDebugInfo != value)
+				{
 					showDebugInfo = value;
 					OnPropertyChanged();
 				}
@@ -1503,14 +1583,16 @@ namespace ICSharpCode.Decompiler
 		bool assumeArrayLengthFitsIntoInt32 = true;
 
 		/// <summary>
-		/// Gets/Sets whether the decompiler can assume that 'ldlen; conv.i4.ovf' does not throw an overflow exception.
+		/// Gets/Sets whether the decompiler can assume that 'ldlen; conv.i4.ovf'
+		/// does not throw an overflow exception.
 		/// </summary>
-		[Category("VB-specific options")]
+		[Category("DecompilerSettings.VBSpecificOptions")]
 		[Browsable(false)]
 		public bool AssumeArrayLengthFitsIntoInt32 {
 			get { return assumeArrayLengthFitsIntoInt32; }
 			set {
-				if (assumeArrayLengthFitsIntoInt32 != value) {
+				if (assumeArrayLengthFitsIntoInt32 != value)
+				{
 					assumeArrayLengthFitsIntoInt32 = value;
 					OnPropertyChanged();
 				}
@@ -1522,12 +1604,13 @@ namespace ICSharpCode.Decompiler
 		/// <summary>
 		/// Gets/Sets whether to use increment and decrement operators
 		/// </summary>
-		[Category("VB-specific options")]
+		[Category("DecompilerSettings.VBSpecificOptions")]
 		[Browsable(false)]
 		public bool IntroduceIncrementAndDecrement {
 			get { return introduceIncrementAndDecrement; }
 			set {
-				if (introduceIncrementAndDecrement != value) {
+				if (introduceIncrementAndDecrement != value)
+				{
 					introduceIncrementAndDecrement = value;
 					OnPropertyChanged();
 				}
@@ -1539,12 +1622,13 @@ namespace ICSharpCode.Decompiler
 		/// <summary>
 		/// Gets/Sets whether to use assignment expressions such as in while ((count = Do()) != 0) ;
 		/// </summary>
-		[Category("VB-specific options")]
+		[Category("DecompilerSettings.VBSpecificOptions")]
 		[Browsable(false)]
 		public bool MakeAssignmentExpressions {
 			get { return makeAssignmentExpressions; }
 			set {
-				if (makeAssignmentExpressions != value) {
+				if (makeAssignmentExpressions != value)
+				{
 					makeAssignmentExpressions = value;
 					OnPropertyChanged();
 				}
@@ -1556,12 +1640,13 @@ namespace ICSharpCode.Decompiler
 		#region Options to aid F# decompilation
 		bool removeDeadCode = false;
 
-		[Category("F#-specific options")]
-		[Description("Remove dead and side effect free code (use with caution!)")]
+		[Category("DecompilerSettings.FSpecificOptions")]
+		[Description("DecompilerSettings.RemoveDeadAndSideEffectFreeCodeUseWithCaution")]
 		public bool RemoveDeadCode {
 			get { return removeDeadCode; }
 			set {
-				if (removeDeadCode != value) {
+				if (removeDeadCode != value)
+				{
 					removeDeadCode = value;
 					OnPropertyChanged();
 				}
@@ -1575,7 +1660,8 @@ namespace ICSharpCode.Decompiler
 		public bool RemoveDeadStores {
 			get { return removeDeadStores; }
 			set {
-				if (removeDeadStores != value) {
+				if (removeDeadStores != value)
+				{
 					removeDeadStores = value;
 					OnPropertyChanged();
 				}
@@ -1591,7 +1677,8 @@ namespace ICSharpCode.Decompiler
 		public bool LoadInMemory {
 			get { return loadInMemory; }
 			set {
-				if (loadInMemory != value) {
+				if (loadInMemory != value)
+				{
 					loadInMemory = value;
 					OnPropertyChanged();
 				}
@@ -1604,7 +1691,8 @@ namespace ICSharpCode.Decompiler
 		public bool ThrowOnAssemblyResolveErrors {
 			get { return throwOnAssemblyResolveErrors; }
 			set {
-				if (throwOnAssemblyResolveErrors != value) {
+				if (throwOnAssemblyResolveErrors != value)
+				{
 					throwOnAssemblyResolveErrors = value;
 					OnPropertyChanged();
 				}
@@ -1613,12 +1701,13 @@ namespace ICSharpCode.Decompiler
 
 		bool applyWindowsRuntimeProjections = true;
 
-		[Category("Other")]
-		[Description("Apply Windows Runtime projections on loaded assemblies")]
+		[Category("DecompilerSettings.Other")]
+		[Description("DecompilerSettings.ApplyWindowsRuntimeProjectionsOnLoadedAssemblies")]
 		public bool ApplyWindowsRuntimeProjections {
 			get { return applyWindowsRuntimeProjections; }
 			set {
-				if (applyWindowsRuntimeProjections != value) {
+				if (applyWindowsRuntimeProjections != value)
+				{
 					applyWindowsRuntimeProjections = value;
 					OnPropertyChanged();
 				}
@@ -1637,7 +1726,8 @@ namespace ICSharpCode.Decompiler
 		public bool ForStatement {
 			get { return forStatement; }
 			set {
-				if (forStatement != value) {
+				if (forStatement != value)
+				{
 					forStatement = value;
 					OnPropertyChanged();
 				}
@@ -1654,7 +1744,8 @@ namespace ICSharpCode.Decompiler
 		public bool DoWhileStatement {
 			get { return doWhileStatement; }
 			set {
-				if (doWhileStatement != value) {
+				if (doWhileStatement != value)
+				{
 					doWhileStatement = value;
 					OnPropertyChanged();
 				}
@@ -1664,15 +1755,55 @@ namespace ICSharpCode.Decompiler
 		bool separateLocalVariableDeclarations = false;
 
 		/// <summary>
-		/// Gets/sets whether the decompiler should separate local variable declarations from their initialization.
+		/// Gets/sets whether the decompiler should separate local variable declarations
+		/// from their initialization.
 		/// </summary>
 		[Category("DecompilerSettings.Other")]
 		[Description("DecompilerSettings.SeparateLocalVariableDeclarations")]
 		public bool SeparateLocalVariableDeclarations {
 			get { return separateLocalVariableDeclarations; }
 			set {
-				if (separateLocalVariableDeclarations != value) {
+				if (separateLocalVariableDeclarations != value)
+				{
 					separateLocalVariableDeclarations = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool useSdkStyleProjectFormat = true;
+
+		/// <summary>
+		/// Gets or sets a value indicating whether the new SDK style format
+		/// shall be used for the generated project files.
+		/// </summary>
+		[Category("DecompilerSettings.ProjectExport")]
+		[Description("DecompilerSettings.UseSdkStyleProjectFormat")]
+		public bool UseSdkStyleProjectFormat {
+			get { return useSdkStyleProjectFormat; }
+			set {
+				if (useSdkStyleProjectFormat != value)
+				{
+					useSdkStyleProjectFormat = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool useNestedDirectoriesForNamespaces;
+
+		/// <summary>
+		/// Gets/sets whether namespaces and namespace-like identifiers should be split at '.'
+		/// and each part should produce a new level of nesting in the output directory structure. 
+		/// </summary>
+		[Category("DecompilerSettings.ProjectExport")]
+		[Description("DecompilerSettings.UseNestedDirectoriesForNamespaces")]
+		public bool UseNestedDirectoriesForNamespaces {
+			get { return useNestedDirectoriesForNamespaces; }
+			set {
+				if (useNestedDirectoriesForNamespaces != value)
+				{
+					useNestedDirectoriesForNamespaces = value;
 					OnPropertyChanged();
 				}
 			}
@@ -1689,7 +1820,8 @@ namespace ICSharpCode.Decompiler
 		public bool AggressiveScalarReplacementOfAggregates {
 			get { return aggressiveScalarReplacementOfAggregates; }
 			set {
-				if (aggressiveScalarReplacementOfAggregates != value) {
+				if (aggressiveScalarReplacementOfAggregates != value)
+				{
 					aggressiveScalarReplacementOfAggregates = value;
 					OnPropertyChanged();
 				}
@@ -1708,7 +1840,8 @@ namespace ICSharpCode.Decompiler
 		public bool AggressiveInlining {
 			get { return aggressiveInlining; }
 			set {
-				if (aggressiveInlining != value) {
+				if (aggressiveInlining != value)
+				{
 					aggressiveInlining = value;
 					OnPropertyChanged();
 				}
@@ -1720,17 +1853,20 @@ namespace ICSharpCode.Decompiler
 		[Browsable(false)]
 		public CSharpFormattingOptions CSharpFormattingOptions {
 			get {
-				if (csharpFormattingOptions == null) {
+				if (csharpFormattingOptions == null)
+				{
 					csharpFormattingOptions = FormattingOptionsFactory.CreateAllman();
 					csharpFormattingOptions.IndentSwitchBody = false;
-					csharpFormattingOptions.ArrayInitializerWrapping = Wrapping.WrapAlways;
+					csharpFormattingOptions.ArrayInitializerWrapping = Wrapping.WrapIfTooLong;
+					csharpFormattingOptions.AutoPropertyFormatting = PropertyFormatting.SingleLine;
 				}
 				return csharpFormattingOptions;
 			}
 			set {
 				if (value == null)
 					throw new ArgumentNullException();
-				if (csharpFormattingOptions != value) {
+				if (csharpFormattingOptions != value)
+				{
 					csharpFormattingOptions = value;
 					OnPropertyChanged();
 				}
@@ -1741,7 +1877,8 @@ namespace ICSharpCode.Decompiler
 
 		protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
 		{
-			if (PropertyChanged != null) {
+			if (PropertyChanged != null)
+			{
 				PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
 			}
 		}

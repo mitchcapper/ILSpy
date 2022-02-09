@@ -1,20 +1,22 @@
 ﻿// Copyright (c) 2021 Daniel Grunwald, Siegfried Pammer
-//
+// 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
 // without restriction, including without limitation the rights to use, copy, modify, merge,
 // publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
 // to whom the Software is furnished to do so, subject to the following conditions:
-//
+// 
 // The above copyright notice and this permission notice shall be included in all copies or
 // substantial portions of the Software.
-//
+// 
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
 // INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
 // PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
 // FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
+
+#nullable enable
 
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
@@ -26,12 +28,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	///     stloc s(ldc.i4 1)
 	///     br IL_0019
 	/// }
-	///
+	/// 
 	/// Block IL_0019 (incoming: > 1) {
 	///     if (logic.not(ldloc s)) br IL_0027
 	///     br IL_001d
 	/// }
-	///
+	/// 
 	/// replace br IL_0019 with br IL_0027
 	/// </summary>
 	class RemoveInfeasiblePathTransform : IILTransform
@@ -70,7 +72,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		//  stloc s(ldc.i4 1)
 		//  br IL_0019
 		// }
-		private bool MatchBlock1(Block block, out ILVariable variable, out int constantValue, out Branch branch)
+		private bool MatchBlock1(Block block, [NotNullWhen(true)] out ILVariable? variable, out int constantValue, [NotNullWhen(true)] out Branch? branch)
 		{
 			variable = null;
 			constantValue = 0;
@@ -97,7 +99,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		//     if (logic.not(ldloc s)) br IL_0027
 		//     br IL_001d
 		// }
-		bool MatchBlock2(Block block, ILVariable s, int constantValue, out ILInstruction exitInst)
+		bool MatchBlock2(Block block, ILVariable s, int constantValue, [NotNullWhen(true)] out ILInstruction? exitInst)
 		{
 			exitInst = null;
 			if (block.Instructions.Count != 2)

@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+
 using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.TypeSystem;
@@ -43,22 +44,27 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			var usingScope = new UsingScope();
 			rootNode.AddAnnotation(usingScope);
 
-			if (context.Settings.UsingDeclarations) {
+			if (context.Settings.UsingDeclarations)
+			{
 				var insertionPoint = rootNode.Children.LastOrDefault(n => n is PreProcessorDirective p && p.Type == PreProcessorDirectiveType.Define);
 
 				// Now add using declarations for those namespaces:
-				foreach (string ns in requiredImports.ImportedNamespaces.OrderByDescending(n => n)) {
+				IOrderedEnumerable<string> sortedImports = requiredImports.ImportedNamespaces
+					.OrderBy(n => n.StartsWith("System", StringComparison.Ordinal))
+					.ThenByDescending(n => n);
+				foreach (string ns in sortedImports)
+				{
 					Debug.Assert(context.RequiredNamespacesSuperset.Contains(ns), $"Should not insert using declaration for namespace that is missing from the superset: {ns}");
 					// we go backwards (OrderByDescending) through the list of namespaces because we insert them backwards
 					// (always inserting at the start of the list)
 					string[] parts = ns.Split('.');
 					AstType nsType = new SimpleType(parts[0]);
-					for (int i = 1; i < parts.Length; i++) {
+					for (int i = 1; i < parts.Length; i++)
+					{
 						nsType = new MemberType { Target = nsType, MemberName = parts[i] };
 					}
 					if (nsType.ToTypeReference(NameLookupMode.TypeInUsingDeclaration) is TypeOrNamespaceReference reference)
 						usingScope.Usings.Add(reference);
-
 					rootNode.InsertChildAfter(insertionPoint, new UsingDeclaration { Import = nsType }, SyntaxTree.MemberRole);
 				}
 			}
@@ -83,7 +89,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			{
 				if (ns.Length == 0)
 					return true;
-				if (currentNamespace.StartsWith(ns, StringComparison.Ordinal)) {
+				if (currentNamespace.StartsWith(ns, StringComparison.Ordinal))
+				{
 					if (currentNamespace.Length == ns.Length)
 						return true;
 					if (currentNamespace[ns.Length] == '.')
@@ -95,7 +102,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			public override void VisitSimpleType(SimpleType simpleType)
 			{
 				var trr = simpleType.Annotation<TypeResolveResult>();
-				if (trr != null && !IsParentOfCurrentNamespace(trr.Type.Namespace)) {
+				if (trr != null && !IsParentOfCurrentNamespace(trr.Type.Namespace))
+				{
 					ImportedNamespaces.Add(trr.Type.Namespace);
 				}
 				base.VisitSimpleType(simpleType); // also visit type arguments
@@ -104,7 +112,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			public override void VisitNamespaceDeclaration(NamespaceDeclaration namespaceDeclaration)
 			{
 				string oldNamespace = currentNamespace;
-				foreach (string ident in namespaceDeclaration.Identifiers) {
+				foreach (string ident in namespaceDeclaration.Identifiers)
+				{
 					currentNamespace = NamespaceDeclaration.BuildQualifiedName(currentNamespace, ident);
 					DeclaredNamespaces.Add(currentNamespace);
 				}
@@ -127,12 +136,17 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				this.settings = context.Settings;
 
 				CSharpTypeResolveContext currentContext;
-				if (ignoreUsingScope) {
+				if (ignoreUsingScope)
+				{
 					currentContext = new CSharpTypeResolveContext(context.TypeSystem.MainModule);
-				} else {
+				}
+				else
+				{
 					this.context = new Stack<CSharpTypeResolveContext>();
-					if (!string.IsNullOrEmpty(context.CurrentTypeDefinition?.Namespace)) {
-						foreach (string ns in context.CurrentTypeDefinition.Namespace.Split('.')) {
+					if (!string.IsNullOrEmpty(context.CurrentTypeDefinition?.Namespace))
+					{
+						foreach (string ns in context.CurrentTypeDefinition.Namespace.Split('.'))
+						{
 							usingScope = new UsingScope(usingScope, ns);
 						}
 					}
@@ -163,21 +177,26 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 			public override void VisitNamespaceDeclaration(NamespaceDeclaration namespaceDeclaration)
 			{
-				if (ignoreUsingScope) {
+				if (ignoreUsingScope)
+				{
 					base.VisitNamespaceDeclaration(namespaceDeclaration);
 					return;
 				}
 				var previousContext = context.Peek();
 				var usingScope = previousContext.CurrentUsingScope.UnresolvedUsingScope;
-				foreach (string ident in namespaceDeclaration.Identifiers) {
+				foreach (string ident in namespaceDeclaration.Identifiers)
+				{
 					usingScope = new UsingScope(usingScope, ident);
 				}
 				var currentContext = new CSharpTypeResolveContext(previousContext.CurrentModule, usingScope.Resolve(previousContext.Compilation));
 				context.Push(currentContext);
-				try {
+				try
+				{
 					astBuilder = CreateAstBuilder(currentContext);
 					base.VisitNamespaceDeclaration(namespaceDeclaration);
-				} finally {
+				}
+				finally
+				{
 					astBuilder = CreateAstBuilder(previousContext);
 					context.Pop();
 				}
@@ -185,17 +204,21 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 			public override void VisitTypeDeclaration(TypeDeclaration typeDeclaration)
 			{
-				if (ignoreUsingScope) {
+				if (ignoreUsingScope)
+				{
 					base.VisitTypeDeclaration(typeDeclaration);
 					return;
 				}
 				var previousContext = context.Peek();
 				var currentContext = previousContext.WithCurrentTypeDefinition(typeDeclaration.GetSymbol() as ITypeDefinition);
 				context.Push(currentContext);
-				try {
+				try
+				{
 					astBuilder = CreateAstBuilder(currentContext);
 					base.VisitTypeDeclaration(typeDeclaration);
-				} finally {
+				}
+				finally
+				{
 					astBuilder = CreateAstBuilder(previousContext);
 					context.Pop();
 				}
@@ -228,28 +251,38 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 			void Visit<T>(T entityDeclaration, Action<T> baseCall) where T : EntityDeclaration
 			{
-				if (ignoreUsingScope) {
+				if (ignoreUsingScope)
+				{
 					baseCall(entityDeclaration);
 					return;
 				}
-				if (entityDeclaration.GetSymbol() is IMethod method) {
+				if (entityDeclaration.GetSymbol() is IMethod method)
+				{
 					var previousContext = context.Peek();
 					CSharpTypeResolveContext currentContext;
-					if (CSharpDecompiler.IsWindowsFormsInitializeComponentMethod(method)) {
+					if (CSharpDecompiler.IsWindowsFormsInitializeComponentMethod(method))
+					{
 						currentContext = new CSharpTypeResolveContext(previousContext.CurrentModule);
-					} else {
+					}
+					else
+					{
 						currentContext = previousContext.WithCurrentMember(method);
 					}
 					context.Push(currentContext);
-					try {
+					try
+					{
 						var function = entityDeclaration.Annotation<IL.ILFunction>();
 						astBuilder = CreateAstBuilder(currentContext, function);
 						baseCall(entityDeclaration);
-					} finally {
+					}
+					finally
+					{
 						astBuilder = CreateAstBuilder(previousContext);
 						context.Pop();
 					}
-				} else {
+				}
+				else
+				{
 					baseCall(entityDeclaration);
 				}
 			}
@@ -257,25 +290,31 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			public override void VisitSimpleType(SimpleType simpleType)
 			{
 				TypeResolveResult rr;
-				if ((rr = simpleType.Annotation<TypeResolveResult>()) == null) {
+				if ((rr = simpleType.Annotation<TypeResolveResult>()) == null)
+				{
 					base.VisitSimpleType(simpleType);
 					return;
 				}
 				astBuilder.NameLookupMode = simpleType.GetNameLookupMode();
-				if (astBuilder.NameLookupMode == NameLookupMode.Type) {
+				if (astBuilder.NameLookupMode == NameLookupMode.Type)
+				{
 					AstType outermostType = simpleType;
 					while (outermostType.Parent is AstType)
 						outermostType = (AstType)outermostType.Parent;
-					if (outermostType.Parent is TypeReferenceExpression) {
+					if (outermostType.Parent is TypeReferenceExpression)
+					{
 						// ILSpy uses TypeReferenceExpression in expression context even when the C# parser
 						// wouldn't know that it's a type reference.
 						// Fall back to expression-mode lookup in these cases:
 						astBuilder.NameLookupMode = NameLookupMode.Expression;
 					}
 				}
-				if (simpleType.Parent is Syntax.Attribute) {
+				if (simpleType.Parent is Syntax.Attribute)
+				{
 					simpleType.ReplaceWith(astBuilder.ConvertAttributeType(rr.Type));
-				} else {
+				}
+				else
+				{
 					simpleType.ReplaceWith(astBuilder.ConvertType(rr.Type));
 				}
 			}

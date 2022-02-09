@@ -1,5 +1,6 @@
-﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
-//
+﻿#nullable enable
+// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
+// 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
 // without restriction, including without limitation the rights to use, copy, modify, merge,
@@ -58,11 +59,11 @@ namespace ICSharpCode.Decompiler.Util
 		public KeyComparer(Func<TElement, TKey> keySelector, IComparer<TKey> keyComparer, IEqualityComparer<TKey> keyEqualityComparer)
 		{
 			if (keySelector == null)
-				throw new ArgumentNullException("keySelector");
+				throw new ArgumentNullException(nameof(keySelector));
 			if (keyComparer == null)
-				throw new ArgumentNullException("keyComparer");
+				throw new ArgumentNullException(nameof(keyComparer));
 			if (keyEqualityComparer == null)
-				throw new ArgumentNullException("keyEqualityComparer");
+				throw new ArgumentNullException(nameof(keyEqualityComparer));
 			this.keySelector = keySelector;
 			this.keyComparer = keyComparer;
 			this.keyEqualityComparer = keyEqualityComparer;
