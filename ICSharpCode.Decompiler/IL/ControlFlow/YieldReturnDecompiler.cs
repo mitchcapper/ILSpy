@@ -940,7 +940,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				foreach (var inst in body.Descendants)
 				{
 					if (IsStateAssignment(inst))
-						throw new SymbolicAnalysisFailedException($"Unknown state transition in {function.Name ?? "finally"} at IL_{inst.StartILOffset:x4}");
+						throw new SymbolicAnalysisFailedException($"Unknown state transition in {function.Name ?? "finally"} at IL_{inst.StartILOffset:X4}");
 				}
 				function.ReleaseRef(); // make body reusable outside of function
 				decompiledFinallyMethods.Add(method, (newState, function));

@@ -28,8 +28,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 {
 	public class FunctionPointerType : AbstractType
 	{
-		public override dnlib.DotNet.IType MetadataToken => null;
-
 		public static FunctionPointerType FromSignature(IType returnType, List<IType> paramTypes, dnlib.DotNet.CallingConvention callConv, MetadataModule module)
 		{
 			bool returnIsRefReadOnly = false;

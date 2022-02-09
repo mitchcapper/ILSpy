@@ -225,7 +225,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		void Warn(string message)
 		{
-			Warnings.Add(string.Format("IL_{0:x4}: {1}", currentInstructionStart, message));
+			Warnings.Add(string.Format("IL_{0:X4}: {1}", currentInstructionStart, message));
 		}
 
 		ImmutableStack<ILVariable> MergeStacks(ImmutableStack<ILVariable> a, ImmutableStack<ILVariable> b)
@@ -459,7 +459,7 @@ namespace ICSharpCode.Decompiler.IL
 			if (removedBlocks.Count > 0) {
 				removedBlocks.SortBy(b => b.StartILOffset);
 				function.Warnings.Add("Discarded unreachable code: "
-							+ string.Join(", ", removedBlocks.Select(b => $"IL_{b.StartILOffset:x4}")));
+							+ string.Join(", ", removedBlocks.Select(b => $"IL_{b.StartILOffset:X4}")));
 			}
 
 			this.SequencePointCandidates.Sort();
@@ -1114,7 +1114,7 @@ namespace ICSharpCode.Decompiler.IL
 			void Warn(string message)
 			{
 				if (warnings != null) {
-					warnings.Add(string.Format("IL_{0:x4}: {1}", ilOffset, message));
+					warnings.Add(string.Format("IL_{0:X4}: {1}", ilOffset, message));
 				}
 			}
 		}

@@ -581,8 +581,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				Debug.Assert(duplicatedBlockStartOffsets.Count > 0);
 				duplicatedBlockStartOffsets.Sort();
 				context.Function.Warnings.Add("The blocks "
-					+ string.Join(", ", duplicatedBlockStartOffsets.Select(o => $"IL_{o:x4}"))
-					+ $" are reachable both inside and outside the pinned region starting at IL_{stLoc.StartILOffset:x4}."
+					+ string.Join(", ", duplicatedBlockStartOffsets.Select(o => $"IL_{o:X4}"))
+					+ $" are reachable both inside and outside the pinned region starting at IL_{stLoc.StartILOffset:X4}."
 					+ " ILSpy has duplicated these blocks in order to place them both within and outside the `fixed` statement.");
 			}
 
@@ -624,6 +624,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					oldVar.Index);
 				newVar.Name = oldVar.Name;
 				newVar.HasGeneratedName = oldVar.HasGeneratedName;
+				newVar.OriginalVariable = oldVar.OriginalVariable;
 				oldVar.Function.Variables.Add(newVar);
 				ReplacePinnedVar(oldVar, newVar, pinnedRegion);
 				UseExistingVariableForPinnedRegion(pinnedRegion);
@@ -677,6 +678,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				oldVar.Index);
 			newVar.Name = oldVar.Name;
 			newVar.HasGeneratedName = oldVar.HasGeneratedName;
+			newVar.OriginalVariable = oldVar.OriginalVariable;
 			oldVar.Function.Variables.Add(newVar);
 			pinnedRegion.Variable = newVar;
 			pinnedRegion.Init = new GetPinnableReference(pinnedRegion.Init, arrayToPointer.Method).WithILRange(arrayToPointer);
@@ -745,6 +747,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					newVar = new ILVariable(VariableKind.PinnedRegionLocal, charPtr, pinnedRegion.Variable.Index);
 					newVar.Name = pinnedRegion.Variable.Name;
 					newVar.HasGeneratedName = pinnedRegion.Variable.HasGeneratedName;
+					newVar.OriginalVariable = pinnedRegion.Variable.OriginalVariable;
 					pinnedRegion.Variable.Function.Variables.Add(newVar);
 					pinnedRegion.Variable = newVar;
 					pinnedRegion.Init = new GetPinnableReference(pinnedRegion.Init, null);
@@ -797,6 +800,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				newVar = new ILVariable(VariableKind.PinnedRegionLocal, nativeVar.Type, nativeVar.Index);
 				newVar.Name = nativeVar.Name;
 				newVar.HasGeneratedName = nativeVar.HasGeneratedName;
+				newVar.OriginalVariable = nativeVar.OriginalVariable;
 				nativeVar.Function.Variables.Add(newVar);
 				ReplacePinnedVar(nativeVar, newVar, pinnedRegion);
 			} else {

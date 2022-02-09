@@ -405,7 +405,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				case '^':
 					// ASCII characters we allow directly in the output even though we don't use
 					// other Unicode characters of the same category.
-					return null;
+					return ch.ToString();
 				case '\ufffd':
 					return "\\u" + ((int)ch).ToString("x4");
 				default:
@@ -425,7 +425,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 						case UnicodeCategory.SpaceSeparator:
 							return "\\u" + ((int)ch).ToString("x4");
 						default:
-							return null;
+							return ch.ToString();
 					}
 			}
 		}
@@ -514,12 +514,82 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				if (ch == '"') {
 					sb.Append("\\\"");
 				} else {
-					sb.Append(ConvertChar(ch));
+					AppendChar(sb, ch);
 				}
 			}
 			if (truncated)
 				sb.Append(TRUNC_MSG);
 			return sb.ToString();
+		}
+
+		private static void AppendChar(StringBuilder sb, char ch)
+		{
+			switch (ch)
+			{
+				case '\\':
+					sb.Append("\\\\");
+					break;
+				case '\0':
+					sb.Append("\\0");
+					break;
+				case '\a':
+					sb.Append("\\a");
+					break;
+				case '\b':
+					sb.Append("\\b");
+					break;
+				case '\f':
+					sb.Append("\\f");
+					break;
+				case '\n':
+					sb.Append("\\n");
+					break;
+				case '\r':
+					sb.Append("\\r");
+					break;
+				case '\t':
+					sb.Append("\\t");
+					break;
+				case '\v':
+					sb.Append("\\v");
+					break;
+				case ' ':
+				case '_':
+				case '`':
+				case '^':
+					// ASCII characters we allow directly in the output even though we don't use
+					// other Unicode characters of the same category.
+					sb.Append(ch);
+					break;
+				case '\ufffd':
+					sb.Append("\\u");
+					sb.Append(((int)ch).ToString("x4"));
+					break;
+				default:
+					switch (char.GetUnicodeCategory(ch))
+					{
+						case UnicodeCategory.NonSpacingMark:
+						case UnicodeCategory.SpacingCombiningMark:
+						case UnicodeCategory.EnclosingMark:
+						case UnicodeCategory.LineSeparator:
+						case UnicodeCategory.ParagraphSeparator:
+						case UnicodeCategory.Control:
+						case UnicodeCategory.Format:
+						case UnicodeCategory.Surrogate:
+						case UnicodeCategory.PrivateUse:
+						case UnicodeCategory.ConnectorPunctuation:
+						case UnicodeCategory.ModifierSymbol:
+						case UnicodeCategory.OtherNotAssigned:
+						case UnicodeCategory.SpaceSeparator:
+							sb.Append("\\u");
+							sb.Append(((int)ch).ToString("x4"));
+							break;
+						default:
+							sb.Append(ch);
+							break;
+					}
+					break;
+			}
 		}
 
 		public static string EscapeIdentifier(string identifier)

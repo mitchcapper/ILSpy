@@ -1,14 +1,14 @@
 ﻿// Copyright (c) 2018 Siegfried Pammer
-// 
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
 // without restriction, including without limitation the rights to use, copy, modify, merge,
 // publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
 // to whom the Software is furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in all copies or
 // substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
 // INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
 // PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
@@ -41,20 +41,20 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				// 			stloc objectVariable(ldloc exceptionVariable)
 				// 			br finallyBlock
 				// 		}
-				// 
+				//
 				// 	}
 				// }
-				// 
+				//
 				// Block finallyBlock (incoming: 2) {
 				// 	if (comp.o(ldloc b == ldnull)) br afterFinallyBlock
 				// 	br finallyBlockContinuation
 				// }
-				// 
+				//
 				// Block finallyBlockContinuation (incoming: 1) {
 				// 	await(addressof System.Threading.Tasks.ValueTask(callvirt DisposeAsync(ldloc b)))
 				// 	br afterFinallyBlock
 				// }
-				// 
+				//
 				// Block afterFinallyBlock (incoming: 2) {
 				// 	stloc V_1(ldloc objectVariable)
 				// 	if (comp.o(ldloc V_1 == ldnull)) br IL_00ea
@@ -182,7 +182,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						continue;
 					}
 					var targetContainer = BlockContainer.FindClosestContainer(statement);
-					context.Step($"Move block with id={value} {targetBlock.Label} to IL_{store.StartILOffset}", statement);
+					context.Step($"Move block with id={value} {targetBlock.Label} to IL_{store.StartILOffset:X4}", statement);
 					parent.Instructions.RemoveAt(statement.ChildIndex + 1);
 					store.ReplaceWith(new Branch(targetBlock));
 
@@ -278,7 +278,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 			void MoveBlock(Block block, BlockContainer target)
 			{
-				context.Step($"Move {block.Label} to container at IL_{target.StartILOffset:x4}", target);
+				context.Step($"Move {block.Label} to container at IL_{target.StartILOffset:X4}", target);
 				block.Remove();
 				target.Blocks.Add(block);
 			}

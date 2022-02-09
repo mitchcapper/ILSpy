@@ -352,7 +352,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 			//assert then block terminates
 			var exitInst = GetExit(block);
-			context.Step($"InvertIf at IL_{ifInst.StartILOffset:x4}", ifInst);
+			context.Step($"InvertIf at IL_{ifInst.StartILOffset:X4}", ifInst);
 
 			//if the then block terminates, else blocks are redundant, and should not exist
 			Debug.Assert(IsEmpty(ifInst.FalseInst));

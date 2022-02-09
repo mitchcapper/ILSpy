@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using dnlib.DotNet;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
 
@@ -28,8 +29,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	/// </summary>
 	public sealed class ArrayType : TypeWithElementType, ICompilationProvider
 	{
-		public override dnlib.DotNet.IType MetadataToken => null;
-		
 		readonly int dimensions;
 		readonly ICompilation compilation;
 		readonly Nullability nullability;
@@ -47,6 +46,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			ICompilationProvider p = elementType as ICompilationProvider;
 			if (p != null && p.Compilation != compilation)
 				throw new InvalidOperationException("Cannot create an array type using a different compilation from the element type.");
+
+			var ts = elementType.MetadataToken.GetTypeSig();
+			MetadataToken = ts is null ? null : dimensions == 1 ? new SZArraySig(ts) : new ArraySig(ts, dimensions);
 		}
 
 		public override TypeKind Kind {

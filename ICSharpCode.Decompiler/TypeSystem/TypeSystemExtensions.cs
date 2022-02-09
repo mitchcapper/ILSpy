@@ -222,7 +222,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// * any enum type
 		/// * any pointer type
 		/// * any user-defined struct type that is not a constructed (= generic) type and contains fields of unmanaged types only.
-		/// 
+		///
 		/// C# 8.0 removes the restriction that constructed (= generic) types are not considered unmanaged types.
 		/// </remarks>
 		public static bool IsUnmanagedType(this IType type, bool allowGenerics)
@@ -633,7 +633,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return td;
 			}
 
-			return new ParameterizedType(td.MetadataToken, td, td.TypeArguments);
+			return new ParameterizedType(td, td.TypeArguments);
 		}
 	}
 }

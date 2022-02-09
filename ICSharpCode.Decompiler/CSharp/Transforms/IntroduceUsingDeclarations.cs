@@ -20,6 +20,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Text;
+using dnlib.DotNet;
 using dnSpy.Contracts.Decompiler;
 using dnSpy.Contracts.Text;
 using ICSharpCode.Decompiler.CSharp.Resolver;
@@ -28,6 +30,7 @@ using ICSharpCode.Decompiler.CSharp.TypeSystem;
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
+using IMethod = ICSharpCode.Decompiler.TypeSystem.IMethod;
 
 namespace ICSharpCode.Decompiler.CSharp.Transforms
 {
@@ -36,6 +39,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	/// </summary>
 	public class IntroduceUsingDeclarations : IAstTransform
 	{
+		static readonly char[] namespaceSep = new char[] { '.' };
+
 		public void Run(AstNode rootNode, TransformContext context)
 		{
 			// First determine all the namespaces that need to be imported:
@@ -46,19 +51,32 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			rootNode.AddAnnotation(usingScope);
 
 			if (context.Settings.UsingDeclarations) {
+				var stringBuilder = context.TypeSystem.SharedStringBuilder;
+
 				var insertionPoint = rootNode.Children.LastOrDefault(n => n is PreProcessorDirective p && p.Type == PreProcessorDirectiveType.Define);
 
 				// Now add using declarations for those namespaces:
-				foreach (string ns in requiredImports.ImportedNamespaces.OrderByDescending(n => n)) {
-					Debug.Assert(context.RequiredNamespacesSuperset.Contains(ns), $"Should not insert using declaration for namespace that is missing from the superset: {ns}");
+				foreach (NamespaceRef ns in requiredImports.ImportedNamespaces.OrderByDescending(n => n.Namespace)) {
+					Debug.Assert(context.RequiredNamespacesSuperset.Contains(ns.Namespace), $"Should not insert using declaration for namespace that is missing from the superset: {ns}");
 					// we go backwards (OrderByDescending) through the list of namespaces because we insert them backwards
 					// (always inserting at the start of the list)
-					string[] parts = ns.Split('.');
+
+					string[] parts = ns.Namespace.Split(namespaceSep);
+					stringBuilder.Clear();
+					stringBuilder.Append(parts[0]);
+					var nsAsm = ns.Assembly;
 					SimpleType simpleType;
 					AstType nsType = simpleType = new SimpleType(parts[0]).WithAnnotation(BoxedTextColor.Namespace);
-					simpleType.IdentifierToken.WithAnnotation(BoxedTextColor.Namespace);
+					simpleType.IdentifierToken.WithAnnotation(BoxedTextColor.Namespace).WithAnnotation(new NamespaceReference(nsAsm, parts[0]));
 					for (int i = 1; i < parts.Length; i++) {
-						nsType = new MemberType { Target = nsType, MemberNameToken = Identifier.Create(parts[i]).WithAnnotation(BoxedTextColor.Namespace) }.WithAnnotation(BoxedTextColor.Namespace);
+						stringBuilder.Append('.');
+						stringBuilder.Append(parts[i]);
+						var nsPart = stringBuilder.ToString();
+						nsType = new MemberType {
+							Target = nsType,
+							MemberNameToken = Identifier.Create(parts[i]).WithAnnotation(BoxedTextColor.Namespace)
+														.WithAnnotation(new NamespaceReference(nsAsm, nsPart))
+						}.WithAnnotation(BoxedTextColor.Namespace);
 					}
 					if (nsType.ToTypeReference(NameLookupMode.TypeInUsingDeclaration) is TypeOrNamespaceReference reference)
 						usingScope.Usings.Add(reference);
@@ -74,23 +92,25 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		sealed class FindRequiredImports : DepthFirstAstVisitor
 		{
 			string currentNamespace;
+			private StringBuilder stringBuilder;
 
 			public readonly HashSet<string> DeclaredNamespaces = new HashSet<string>() { string.Empty };
-			public readonly HashSet<string> ImportedNamespaces = new HashSet<string>();
+			public readonly HashSet<NamespaceRef> ImportedNamespaces = new HashSet<NamespaceRef>();
 
 			public FindRequiredImports(TransformContext context)
 			{
+				this.stringBuilder = context.TypeSystem.SharedStringBuilder;
 				this.currentNamespace = context.CurrentTypeDefinition?.Namespace ?? string.Empty;
 			}
 
-			bool IsParentOfCurrentNamespace(string ns)
+			bool IsParentOfCurrentNamespace(StringBuilder sb)
 			{
-				if (ns.Length == 0)
+				if (sb.Length == 0)
 					return true;
-				if (currentNamespace.StartsWith(ns, StringComparison.Ordinal)) {
-					if (currentNamespace.Length == ns.Length)
+				if (currentNamespace.StartsWith(sb)) {
+					if (currentNamespace.Length == sb.Length)
 						return true;
-					if (currentNamespace[ns.Length] == '.')
+					if (currentNamespace[sb.Length] == '.')
 						return true;
 				}
 				return false;
@@ -98,11 +118,23 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 			public override void VisitSimpleType(SimpleType simpleType)
 			{
-				var trr = simpleType.Annotation<TypeResolveResult>();
-				if (trr != null && !IsParentOfCurrentNamespace(trr.Type.Namespace)) {
-					ImportedNamespaces.Add(trr.Type.Namespace);
+				ITypeDefOrRef tr = simpleType.Annotation<ITypeDefOrRef>();
+				if (tr != null) {
+					var sb = GetNamespace(tr);
+					if (!IsParentOfCurrentNamespace(sb)) {
+						string ns = sb.ToString();
+						ImportedNamespaces.Add(new NamespaceRef(tr.DefinitionAssembly, ns));
+					}
 				}
 				base.VisitSimpleType(simpleType); // also visit type arguments
+			}
+
+			StringBuilder GetNamespace(dnlib.DotNet.IType type)
+			{
+				this.stringBuilder.Clear();
+				if (type == null)
+					return this.stringBuilder;
+				return FullNameFactory.NamespaceSB(type, false, this.stringBuilder);
 			}
 
 			public override void VisitNamespaceDeclaration(NamespaceDeclaration namespaceDeclaration)
@@ -283,6 +315,18 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					simpleType.ReplaceWith(astBuilder.ConvertType(rr.Type));
 				}
 			}
+		}
+
+		struct NamespaceRef : IEquatable<NamespaceRef> {
+			public IAssembly Assembly { get; }
+			public string Namespace { get; }
+			public NamespaceRef(IAssembly asm, string ns) {
+				Assembly = asm;
+				Namespace = ns;
+			}
+			public bool Equals(NamespaceRef other) => StringComparer.Ordinal.Equals(other.Namespace, Namespace);
+			public override bool Equals(object obj) => obj is NamespaceRef && Equals((NamespaceRef)obj);
+			public override int GetHashCode() => StringComparer.Ordinal.GetHashCode(Namespace);
 		}
 	}
 }

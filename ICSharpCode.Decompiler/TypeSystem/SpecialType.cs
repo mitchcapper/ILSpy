@@ -79,8 +79,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			this.isReferenceType = isReferenceType;
 		}
 
-		public override dnlib.DotNet.IType MetadataToken => null;
-
 		public override string Name {
 			get { return name; }
 		}

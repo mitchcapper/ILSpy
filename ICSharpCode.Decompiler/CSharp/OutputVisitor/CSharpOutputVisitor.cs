@@ -3148,7 +3148,9 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		public virtual void VisitSimpleType(SimpleType simpleType)
 		{
 			StartNode(simpleType);
-			WriteIdentifier(simpleType.IdentifierToken, CSharpMetadataTextColorProvider.Instance.GetColor(simpleType.IdentifierToken.Annotation<object>() ?? simpleType.Annotation<object>()));
+			if (simpleType.Identifier.Length != 0 || !SimpleType.DummyTypeGenericParam.Equals(simpleType.Annotation<string>(), StringComparison.Ordinal)) {
+				WriteIdentifier(simpleType.IdentifierToken, CSharpMetadataTextColorProvider.Instance.GetColor(simpleType.IdentifierToken.Annotation<object>() ?? simpleType.Annotation<object>()));
+			}
 			WriteTypeArguments(simpleType.TypeArguments, CodeBracesRangeFlags.AngleBrackets);
 			EndNode(simpleType);
 		}

@@ -17,39 +17,47 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				case CorLibTypeSig corLibTypeSig:
 					return module.Compilation.FindType(corLibTypeSig.ElementType.ToKnownTypeCode());
 				case GenericMVar mVar:
+					// TODO: store OriginalMember
 					return context.GetMethodTypeParameter((int)mVar.Number);
 				case GenericVar tVar:
+					// TODO: store OriginalMember
 					return context.GetClassTypeParameter((int)tVar.Number);
 				case FnPtrSig fnPtr: {
 					// pointers to member functions are not supported even in C# 9
 					if (!fnPtr.Signature.HasThis && fnPtr.Signature is MethodBaseSig mSig) {
 						var retType = mSig.RetType.DecodeSignature(module, context);
 						var paramTypes = mSig.Params.Select(t => t.DecodeSignature(module, context)).ToList();
-						return FunctionPointerType.FromSignature(retType, paramTypes, mSig.CallingConvention, module);
+						var tsFnPtr = FunctionPointerType.FromSignature(retType, paramTypes, mSig.CallingConvention, module);
+						tsFnPtr.MetadataToken = tsFnPtr.OriginalMember = fnPtr;
+						return tsFnPtr;
 					}
 
 					return module.Compilation.FindType(KnownTypeCode.IntPtr);
 				}
 				case GenericInstSig instSig:
-					return new ParameterizedType(instSig, instSig.GenericType.DecodeSignature(module, context),
-						instSig.GenericArguments.Select(x => x.DecodeSignature(module, context))) { OriginalMember = instSig };
+					return new ParameterizedType(instSig.GenericType.DecodeSignature(module, context),
+							instSig.GenericArguments.Select(x => x.DecodeSignature(module, context)))
+						{ OriginalMember = instSig, MetadataToken = instSig };
 				case ByRefSig byRefSig:
-					return new ByReferenceType(byRefSig, byRefSig.Next.DecodeSignature(module, context))
-						{ OriginalMember = byRefSig };
+					return new ByReferenceType(byRefSig.Next.DecodeSignature(module, context))
+						{ OriginalMember = byRefSig, MetadataToken = byRefSig };
 				case PinnedSig pinnedSig:
-					return new PinnedType(pinnedSig, pinnedSig.Next.DecodeSignature(module, context))
-						{ OriginalMember = pinnedSig };
+					return new PinnedType(pinnedSig.Next.DecodeSignature(module, context))
+						{ OriginalMember = pinnedSig, MetadataToken = pinnedSig };
 				case CModOptSig cModOptSig:
-					return new ModifiedType(cModOptSig, cModOptSig.Modifier.DecodeSignature(module, context),
-						cModOptSig.Next.DecodeSignature(module, context), false) { OriginalMember = cModOptSig };
+					return new ModifiedType(cModOptSig.Modifier.DecodeSignature(module, context),
+							cModOptSig.Next.DecodeSignature(module, context), false)
+						{ OriginalMember = cModOptSig, MetadataToken = cModOptSig };
 				case CModReqdSig cModReqdSig:
-					return new ModifiedType(cModReqdSig, cModReqdSig.Modifier.DecodeSignature(module, context),
-						cModReqdSig.Next.DecodeSignature(module, context), true) { OriginalMember = cModReqdSig };
+					return new ModifiedType(cModReqdSig.Modifier.DecodeSignature(module, context),
+							cModReqdSig.Next.DecodeSignature(module, context), true)
+						{ OriginalMember = cModReqdSig, MetadataToken = cModReqdSig };
 				case PtrSig ptrSig:
-					return new PointerType(ptrSig, ptrSig.Next.DecodeSignature(module, context)) { OriginalMember = ptrSig };
+					return new PointerType(ptrSig.Next.DecodeSignature(module, context))
+						{ OriginalMember = ptrSig, MetadataToken = ptrSig };
 				case ArraySigBase arraySigBase:
 					return new ArrayType(module.Compilation, arraySigBase.Next.DecodeSignature(module, context),
-						(int)arraySigBase.Rank) { OriginalMember = arraySigBase };
+						(int)arraySigBase.Rank) { OriginalMember = arraySigBase, MetadataToken = arraySigBase };
 				case ClassOrValueTypeSig classOrValueTypeSig:
 					ThreeState isVT = ThreeState.Unknown;
 					if (classOrValueTypeSig is ClassSig)
@@ -84,7 +92,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					if (module.typeRefDict.TryGetValue(typeRef, out var tsType))
 						return tsType;
 
-					Console.WriteLine("Resolving TypeRef: {0}", typeRef);
 					var resolved = typeRef.Resolve();
 					if (resolved != null && module.Compilation.GetOrAddModule(resolved.Module) is MetadataModule mod) {
 						var mdType = mod.GetDefinitionInternal(resolved);
@@ -92,7 +99,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 						tsType = mdType;
 					}
 					else {
-						Console.WriteLine("Failed");
+						Console.WriteLine("Failed to resolve TypeRef: {0}", typeRef);
 						bool? isReferenceType;
 						if (isVT != ThreeState.Unknown)
 							isReferenceType = isVT == ThreeState.False;

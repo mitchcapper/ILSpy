@@ -93,7 +93,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				this.Kind = TypeKind.Interface;
 			} else if (handle.IsEnum) {
 				this.Kind = TypeKind.Enum;
-				this.EnumUnderlyingType = module.Compilation.FindType(handle.GetEnumUnderlyingType().ElementType.ToKnownTypeCode());
+				this.EnumUnderlyingType = handle.GetEnumUnderlyingType().DecodeSignature(module, new GenericContext());
 			} else if (handle.IsValueType) {
 				if (KnownTypeCode == KnownTypeCode.Void) {
 					this.Kind = TypeKind.Void;

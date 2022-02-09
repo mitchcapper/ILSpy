@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using dnlib.DotNet;
+
 namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
 	public sealed class PinnedType : TypeWithElementType
@@ -23,11 +25,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public PinnedType(IType elementType)
 			: base(elementType)
 		{
-		}
-
-		public PinnedType(dnlib.DotNet.IType dnlibType, IType elementType)
-			: base(dnlibType, elementType)
-		{
+			var ts = elementType.MetadataToken.GetTypeSig();
+			MetadataToken = ts is null ? null : new PinnedSig(ts);
 		}
 
 		public override string NameSuffix => " pinned";

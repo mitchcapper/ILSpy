@@ -251,6 +251,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					v.InitialValueIsInitialized = inst.Variable.InitialValueIsInitialized;
 					v.UsesInitialValue = false; // we'll set UsesInitialValue when we encounter an uninit load
 					v.RemoveIfRedundant = inst.Variable.RemoveIfRedundant;
+					v.OriginalVariable = inst.Variable.OriginalVariable;
+					v.OriginalParameter = inst.Variable.OriginalParameter;
 					newVariables.Add(representative, v);
 					inst.Variable.Function.Variables.Add(v);
 				}

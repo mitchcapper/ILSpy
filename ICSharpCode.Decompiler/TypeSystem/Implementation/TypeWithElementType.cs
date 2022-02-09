@@ -23,22 +23,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	public abstract class TypeWithElementType : AbstractType
 	{
 		protected IType elementType;
-		protected dnlib.DotNet.IType dnType;
-
-		public override dnlib.DotNet.IType MetadataToken => dnType;
 
 		protected TypeWithElementType(IType elementType)
 		{
 			if (elementType == null)
 				throw new ArgumentNullException("elementType");
-			this.elementType = elementType;
-		}
-
-		protected TypeWithElementType(dnlib.DotNet.IType dnlibType, IType elementType)
-		{
-			if (elementType == null)
-				throw new ArgumentNullException("elementType");
-			dnType = dnlibType;
 			this.elementType = elementType;
 		}
 

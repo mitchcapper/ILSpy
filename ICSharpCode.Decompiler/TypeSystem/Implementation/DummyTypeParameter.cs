@@ -26,8 +26,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
 	public sealed class DummyTypeParameter : AbstractType, ITypeParameter
 	{
-		public override dnlib.DotNet.IType MetadataToken => null;
-
 		static ITypeParameter[] methodTypeParameters = { new DummyTypeParameter(SymbolKind.Method, 0) };
 		static ITypeParameter[] classTypeParameters = { new DummyTypeParameter(SymbolKind.TypeDefinition, 0) };
 		static IReadOnlyList<ITypeParameter>[] classTypeParameterLists = { EmptyList<ITypeParameter>.Instance };

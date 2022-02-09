@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using dnlib.DotNet;
 using dnlib.DotNet.Emit;
 using dnlib.PE;
@@ -236,6 +237,50 @@ namespace ICSharpCode.Decompiler
 		}
 
 		public static bool IsValueType(TypeSig ts) => ts?.IsValueType ?? false;
+
+		public static string GetNamespace(this IType type, StringBuilder sb)
+		{
+			if (type is TypeDef td)
+				return td.Namespace;
+			if (type is TypeRef tr)
+				return tr.Namespace;
+			sb.Length = 0;
+			return FullNameFactory.Namespace(type, false, sb);
+		}
+
+		public static string GetName(this IType type, StringBuilder sb) {
+			if (type is TypeDef td)
+				return td.Name;
+			if (type is TypeRef tr)
+				return tr.Name;
+			sb.Length = 0;
+			return FullNameFactory.Name(type, false, sb);
+		}
+
+		public static string GetFnPtrName(FnPtrSig sig)
+		{
+			return "method";
+		}
+
+		public static bool Compare(this ITypeDefOrRef type, UTF8String expNs, UTF8String expName)
+		{
+			if (type == null)
+				return false;
+
+			if (type is TypeRef tr)
+				return tr.Namespace == expNs && tr.Name == expName;
+			if (type is TypeDef td)
+				return td.Namespace == expNs && td.Name == expName;
+
+			return false;
+		}
+
+		static readonly UTF8String systemString = new UTF8String("System");
+		static readonly UTF8String nullableString = new UTF8String("Nullable`1");
+
+		public static bool IsSystemNullable(this ClassOrValueTypeSig sig) {
+			return sig is ValueTypeSig && sig.TypeDefOrRef.Compare(systemString, nullableString);
+		}
 
 		public static string GetScopeName(this IScope scope)
 		{

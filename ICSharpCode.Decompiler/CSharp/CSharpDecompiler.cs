@@ -1219,6 +1219,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					);
 					body = statementBuilder.ConvertAsBlock(function.Body);
 
+					AssignSourceLocals(function);
+
 					Comment prev = null;
 					foreach (string warning in function.Warnings) {
 						body.InsertChildAfter(prev, prev = new Comment(warning), Roles.Comment);
@@ -1266,6 +1268,27 @@ namespace ICSharpCode.Decompiler.CSharp
 				entityDecl.Modifiers |= Modifiers.Async;
 				RemoveAttribute(entityDecl, KnownAttribute.AsyncStateMachine);
 				RemoveAttribute(entityDecl, KnownAttribute.DebuggerStepThrough);
+			}
+		}
+
+		private static void AssignSourceLocals(ILFunction function)
+		{
+			foreach (ILFunction ilFunction in function.Descendants.OfType<ILFunction>()) {
+				var dict = new Dictionary<Local, SourceLocal>();
+				foreach (ILVariable variable in ilFunction.Variables) {
+					if (variable.OriginalVariable is null) {
+						if (variable.OriginalParameter is null) {
+							Debug.Assert(variable.Type is not null);
+						}
+						continue;
+					}
+
+					if (dict.TryGetValue(variable.OriginalVariable, out var existing)) {
+						variable.sourceParamOrLocal = existing;
+					} else {
+						dict[variable.OriginalVariable] = variable.GetSourceLocal();
+					}
+				}
 			}
 		}
 
@@ -1346,7 +1369,10 @@ namespace ICSharpCode.Decompiler.CSharp
 					fieldDecl.Attributes.MoveTo(fixedFieldDecl.Attributes);
 					fixedFieldDecl.Modifiers = fieldDecl.Modifiers;
 					fixedFieldDecl.ReturnType = typeSystemAstBuilder.ConvertType(elementType);
-					fixedFieldDecl.Variables.Add(new FixedVariableInitializer(field.Name, new PrimitiveExpression(elementCount)));
+					fixedFieldDecl.Variables.Add(new FixedVariableInitializer {
+						NameToken = Identifier.Create(field.Name).WithAnnotation(field.MetadataToken),
+						CountExpression = new PrimitiveExpression(elementCount)
+					}.WithAnnotation(field.MetadataToken));
 					fixedFieldDecl.Variables.Single().CopyAnnotationsFrom(((FieldDeclaration)fieldDecl).Variables.Single());
 					fixedFieldDecl.CopyAnnotationsFrom(fieldDecl);
 					RemoveAttribute(fixedFieldDecl, KnownAttribute.FixedBuffer);
@@ -1475,15 +1501,24 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// a type system type reference.</param>
 		/// <param name="typeAttributes">Attributes associated with the Cecil type reference.
 		/// This is used to support the 'dynamic' type.</param>
-		public static AstType ConvertType(TypeSig type, IHasCustomAttribute typeAttributes = null, ConvertTypeOptions options = ConvertTypeOptions.None)
+		public static AstType ConvertType(ITypeDefOrRef type, StringBuilder sb, IHasCustomAttribute typeAttributes = null, ConvertTypeOptions options = ConvertTypeOptions.None)
 		{
 			int typeIndex = 0;
-			return ConvertType(type, typeAttributes, ref typeIndex, options);
+			return ConvertType(type, typeAttributes, ref typeIndex, options, 0, sb);
 		}
 
-		static AstType ConvertType(TypeSig type, IHasCustomAttribute typeAttributes, ref int typeIndex, ConvertTypeOptions options)
+		public static AstType ConvertType(TypeSig type, StringBuilder sb, IHasCustomAttribute typeAttributes = null, ConvertTypeOptions options = ConvertTypeOptions.None)
 		{
-			type = type.RemoveModifiers();
+			int typeIndex = 0;
+			return ConvertType(type, typeAttributes, ref typeIndex, options, 0, sb);
+		}
+
+		const int MAX_CONVERTTYPE_DEPTH = 50;
+		static AstType ConvertType(TypeSig type, IHasCustomAttribute typeAttributes, ref int typeIndex, ConvertTypeOptions options, int depth, StringBuilder sb)
+		{
+			if (depth++ > MAX_CONVERTTYPE_DEPTH)
+				return AstType.Null;
+			type = type.RemovePinnedAndModifiers();
 			if (type == null) {
 				return AstType.Null;
 			}
@@ -1491,108 +1526,67 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (type is ByRefSig) {
 				typeIndex++;
 				// by reference type cannot be represented in C#; so we'll represent it as a pointer instead
-				return ConvertType((type as ByRefSig).Next, typeAttributes, ref typeIndex, options)
+				return ConvertType((type as ByRefSig).Next, typeAttributes, ref typeIndex, options, depth, sb)
 					.MakePointerType();
 			} else if (type is PtrSig) {
 				typeIndex++;
-				return ConvertType((type as PtrSig).Next, typeAttributes, ref typeIndex, options)
+				return ConvertType((type as PtrSig).Next, typeAttributes, ref typeIndex, options, depth, sb)
 					.MakePointerType();
 			} else if (type is ArraySigBase) {
 				typeIndex++;
-				return ConvertType((type as ArraySigBase).Next, typeAttributes, ref typeIndex, options)
+				return ConvertType((type as ArraySigBase).Next, typeAttributes, ref typeIndex, options, depth, sb)
 					.MakeArrayType((int)(type as ArraySigBase).Rank);
 			} else if (type is GenericInstSig) {
 				GenericInstSig gType = (GenericInstSig)type;
-				if (gType.GenericType.Namespace == "System" && gType.GenericType.TypeName == "Nullable`1" && gType.GenericArguments.Count == 1)  {
+				if (gType.GenericType != null && gType.GenericArguments.Count == 1 && gType.GenericType.IsSystemNullable()) {
 					typeIndex++;
 					return new ComposedType {
-						BaseType = ConvertType(gType.GenericArguments[0], typeAttributes, ref typeIndex, options),
+						BaseType = ConvertType(gType.GenericArguments[0], typeAttributes, ref typeIndex, options, depth, sb),
 						HasNullableSpecifier = true
 					};
 				}
-				if (IsValueTuple(gType, out int tupleCardinality) && tupleCardinality > 1 && tupleCardinality < TupleType.RestPosition) {
-					var tupleType = new TupleAstType();
-
-					foreach (var typeArgument in gType.GenericArguments) {
-						typeIndex++;
-						tupleType.Elements.Add(new TupleTypeElement {
-							Type = ConvertType(typeArgument, typeAttributes, ref typeIndex, options)
-						});
-					}
-					return tupleType;
-				}
-				AstType baseType = ConvertType(gType.Next, typeAttributes, ref typeIndex, options & ~ConvertTypeOptions.IncludeTypeParameterDefinitions);
+				AstType baseType = ConvertType(gType.GenericType == null ? null : gType.GenericType.TypeDefOrRef, typeAttributes, ref typeIndex, options & ~ConvertTypeOptions.IncludeTypeParameterDefinitions, depth, sb);
 				List<AstType> typeArguments = new List<AstType>();
 				foreach (var typeArgument in gType.GenericArguments) {
 					typeIndex++;
-					typeArguments.Add(ConvertType(typeArgument, typeAttributes, ref typeIndex, options));
+					typeArguments.Add(ConvertType(typeArgument, typeAttributes, ref typeIndex, options, depth, sb));
 				}
 				ApplyTypeArgumentsTo(baseType, typeArguments);
 				return baseType;
 			} else if (type is GenericSig) {
-				return new SimpleType(type.TypeName);
+				var sig = (GenericSig)type;
+				var simpleType = new SimpleType(sig.GetName(sb)).WithAnnotation(sig.GenericParam).WithAnnotation(type);
+				simpleType.IdentifierToken.WithAnnotation(sig.GenericParam).WithAnnotation(type);
+				return simpleType;
 			} else if (type is TypeDefOrRefSig) {
-				return ConvertType(((TypeDefOrRefSig)type).TypeDefOrRef, typeAttributes, ref typeIndex, options);
-			} else {
-				throw new NotSupportedException();
-			}
+				return ConvertType(((TypeDefOrRefSig)type).TypeDefOrRef, typeAttributes, ref typeIndex, options, depth, sb);
+			} else
+				return ConvertType(type.ToTypeDefOrRef(), typeAttributes, ref typeIndex, options, depth, sb);
 		}
 
-		static internal bool IsValueTuple(GenericInstSig gType, out int tupleCardinality)
+		static AstType ConvertType(ITypeDefOrRef type, IHasCustomAttribute typeAttributes, ref int typeIndex, ConvertTypeOptions options, int depth, StringBuilder sb)
 		{
-			tupleCardinality = 0;
-			if (gType == null || gType.GenericType.TypeDefOrRef.DeclaringType != null || !gType.GenericType.TypeDefOrRef.Name.StartsWith("ValueTuple`", StringComparison.Ordinal) || gType.GenericType.TypeDefOrRef.Namespace != "System")
-				return false;
-			if (gType.GenericArguments.Count == TupleType.RestPosition) {
-				if (IsValueTuple(gType.GenericArguments.Last() as GenericInstSig, out tupleCardinality)) {
-					tupleCardinality += TupleType.RestPosition - 1;
-					return true;
-				}
-			}
-			tupleCardinality = gType.GenericArguments.Count;
-			return tupleCardinality > 0 && tupleCardinality < TupleType.RestPosition;
-		}
-
-		static AstType ConvertType(ITypeDefOrRef type, IHasCustomAttribute typeAttributes, ref int typeIndex,
-			ConvertTypeOptions options)
-		{
-			if (type == null) {
+			if (depth++ > MAX_CONVERTTYPE_DEPTH || type == null)
 				return AstType.Null;
-			} else if (type is TypeSpec) {
-				return ConvertType(((TypeSpec)type).TypeSig, typeAttributes, ref typeIndex, options);
-			}
 
-			if (type.DeclaringType != null) {
+			var ts = type as TypeSpec;
+			if (ts != null && !(ts.TypeSig is FnPtrSig))
+				return ConvertType(ts.TypeSig, typeAttributes, ref typeIndex, options, depth, sb);
+
+			if (type.DeclaringType != null && (options & ConvertTypeOptions.DoNotIncludeEnclosingType) == 0) {
+				AstType typeRef = ConvertType(type.DeclaringType, typeAttributes, ref typeIndex, options & ~ConvertTypeOptions.IncludeTypeParameterDefinitions, depth, sb);
 				string namepart = ReflectionHelper.SplitTypeParameterCountFromReflectionName(type.Name);
-				AstType memberType;
-				if ((options & (ConvertTypeOptions.IncludeOuterTypeName | ConvertTypeOptions.IncludeNamespace)) != 0) {
-					AstType typeRef = ConvertType(type.DeclaringType, typeAttributes, ref typeIndex, options & ~ConvertTypeOptions.IncludeTypeParameterDefinitions);
-					memberType = new MemberType { Target = typeRef, MemberName = namepart };
-					if ((options & ConvertTypeOptions.IncludeTypeParameterDefinitions) == ConvertTypeOptions.IncludeTypeParameterDefinitions) {
-						AddTypeParameterDefininitionsTo(type, memberType);
-					}
-				} else {
-					memberType = new SimpleType(namepart);
-					if ((options & ConvertTypeOptions.IncludeTypeParameterDefinitions) == ConvertTypeOptions.IncludeTypeParameterDefinitions) {
-						var resolved = type.Resolve();
-						if (resolved != null && resolved.HasGenericParameters) {
-							List<AstType> typeArguments = new List<AstType>();
-							foreach (GenericParam gp in resolved.GenericParameters) {
-								typeArguments.Add(new SimpleType(gp.Name));
-							}
-							ReflectionHelper.SplitTypeParameterCountFromReflectionName(type.Name, out int typeParameterCount);
-							if (typeParameterCount > typeArguments.Count)
-								typeParameterCount = typeArguments.Count;
-							((SimpleType)memberType).TypeArguments.AddRange(typeArguments.GetRange(typeArguments.Count - typeParameterCount, typeParameterCount));
-							typeArguments.RemoveRange(typeArguments.Count - typeParameterCount, typeParameterCount);
-						}
-					}
-				}
+				MemberType memberType = new MemberType { Target = typeRef, MemberNameToken = Identifier.Create(namepart).WithAnnotation(type) };
 				memberType.AddAnnotation(type);
+				if ((options & ConvertTypeOptions.IncludeTypeParameterDefinitions) == ConvertTypeOptions.IncludeTypeParameterDefinitions) {
+					AddTypeParameterDefininitionsTo(type, memberType);
+				}
 				return memberType;
 			} else {
-				string ns = type.Namespace ?? string.Empty;
-				string name = type.Name;
+				string ns = type.GetNamespace(sb) ?? string.Empty;
+				string name = type.GetName(sb);
+				if (ts != null)
+					name = DnlibExtensions.GetFnPtrName(ts.TypeSig as FnPtrSig);
 				if (name == null)
 					throw new InvalidOperationException("type.Name returned null. Type: " + type.ToString());
 
@@ -1604,37 +1598,37 @@ namespace ICSharpCode.Decompiler.CSharp
 							!= ConvertTypeOptions.DoNotUsePrimitiveTypeNames) {
 							switch (name) {
 								case "SByte":
-									return new Syntax.PrimitiveType("sbyte");
+									return new Syntax.PrimitiveType("sbyte").WithAnnotation(type);
 								case "Int16":
-									return new Syntax.PrimitiveType("short");
+									return new Syntax.PrimitiveType("short").WithAnnotation(type);
 								case "Int32":
-									return new Syntax.PrimitiveType("int");
+									return new Syntax.PrimitiveType("int").WithAnnotation(type);
 								case "Int64":
-									return new Syntax.PrimitiveType("long");
+									return new Syntax.PrimitiveType("long").WithAnnotation(type);
 								case "Byte":
-									return new Syntax.PrimitiveType("byte");
+									return new Syntax.PrimitiveType("byte").WithAnnotation(type);
 								case "UInt16":
-									return new Syntax.PrimitiveType("ushort");
+									return new Syntax.PrimitiveType("ushort").WithAnnotation(type);
 								case "UInt32":
-									return new Syntax.PrimitiveType("uint");
+									return new Syntax.PrimitiveType("uint").WithAnnotation(type);
 								case "UInt64":
-									return new Syntax.PrimitiveType("ulong");
+									return new Syntax.PrimitiveType("ulong").WithAnnotation(type);
 								case "String":
-									return new Syntax.PrimitiveType("string");
+									return new Syntax.PrimitiveType("string").WithAnnotation(type);
 								case "Single":
-									return new Syntax.PrimitiveType("float");
+									return new Syntax.PrimitiveType("float").WithAnnotation(type);
 								case "Double":
-									return new Syntax.PrimitiveType("double");
+									return new Syntax.PrimitiveType("double").WithAnnotation(type);
 								case "Decimal":
-									return new Syntax.PrimitiveType("decimal");
+									return new Syntax.PrimitiveType("decimal").WithAnnotation(type);
 								case "Char":
-									return new Syntax.PrimitiveType("char");
+									return new Syntax.PrimitiveType("char").WithAnnotation(type);
 								case "Boolean":
-									return new Syntax.PrimitiveType("bool");
+									return new Syntax.PrimitiveType("bool").WithAnnotation(type);
 								case "Void":
-									return new Syntax.PrimitiveType("void");
+									return new Syntax.PrimitiveType("void").WithAnnotation(type);
 								case "Object":
-									return new Syntax.PrimitiveType("object");
+									return new Syntax.PrimitiveType("object").WithAnnotation(type);
 							}
 						}
 					}
@@ -1644,11 +1638,19 @@ namespace ICSharpCode.Decompiler.CSharp
 					AstType astType;
 					if ((options & ConvertTypeOptions.IncludeNamespace) == ConvertTypeOptions.IncludeNamespace && ns.Length > 0) {
 						string[] parts = ns.Split('.');
-						AstType nsType = new SimpleType(parts[0]);
+						var nsAsm = type.DefinitionAssembly;
+						sb.Clear();
+						sb.Append(parts[0]);
+						SimpleType simpleType;
+						AstType nsType = simpleType = new SimpleType(parts[0]).WithAnnotation(BoxedTextColor.Namespace);
+						simpleType.IdentifierToken.WithAnnotation(BoxedTextColor.Namespace).WithAnnotation(new NamespaceReference(nsAsm, parts[0]));
 						for (int i = 1; i < parts.Length; i++) {
-							nsType = new MemberType { Target = nsType, MemberName = parts[i] };
+							sb.Append('.');
+							sb.Append(parts[i]);
+							var nsPart = sb.ToString();
+							nsType = new MemberType { Target = nsType, MemberNameToken = Identifier.Create(parts[i]).WithAnnotation(BoxedTextColor.Namespace).WithAnnotation(new NamespaceReference(nsAsm, nsPart)) }.WithAnnotation(BoxedTextColor.Namespace);
 						}
-						astType = new MemberType { Target = nsType, MemberName = name };
+						astType = new MemberType { Target = nsType, MemberNameToken = Identifier.Create(name).WithAnnotation(type) };
 					} else {
 						astType = new SimpleType(name);
 					}
@@ -1664,11 +1666,11 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		static void AddTypeParameterDefininitionsTo(ITypeDefOrRef type, AstType astType)
 		{
-			var resolved = type.Resolve();
-			if (resolved != null && resolved.HasGenericParameters) {
+			TypeDef typeDef = type.ResolveTypeDef();
+			if (typeDef != null && typeDef.HasGenericParameters) {
 				List<AstType> typeArguments = new List<AstType>();
-				foreach (GenericParam gp in resolved.GenericParameters) {
-					typeArguments.Add(new SimpleType(gp.Name));
+				foreach (GenericParam gp in typeDef.GenericParameters) {
+					typeArguments.Add(new SimpleType(gp.Name).WithAnnotation(gp));
 				}
 				ApplyTypeArgumentsTo(astType, typeArguments);
 			}
@@ -1686,7 +1688,6 @@ namespace ICSharpCode.Decompiler.CSharp
 					st.TypeArguments.AddRange(typeArguments.GetRange(typeArguments.Count - typeParameterCount, typeParameterCount));
 				} else {
 					st.TypeArguments.AddRange(typeArguments);
-
 				}
 			}
 			MemberType mt = baseType as MemberType;
@@ -1706,14 +1707,14 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		const string DynamicAttributeFullName = "System.Runtime.CompilerServices.DynamicAttribute";
-
+		static readonly UTF8String systemRuntimeCompilerServicesString = new UTF8String("System.Runtime.CompilerServices");
+		static readonly UTF8String dynamicAttributeString = new UTF8String("DynamicAttribute");
 		static bool HasDynamicAttribute(IHasCustomAttribute attributeProvider, int typeIndex)
 		{
-			if (attributeProvider == null || !attributeProvider.HasCustomAttributes)
+			if (attributeProvider == null)
 				return false;
 			foreach (CustomAttribute a in attributeProvider.CustomAttributes) {
-				if (a.Constructor.DeclaringType.FullName == DynamicAttributeFullName) {
+				if (a.AttributeType.Compare(systemRuntimeCompilerServicesString, dynamicAttributeString)) {
 					if (a.ConstructorArguments.Count == 1) {
 						IList<CAArgument> values = a.ConstructorArguments[0].Value as IList<CAArgument>;
 						if (values != null && typeIndex < values.Count && values[typeIndex].Value is bool)
@@ -1748,6 +1749,6 @@ namespace ICSharpCode.Decompiler.CSharp
 		IncludeNamespace = 1,
 		IncludeTypeParameterDefinitions = 2,
 		DoNotUsePrimitiveTypeNames = 4,
-		IncludeOuterTypeName = 8,
+		DoNotIncludeEnclosingType = 8,
 	}
 }

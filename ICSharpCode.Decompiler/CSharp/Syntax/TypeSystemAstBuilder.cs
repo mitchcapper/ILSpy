@@ -393,6 +393,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 							case TypeKind.NUInt:
 								astType = new PrimitiveType(type.Name);
 								break;
+							case TypeKind.UnboundTypeArgument:
+								astType = MakeSimpleType(type.Name).WithAnnotation(BoxedTextColor.TypeGenericParameter)
+																   .WithAnnotation(SimpleType.DummyTypeGenericParam);
+								break;
 							default:
 								astType = MakeSimpleType(type.Name);
 								break;
@@ -534,7 +538,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			Debug.Assert(endIndex <= typeParameters.Count);
 			for (int i = startIndex; i < endIndex; i++) {
 				if (ConvertUnboundTypeArguments && typeArguments[i].Kind == TypeKind.UnboundTypeArgument) {
-					result.AddChild(MakeSimpleType(typeParameters[i].Name), Roles.TypeArgument);
+					result.AddChild(MakeSimpleType(typeParameters[i].Name).WithAnnotation(BoxedTextColor.TypeGenericParameter).WithAnnotation(SimpleType.DummyTypeGenericParam), Roles.TypeArgument);
 				} else {
 					result.AddChild(ConvertType(typeArguments[i]), Roles.TypeArgument);
 				}
@@ -1727,7 +1731,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		FieldDeclaration ConvertField(IField field)
 		{
 			FieldDeclaration decl = new FieldDeclaration();
-			decl.WithAnnotation(field.OriginalMember);
+			decl.WithAnnotation(field.MetadataToken);
 			if (ShowModifiers) {
 				Modifiers m = GetMemberModifiers(field);
 				if (field.IsConst) {
@@ -1755,7 +1759,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					initializer = new ErrorExpression(ex.Message);
 				}
 			}
-			decl.Variables.Add(new VariableInitializer(field.OriginalMember, field.Name, initializer));
+			decl.Variables.Add(new VariableInitializer(field.MetadataToken, field.Name, initializer));
 			return decl;
 		}
 

@@ -24,12 +24,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 {
 	public sealed class PointerType : TypeWithElementType
 	{
-		public PointerType(IType elementType) : base(new PtrSig(elementType.MetadataToken.GetTypeSig()), elementType)
+		public PointerType(IType elementType) : base(elementType)
 		{
-		}
-
-		public PointerType(dnlib.DotNet.IType dnlibType, IType elementType) : base(dnlibType, elementType)
-		{
+			var ts = elementType.MetadataToken.GetTypeSig();
+			MetadataToken = ts is null ? null : new PtrSig(ts);
 		}
 
 		public override TypeKind Kind {
@@ -67,7 +65,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			IType e = elementType.AcceptVisitor(visitor);
 			if (e == elementType)
 				return this;
-			return new PointerType(new PtrSig(e.MetadataToken.GetTypeSig()), e);
+			return new PointerType(e);
 		}
 	}
 

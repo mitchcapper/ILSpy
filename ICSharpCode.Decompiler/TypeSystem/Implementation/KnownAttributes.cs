@@ -177,11 +177,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return ref typeNames[(int)attr];
 		}
 
-		public static IType FindType(this ICompilation compilation, KnownAttribute attrType)
-		{
-			return compilation.FindType(attrType.GetTypeName());
-		}
-
 		public static KnownAttribute IsKnownAttributeType(this ITypeDefinition attributeType)
 		{
 			if (!attributeType.GetNonInterfaceBaseTypes().Any(t => t.IsKnownType(KnownTypeCode.Attribute)))

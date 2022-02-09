@@ -28,18 +28,18 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	/// </summary>
 	public class ModifiedType : TypeWithElementType
 	{
-		private readonly dnlib.DotNet.IType dnlibType;
 		readonly TypeKind kind;
 		readonly IType modifier;
 
-		public ModifiedType(dnlib.DotNet.IType dnlibType, IType modifier, IType unmodifiedType, bool isRequired) : base(unmodifiedType)
+		public ModifiedType(IType modifier, IType unmodifiedType, bool isRequired) : base(unmodifiedType)
 		{
-			this.dnlibType = dnlibType;
 			this.kind = isRequired ? TypeKind.ModReq : TypeKind.ModOpt;
 			this.modifier = modifier ?? throw new ArgumentNullException(nameof(modifier));
-		}
 
-		public override dnlib.DotNet.IType MetadataToken => dnlibType;
+			var ts = unmodifiedType.MetadataToken.GetTypeSig();
+			MetadataToken = ts is null || modifier.MetadataToken is not ITypeDefOrRef dnModifier ? null :
+				isRequired ? new CModReqdSig(dnModifier, ts) : new CModOptSig(dnModifier, ts);
+		}
 
 		public IType Modifier => modifier;
 		public override TypeKind Kind => kind;
@@ -56,7 +56,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			if (newElementType == elementType)
 				return this;
 			else
-				return new ModifiedType(dnlibType, modifier, newElementType, kind == TypeKind.ModReq);
+				return new ModifiedType(modifier, newElementType, kind == TypeKind.ModReq);
 		}
 
 		public override ITypeDefinition GetDefinition()
@@ -120,12 +120,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			var newModifier = modifier.AcceptVisitor(visitor);
 			if (newModifier != modifier || newElementType != elementType) {
 				var isRequired = kind == TypeKind.ModReq;
-				return new ModifiedType(
-					isRequired
-						? new CModReqdSig(newModifier.MetadataToken.GetScopeTypeDefOrRef(),
-							newElementType.MetadataToken.GetTypeSig())
-						: new CModOptSig(newModifier.MetadataToken.GetScopeTypeDefOrRef(),
-							newElementType.MetadataToken.GetTypeSig()), newModifier, newElementType, isRequired);
+				return new ModifiedType(newModifier, newElementType, isRequired);
 			}
 			return this;
 		}

@@ -171,7 +171,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				context.StepStartGroup($"TransformUseSites of " + info.Definition.Name, info.Definition);
 				try {
 					foreach (var useSite in info.UseSites) {
-						context.Step($"Transform use-site at IL_{useSite.StartILOffset:x4}", useSite);
+						context.Step($"Transform use-site at IL_{useSite.StartILOffset:X4}", useSite);
 						switch (useSite)
 						{
 							case NewObj newObj:

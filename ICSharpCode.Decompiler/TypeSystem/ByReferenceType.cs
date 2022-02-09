@@ -24,15 +24,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 {
 	public sealed class ByReferenceType : TypeWithElementType
 	{
-
-		public override dnlib.DotNet.IType MetadataToken => null;
-
-		public ByReferenceType(IType elementType) : base(new ByRefSig(elementType.MetadataToken.GetTypeSig()), elementType)
+		public ByReferenceType(IType elementType) : base(elementType)
 		{
-		}
-
-		public ByReferenceType(dnlib.DotNet.IType dnType, IType elementType) : base(dnType, elementType)
-		{
+			var ts = elementType.MetadataToken.GetTypeSig();
+			MetadataToken = ts is null ? null : new ByRefSig(ts);
 		}
 
 		public override TypeKind Kind {

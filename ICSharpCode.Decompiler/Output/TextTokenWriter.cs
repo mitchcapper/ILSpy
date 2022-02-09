@@ -142,9 +142,9 @@ namespace ICSharpCode.Decompiler
 				return letClauseVariable;
 
 			if (node is GotoStatement gotoStatement) {
-				var method = nodeStack.Select(nd => nd.GetSymbol() as IMethod).FirstOrDefault(mr => mr != null);
+				var method = nodeStack.Select(nd => nd.Annotation<dnlib.DotNet.IMethod>()).FirstOrDefault(mr => mr != null && mr.IsMethod);
 				if (method != null)
-					return method + gotoStatement.Label;
+					return method.ToString() + gotoStatement.Label;
 			}
 
 			return null;
@@ -181,9 +181,9 @@ namespace ICSharpCode.Decompiler
 			}
 
 			if (node is LabelStatement label) {
-				var method = nodeStack.Select(nd => nd.GetSymbol() as IMethod).FirstOrDefault(mr => mr != null);
+				var method = nodeStack.Select(nd => nd.Annotation<dnlib.DotNet.IMethod>()).FirstOrDefault(mr => mr != null && mr.IsMethod);
 				if (method != null)
-					return method + label.Label;
+					return method.ToString() + label.Label;
 			}
 
 			return null;

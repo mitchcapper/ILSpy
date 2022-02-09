@@ -3087,9 +3087,10 @@ namespace ICSharpCode.Decompiler.CSharp
 					.WithRR(new MemberResolveResult(rr, memberPath.Member))
 					.WithoutILInstruction();
 			} else {
-				return new NamedExpression(valuePath.Member.Name, value)
-					.WithRR(new MemberResolveResult(rr, valuePath.Member))
-					.WithoutILInstruction();
+				var named = new NamedExpression().WithAnnotation(valuePath.Member.OriginalMember);
+				named.NameToken = Identifier.Create(valuePath.Member.Name).WithAnnotation(valuePath.Member.OriginalMember);
+				named.Expression = value;
+				return named.WithRR(new MemberResolveResult(rr, valuePath.Member)).WithoutILInstruction();
 			}
 		}
 
@@ -4064,7 +4065,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			string message = "Error";
 			if (inst.StartILOffset != 0) {
-				message += $" near IL_{inst.StartILOffset:x4}";
+				message += $" near IL_{inst.StartILOffset:X4}";
 			}
 			if (!string.IsNullOrEmpty(inst.Message)) {
 				message += ": " + inst.Message;
@@ -4077,7 +4078,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			string message = inst.Severity;
 			if (inst.StartILOffset != 0)
 			{
-				message += $" near IL_{inst.StartILOffset:x4}";
+				message += $" near IL_{inst.StartILOffset:X4}";
 			}
 			if (!string.IsNullOrEmpty(inst.Message)) {
 				message += ": " + inst.Message;
