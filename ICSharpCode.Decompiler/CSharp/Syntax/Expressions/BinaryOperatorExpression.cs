@@ -26,7 +26,6 @@
 
 using System;
 using System.Linq.Expressions;
-using System.Collections.Generic;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
@@ -59,62 +58,63 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public readonly static Role<Expression> LeftRole = new Role<Expression>("Left", Expression.Null);
 		public readonly static Role<Expression> RightRole = new Role<Expression>("Right", Expression.Null);
-		
+
 		public BinaryOperatorExpression()
 		{
 		}
-		
+
 		public BinaryOperatorExpression(Expression left, BinaryOperatorType op, Expression right)
 		{
 			this.Left = left;
 			this.Operator = op;
 			this.Right = right;
 		}
-		
+
 		public BinaryOperatorType Operator {
 			get;
 			set;
 		}
-		
+
 		public Expression Left {
-			get { return GetChildByRole (LeftRole); }
+			get { return GetChildByRole(LeftRole); }
 			set { SetChildByRole(LeftRole, value); }
 		}
-		
+
 		public CSharpTokenNode OperatorToken {
-			get { return GetChildByRole (GetOperatorRole (Operator)); }
+			get { return GetChildByRole(GetOperatorRole(Operator)); }
 		}
-		
+
 		public Expression Right {
-			get { return GetChildByRole (RightRole); }
-			set { SetChildByRole (RightRole, value); }
+			get { return GetChildByRole(RightRole); }
+			set { SetChildByRole(RightRole, value); }
 		}
-		
-		public override void AcceptVisitor (IAstVisitor visitor)
+
+		public override void AcceptVisitor(IAstVisitor visitor)
 		{
-			visitor.VisitBinaryOperatorExpression (this);
+			visitor.VisitBinaryOperatorExpression(this);
 		}
-			
-		public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+
+		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
 		{
-			return visitor.VisitBinaryOperatorExpression (this);
+			return visitor.VisitBinaryOperatorExpression(this);
 		}
-		
-		public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
+
+		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
 		{
-			return visitor.VisitBinaryOperatorExpression (this, data);
+			return visitor.VisitBinaryOperatorExpression(this, data);
 		}
-		
+
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			BinaryOperatorExpression o = other as BinaryOperatorExpression;
 			return o != null && (this.Operator == BinaryOperatorType.Any || this.Operator == o.Operator)
 				&& this.Left.DoMatch(o.Left, match) && this.Right.DoMatch(o.Right, match);
 		}
-		
-		public static TokenRole GetOperatorRole (BinaryOperatorType op)
+
+		public static TokenRole GetOperatorRole(BinaryOperatorType op)
 		{
-			switch (op) {
+			switch (op)
+			{
 				case BinaryOperatorType.BitwiseAnd:
 					return BitwiseAndRole;
 				case BinaryOperatorType.BitwiseOr:
@@ -161,10 +161,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					throw new NotSupportedException("Invalid value for BinaryOperatorType");
 			}
 		}
-		
+
 		public static ExpressionType GetLinqNodeType(BinaryOperatorType op, bool checkForOverflow)
 		{
-			switch (op) {
+			switch (op)
+			{
 				case BinaryOperatorType.BitwiseAnd:
 					return ExpressionType.And;
 				case BinaryOperatorType.BitwiseOr:
@@ -210,14 +211,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 	}
-	
+
 	public enum BinaryOperatorType
 	{
 		/// <summary>
 		/// Any binary operator (used in pattern matching)
 		/// </summary>
 		Any,
-		
+
 		// We avoid 'logical or' on purpose, because it's not clear if that refers to the bitwise
 		// or to the short-circuiting (conditional) operator:
 		// MCS and old NRefactory used bitwise='|', logical='||'
@@ -232,7 +233,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		ConditionalOr,
 		/// <summary>left ^ right</summary>
 		ExclusiveOr,
-		
+
 		/// <summary>left &gt; right</summary>
 		GreaterThan,
 		/// <summary>left &gt;= right</summary>
@@ -245,7 +246,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		LessThan,
 		/// <summary>left &lt;= right</summary>
 		LessThanOrEqual,
-		
+
 		/// <summary>left + right</summary>
 		Add,
 		/// <summary>left - right</summary>
@@ -256,12 +257,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		Divide,
 		/// <summary>left % right</summary>
 		Modulus,
-		
+
 		/// <summary>left &lt;&lt; right</summary>
 		ShiftLeft,
 		/// <summary>left &gt;&gt; right</summary>
 		ShiftRight,
-		
+
 		/// <summary>left ?? right</summary>
 		NullCoalescing,
 		/// <summary>left .. right</summary>

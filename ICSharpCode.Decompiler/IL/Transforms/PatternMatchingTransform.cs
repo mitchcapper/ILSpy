@@ -1,20 +1,22 @@
 ﻿// Copyright (c) 2021 Daniel Grunwald, Siegfried Pammer
-//
+// 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
 // without restriction, including without limitation the rights to use, copy, modify, merge,
 // publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
 // to whom the Software is furnished to do so, subject to the following conditions:
-//
+// 
 // The above copyright notice and this permission notice shall be included in all copies or
 // substantial portions of the Software.
-//
+// 
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
 // INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
 // PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
 // FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
+
+#nullable enable
 
 using System;
 using System.Diagnostics;
@@ -36,7 +38,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return;
 			foreach (var container in function.Descendants.OfType<BlockContainer>())
 			{
-				ControlFlowGraph cfg = null;
+				ControlFlowGraph? cfg = null;
 				foreach (var block in container.Blocks)
 				{
 					if (PatternMatchValueTypes(block, container, context, ref cfg))
@@ -57,7 +59,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		///		if (comp.o(ldloc V == ldnull)) br falseBlock
 		///		br trueBlock
 		/// }
-		///
+		/// 
 		/// All other uses of V are in blocks dominated by trueBlock.
 		/// =>
 		/// Block {
@@ -67,7 +69,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// }
 		///
 		/// - or -
-		///
+		/// 
 		/// Block {
 		/// 	stloc s(isinst T(testedOperand))
 		/// 	stloc v(ldloc s)
@@ -80,9 +82,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		///		if (match.type[T].notnull(V = testedOperand)) br trueBlock
 		///		br falseBlock
 		/// }
-		///
+		/// 
 		/// All other uses of V are in blocks dominated by trueBlock.
-		private bool PatternMatchRefTypes(Block block, BlockContainer container, ILTransformContext context, ref ControlFlowGraph cfg)
+		private bool PatternMatchRefTypes(Block block, BlockContainer container, ILTransformContext context, ref ControlFlowGraph? cfg)
 		{
 			if (!block.MatchIfAtEndOfBlock(out var condition, out var trueInst, out var falseInst))
 				return false;
@@ -142,7 +144,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (v != s)
 					return false;
 			}
-			IType unboxType;
+			IType? unboxType;
 			if (value is UnboxAny unboxAny)
 			{
 				// stloc S(unbox.any T(isinst T(testedOperand)))
@@ -181,7 +183,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		}
 
 		private bool CheckAllUsesDominatedBy(ILVariable v, BlockContainer container, ILInstruction trueInst,
-			ILInstruction storeToV, ILInstruction loadInNullCheck, ILTransformContext context, ref ControlFlowGraph cfg)
+			ILInstruction storeToV, ILInstruction? loadInNullCheck, ILTransformContext context, ref ControlFlowGraph? cfg)
 		{
 			var targetBlock = trueInst as Block;
 			if (targetBlock == null && !trueInst.MatchBranch(out targetBlock))
@@ -201,8 +203,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				if (use == storeToV || use == loadInNullCheck)
 					continue;
-				Block found = null;
-				for (ILInstruction current = use; current != null; current = current.Parent)
+				Block? found = null;
+				for (ILInstruction? current = use; current != null; current = current.Parent)
 				{
 					if (current.Parent == container)
 					{
@@ -225,7 +227,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// 	if (comp.o(isinst T(ldloc testedOperand) == ldnull)) br falseBlock
 		/// 	br unboxBlock
 		/// }
-		///
+		/// 
 		/// Block unboxBlock (incoming: 1) {
 		/// 	stloc V(unbox.any T(ldloc temp))
 		/// 	...
@@ -236,14 +238,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		///		if (match.type[T].notnull(V = testedOperand)) br unboxBlock
 		///		br falseBlock
 		///	}
-		private bool PatternMatchValueTypes(Block block, BlockContainer container, ILTransformContext context, ref ControlFlowGraph cfg)
+		private bool PatternMatchValueTypes(Block block, BlockContainer container, ILTransformContext context, ref ControlFlowGraph? cfg)
 		{
 			if (!MatchIsInstBlock(block, out var type, out var testedOperand,
 				out var unboxBlock, out var falseBlock))
 			{
 				return false;
 			}
-			StLoc tempStore = block.Instructions.ElementAtOrDefault(block.Instructions.Count - 3) as StLoc;
+			StLoc? tempStore = block.Instructions.ElementAtOrDefault(block.Instructions.Count - 3) as StLoc;
 			if (tempStore == null || !tempStore.Value.MatchLdLoc(testedOperand.Variable))
 			{
 				tempStore = null;
@@ -291,7 +293,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		///	...
 		/// if (comp.o(isinst T(ldloc testedOperand) == ldnull)) br falseBlock
 		/// br unboxBlock
-		private bool MatchIsInstBlock(Block block, out IType type, out LdLoc testedOperand, out Block unboxBlock, out Block falseBlock)
+		private bool MatchIsInstBlock(Block block,
+			[NotNullWhen(true)] out IType? type,
+			[NotNullWhen(true)] out LdLoc? testedOperand,
+			[NotNullWhen(true)] out Block? unboxBlock,
+			[NotNullWhen(true)] out Block? falseBlock)
 		{
 			type = null;
 			testedOperand = null;
@@ -324,7 +330,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// 	stloc V(unbox.any T(ldloc testedOperand))
 		/// 	...
 		/// }
-		private bool MatchUnboxBlock(Block unboxBlock, IType type, out ILVariable testedOperand, out ILVariable v, out ILInstruction storeToV)
+		private bool MatchUnboxBlock(Block unboxBlock, IType type, [NotNullWhen(true)] out ILVariable? testedOperand,
+			[NotNullWhen(true)] out ILVariable? v, [NotNullWhen(true)] out ILInstruction? storeToV)
 		{
 			v = null;
 			storeToV = null;

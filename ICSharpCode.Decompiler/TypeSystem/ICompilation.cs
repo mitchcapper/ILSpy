@@ -16,10 +16,13 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 using System.Text;
 using dnlib.DotNet;
+
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.TypeSystem
@@ -58,7 +61,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// returns the global root namespace.
 		/// If no alias with the specified name exists, this method returns null.
 		/// </remarks>
-		INamespace GetNamespaceForExternAlias(string alias);
+		INamespace? GetNamespaceForExternAlias(string? alias);
 
 		IType FindType(KnownTypeCode typeCode);
 

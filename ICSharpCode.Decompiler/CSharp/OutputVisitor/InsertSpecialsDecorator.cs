@@ -18,6 +18,7 @@
 
 using System.Collections.Generic;
 using System.Diagnostics;
+
 using ICSharpCode.Decompiler.CSharp.Syntax;
 
 namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
@@ -33,7 +34,8 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 		public override void StartNode(AstNode node)
 		{
-			if (positionStack.Count > 0) {
+			if (positionStack.Count > 0)
+			{
 				WriteSpecialsUpToNode(node);
 			}
 			positionStack.Push(node.FirstChild);
@@ -50,7 +52,8 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 		public override void WriteKeyword(Role role, string keyword)
 		{
-			if (role != null) {
+			if (role != null)
+			{
 				WriteSpecialsUpToRole(role);
 			}
 			base.WriteKeyword(role, keyword);
@@ -81,8 +84,10 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		/// </summary>
 		void WriteSpecials(AstNode start, AstNode end)
 		{
-			for (AstNode pos = start; pos != end; pos = pos.NextSibling) {
-				if (pos.Role == Roles.Comment) {
+			for (AstNode pos = start; pos != end; pos = pos.NextSibling)
+			{
+				if (pos.Role == Roles.Comment)
+				{
 					var node = (Comment)pos;
 					base.StartNode(node);
 					base.WriteComment(node.CommentType, node.Content, node.References);
@@ -94,7 +99,8 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				//						base.NewLine();
 				//					visitorWroteNewLine--;
 				//				}
-				if (pos.Role == Roles.PreProcessorDirective) {
+				if (pos.Role == Roles.PreProcessorDirective)
+				{
 					var node = (PreProcessorDirective)pos;
 					base.StartNode(node);
 					base.WritePreProcessorDirective(node.Type, node.Argument);
@@ -114,12 +120,15 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 		void WriteSpecialsUpToRole(Role role, AstNode nextNode)
 		{
-			if (positionStack.Count == 0) {
+			if (positionStack.Count == 0)
+			{
 				return;
 			}
 			// Look for the role between the current position and the nextNode.
-			for (AstNode pos = positionStack.Peek(); pos != null && pos != nextNode; pos = pos.NextSibling) {
-				if (pos.Role == role) {
+			for (AstNode pos = positionStack.Peek(); pos != null && pos != nextNode; pos = pos.NextSibling)
+			{
+				if (pos.Role == role)
+				{
 					WriteSpecials(positionStack.Pop(), pos);
 					// Push the next sibling because the node matching the role is not a special,
 					// and should be considered to be already handled.
@@ -136,11 +145,14 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		/// </summary>
 		void WriteSpecialsUpToNode(AstNode node)
 		{
-			if (positionStack.Count == 0) {
+			if (positionStack.Count == 0)
+			{
 				return;
 			}
-			for (AstNode pos = positionStack.Peek(); pos != null; pos = pos.NextSibling) {
-				if (pos == node) {
+			for (AstNode pos = positionStack.Peek(); pos != null; pos = pos.NextSibling)
+			{
+				if (pos == node)
+				{
 					WriteSpecials(positionStack.Pop(), pos);
 					// Push the next sibling because the node itself is not a special,
 					// and should be considered to be already handled.

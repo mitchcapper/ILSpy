@@ -118,9 +118,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			var newElementType = elementType.AcceptVisitor(visitor);
 			var newModifier = modifier.AcceptVisitor(visitor);
-			if (newModifier != modifier || newElementType != elementType) {
-				var isRequired = kind == TypeKind.ModReq;
-				return new ModifiedType(newModifier, newElementType, isRequired);
+			if (newModifier != modifier || newElementType != elementType)
+			{
+				return new ModifiedType(newModifier, newElementType, kind == TypeKind.ModReq);
 			}
 			return this;
 		}
@@ -140,7 +140,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public override int GetHashCode()
 		{
-			unchecked {
+			unchecked
+			{
 				return (int)kind ^ (elementType.GetHashCode() * 1344795899) ^ (modifier.GetHashCode() * 901375117);
 			}
 		}

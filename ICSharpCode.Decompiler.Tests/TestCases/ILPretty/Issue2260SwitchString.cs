@@ -7,48 +7,63 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.ILPretty
 		{
 			string text = default(string);
 			string s = default(string);
-			switch (text) {
+			switch (text)
+			{
 				case "rowno":
 					break;
 				case "item_no":
 					new object();
 					break;
-				case "stock_qty": {
+				case "stock_qty":
+					{
 						decimal result2 = default(decimal);
-						if (!decimal.TryParse(s, out result2)) {
+						if (!decimal.TryParse(s, out result2))
+						{
 							new object();
-						} else if (result2 < 1m) {
+						}
+						else if (result2 < 1m)
+						{
 							new object();
 						}
 						break;
 					}
-				case "new_price": {
+				case "new_price":
+					{
 						decimal num = default(decimal);
 						break;
 					}
-				case "new_price4": {
+				case "new_price4":
+					{
 						decimal result4 = default(decimal);
-						if (decimal.TryParse(s, out result4) && !(result4 < 0m)) {
+						if (decimal.TryParse(s, out result4) && !(result4 < 0m))
+						{
 						}
 						break;
 					}
-				case "new_price1": {
+				case "new_price1":
+					{
 						decimal result3 = default(decimal);
-						if (!decimal.TryParse(s, out result3)) {
+						if (!decimal.TryParse(s, out result3))
+						{
 							new object();
 							break;
 						}
-						if (result3 < 0m) {
+						if (result3 < 0m)
+						{
 							new object();
 						}
 						new object();
 						break;
 					}
-				case "new_price2": {
+				case "new_price2":
+					{
 						decimal result = default(decimal);
-						if (!decimal.TryParse(s, out result)) {
+						if (!decimal.TryParse(s, out result))
+						{
 							new object();
-						} else if (result < 0m) {
+						}
+						else if (result < 0m)
+						{
 							new object();
 						}
 						break;

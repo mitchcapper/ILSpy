@@ -1,3 +1,4 @@
+#nullable enable
 // Copyright (c) 2014 AlphaSierraPapa for the SharpDevelop Team
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
@@ -16,11 +17,11 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Diagnostics;
 using System.Linq;
 using dnSpy.Contracts.Decompiler;
 using dnSpy.Contracts.Text;
+
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.IL
@@ -50,7 +51,7 @@ namespace ICSharpCode.Decompiler.IL
 			this.Sections = new InstructionCollection<SwitchSection>(this, 1);
 		}
 
-		ILInstruction value;
+		ILInstruction value = null!;
 		public ILInstruction Value {
 			get { return this.value; }
 			set {
@@ -64,7 +65,8 @@ namespace ICSharpCode.Decompiler.IL
 		protected override InstructionFlags ComputeFlags()
 		{
 			var sectionFlags = InstructionFlags.EndPointUnreachable; // neutral element for CombineBranches()
-			foreach (var section in Sections) {
+			foreach (var section in Sections)
+			{
 				sectionFlags = SemanticHelper.CombineBranches(sectionFlags, section.Flags);
 			}
 			return value.Flags | InstructionFlags.ControlFlow | sectionFlags;
@@ -87,7 +89,8 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(") ", BoxedTextColor.Text);
 			output.WriteLine("{", BoxedTextColor.Text);
 			output.IncreaseIndent();
-			foreach (var section in this.Sections) {
+			foreach (var section in this.Sections)
+			{
 				section.WriteTo(output, options);
 				output.WriteLine();
 			}
@@ -145,8 +148,10 @@ namespace ICSharpCode.Decompiler.IL
 			base.CheckInvariant(phase);
 			bool expectNullSection = this.IsLifted;
 			LongSet sets = LongSet.Empty;
-			foreach (var section in Sections) {
-				if (section.HasNullLabel) {
+			foreach (var section in Sections)
+			{
+				if (section.HasNullLabel)
+				{
 					Debug.Assert(expectNullSection, "Duplicate 'case null' or 'case null' in non-lifted switch.");
 					expectNullSection = false;
 				}
@@ -164,8 +169,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			// Pick the section with the most labels as default section.
 			IL.SwitchSection defaultSection = Sections.First();
-			foreach (var section in Sections) {
-				if (section.Labels.Count() > defaultSection.Labels.Count()) {
+			foreach (var section in Sections)
+			{
+				if (section.Labels.Count() > defaultSection.Labels.Count())
+				{
 					defaultSection = section;
 				}
 			}
@@ -207,13 +214,17 @@ namespace ICSharpCode.Decompiler.IL
 			WriteILRange(output, options);
 			output.Write("case", this, DecompilerReferenceFlags.Definition | DecompilerReferenceFlags.Local, BoxedTextColor.Text);
 			output.Write(" ", BoxedTextColor.Text);
-			if (HasNullLabel) {
+			if (HasNullLabel)
+			{
 				output.Write("null", BoxedTextColor.Text);
-				if (!Labels.IsEmpty) {
+				if (!Labels.IsEmpty)
+				{
 					output.Write(", ", BoxedTextColor.Text);
 					output.Write(Labels.ToString(), BoxedTextColor.Text);
 				}
-			} else {
+			}
+			else
+			{
 				output.Write(Labels.ToString(), BoxedTextColor.Text);
 			}
 			output.Write(": ", BoxedTextColor.Text);

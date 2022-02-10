@@ -46,14 +46,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 	{
 		public class HbmParam
 		{
-			public string Name {
-				get;
-				set;
-			}
-			public string[] Text {
-				get;
-				set;
-			}
+			public string Name { get; set; }
+			public string[] Text { get; set; }
 		}
 
 		public class Customer
@@ -96,11 +90,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			return from c in customers
 				   from o in c.Orders
-				   select new {
-					   c.Name,
-					   o.OrderID,
-					   o.Total
-				   };
+				   select new { c.Name, o.OrderID, o.Total };
 		}
 
 		public object SelectManyFollowedByOrderBy()
@@ -108,11 +98,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return from c in customers
 				   from o in c.Orders
 				   orderby o.Total descending
-				   select new {
-					   c.Name,
-					   o.OrderID,
-					   o.Total
-				   };
+				   select new { c.Name, o.OrderID, o.Total };
 		}
 
 		public object MultipleSelectManyFollowedBySelect()
@@ -120,11 +106,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return from c in customers
 				   from o in c.Orders
 				   from d in o.Details
-				   select new {
-					   c.Name,
-					   o.OrderID,
-					   d.Quantity
-				   };
+				   select new { c.Name, o.OrderID, d.Quantity };
 		}
 
 		public object MultipleSelectManyFollowedByLet()
@@ -133,11 +115,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				   from o in c.Orders
 				   from d in o.Details
 				   let x = (decimal)d.Quantity * d.UnitPrice
-				   select new {
-					   c.Name,
-					   o.OrderID,
-					   x
-				   };
+				   select new { c.Name, o.OrderID, x };
 		}
 
 		public object FromLetWhereSelect()
@@ -165,22 +143,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 					let pname = pi.Name
 					let pvalue = pi.GetValue(customers, null)
 					select new HbmParam {
-							Name = pname,
-							Text = new string[1] {
-								(pvalue == null) ? "null" : pvalue.ToString()
-							}
-						}).ToArray();
+						Name = pname,
+						Text = new string[1] { (pvalue == null) ? "null" : pvalue.ToString() }
+					}).ToArray();
 		}
 
 		public object Join()
 		{
 			return from c in customers
 				   join o in orders on c.CustomerID equals o.CustomerID
-				   select new {
-					   c.Name,
-					   o.OrderDate,
-					   o.Total
-				   };
+				   select new { c.Name, o.OrderDate, o.Total };
 		}
 
 		public object JoinInto()
@@ -243,17 +215,17 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 #if ROSLYN && OPT
 			IEnumerable<char> obj = (test ? (from c in Enumerable.Range(0, 255)
-												   where char.IsLetter((char)c)
-												   select (char)c) : (from c in Enumerable.Range(0, 255)
-																	  where char.IsDigit((char)c)
-																	  select (char)c));
+											 where char.IsLetter((char)c)
+											 select (char)c) : (from c in Enumerable.Range(0, 255)
+																where char.IsDigit((char)c)
+																select (char)c));
 			return obj.Concat(obj);
 #else
 			IEnumerable<char> enumerable = (test ? (from c in Enumerable.Range(0, 255)
-												   where char.IsLetter((char)c)
-												   select (char)c) : (from c in Enumerable.Range(0, 255)
-																	  where char.IsDigit((char)c)
-																	  select (char)c));
+													where char.IsLetter((char)c)
+													select (char)c) : (from c in Enumerable.Range(0, 255)
+																	   where char.IsDigit((char)c)
+																	   select (char)c));
 			return enumerable.Concat(enumerable);
 #endif
 		}

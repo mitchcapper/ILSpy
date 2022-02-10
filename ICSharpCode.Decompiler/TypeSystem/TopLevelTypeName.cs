@@ -36,9 +36,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public TopLevelTypeName(string namespaceName, string name, int typeParameterCount = 0)
 		{
 			if (namespaceName == null)
-				throw new ArgumentNullException("namespaceName");
+				throw new ArgumentNullException(nameof(namespaceName));
 			if (name == null)
-				throw new ArgumentNullException("name");
+				throw new ArgumentNullException(nameof(name));
 			this.namespaceName = namespaceName;
 			this.name = name;
 			this.typeParameterCount = typeParameterCount;
@@ -47,10 +47,13 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public TopLevelTypeName(string reflectionName)
 		{
 			int pos = reflectionName.LastIndexOf('.');
-			if (pos < 0) {
+			if (pos < 0)
+			{
 				namespaceName = string.Empty;
 				name = reflectionName;
-			} else {
+			}
+			else
+			{
 				namespaceName = reflectionName.Substring(0, pos);
 				name = reflectionName.Substring(pos + 1);
 			}
@@ -72,12 +75,14 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public string ReflectionName {
 			get {
 				StringBuilder b = new StringBuilder();
-				if (!string.IsNullOrEmpty(namespaceName)) {
+				if (!string.IsNullOrEmpty(namespaceName))
+				{
 					b.Append(namespaceName);
 					b.Append('.');
 				}
 				b.Append(name);
-				if (typeParameterCount > 0) {
+				if (typeParameterCount > 0)
+				{
 					b.Append('`');
 					b.Append(typeParameterCount);
 				}

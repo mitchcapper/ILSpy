@@ -1,4 +1,5 @@
-﻿// Copyright (c) 2018 Daniel Grunwald
+#nullable enable
+// Copyright (c) 2018 Daniel Grunwald
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -20,6 +21,8 @@ using System.Diagnostics;
 using System.Linq;
 using dnSpy.Contracts.Decompiler;
 using dnSpy.Contracts.Text;
+using ICSharpCode.Decompiler.IL.Transforms;
+
 using ICSharpCode.Decompiler.IL.Transforms;
 
 namespace ICSharpCode.Decompiler.IL
@@ -70,7 +73,8 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			this.ResultType = unwrappedType;
 			this.RefInput = refInput;
-			if (unwrappedType == StackType.Ref) {
+			if (unwrappedType == StackType.Ref)
+			{
 				Debug.Assert(refInput);
 			}
 		}
@@ -78,9 +82,12 @@ namespace ICSharpCode.Decompiler.IL
 		internal override void CheckInvariant(ILPhase phase)
 		{
 			base.CheckInvariant(phase);
-			if (this.RefInput) {
+			if (this.RefInput)
+			{
 				Debug.Assert(Argument.ResultType == StackType.Ref, "nullable.unwrap expects reference to nullable type as input");
-			} else {
+			}
+			else
+			{
 				Debug.Assert(Argument.ResultType == StackType.O, "nullable.unwrap expects nullable type as input");
 			}
 			Debug.Assert(Ancestors.Any(a => a is NullableRewrap));
@@ -89,7 +96,8 @@ namespace ICSharpCode.Decompiler.IL
 		public override void WriteTo(IDecompilerOutput output, ILAstWritingOptions options)
 		{
 			output.Write("nullable.unwrap.", BoxedTextColor.Text);
-			if (RefInput) {
+			if (RefInput)
+			{
 				output.Write("refinput.", BoxedTextColor.Text);
 			}
 			output.Write(ResultType);

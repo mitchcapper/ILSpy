@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.TypeSystem.Implementation
@@ -39,21 +40,21 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public DefaultParameter(IType type, string name)
 		{
 			if (type == null)
-				throw new ArgumentNullException("type");
+				throw new ArgumentNullException(nameof(type));
 			if (name == null)
-				throw new ArgumentNullException("name");
+				throw new ArgumentNullException(nameof(name));
 			this.type = type;
 			this.name = name;
 			this.attributes = EmptyList<IAttribute>.Instance;
 		}
 
 		public DefaultParameter(IType type, string name, IParameterizedMember owner = null, IReadOnlyList<IAttribute> attributes = null,
-		                        ReferenceKind referenceKind = ReferenceKind.None, bool isParams = false, bool isOptional = false, object defaultValue = null)
+				ReferenceKind referenceKind = ReferenceKind.None, bool isParams = false, bool isOptional = false, object defaultValue = null)
 		{
 			if (type == null)
-				throw new ArgumentNullException("type");
+				throw new ArgumentNullException(nameof(type));
 			if (name == null)
-				throw new ArgumentNullException("name");
+				throw new ArgumentNullException(nameof(name));
 			this.type = type;
 			this.name = name;
 			this.owner = owner;
@@ -125,7 +126,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			b.Append(parameter.Name);
 			b.Append(':');
 			b.Append(parameter.Type.ReflectionName);
-			if (parameter.IsOptional && parameter.HasConstantValueInSignature) {
+			if (parameter.IsOptional && parameter.HasConstantValueInSignature)
+			{
 				b.Append(" = ");
 				object val = parameter.GetConstantValue(throwOnInvalidMetadata: false);
 				if (val != null)

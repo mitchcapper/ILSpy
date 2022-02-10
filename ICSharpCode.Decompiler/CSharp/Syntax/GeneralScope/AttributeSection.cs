@@ -53,14 +53,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				get { return NodeType.Pattern; }
 			}
 
-			public override void AcceptVisitor (IAstVisitor visitor)
+			public override void AcceptVisitor(IAstVisitor visitor)
 			{
-				visitor.VisitPatternPlaceholder (this, child);
+				visitor.VisitPatternPlaceholder(this, child);
 			}
 
-			public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+			public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
 			{
-				return visitor.VisitPatternPlaceholder (this, child);
+				return visitor.VisitPatternPlaceholder(this, child);
 			}
 
 			public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
@@ -87,50 +87,50 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 
 		public CSharpTokenNode LBracketToken {
-			get { return GetChildByRole (Roles.LBracket); }
+			get { return GetChildByRole(Roles.LBracket); }
 		}
 
 		public string AttributeTarget {
 			get {
-				return GetChildByRole (Roles.Identifier).Name;
+				return GetChildByRole(Roles.Identifier).Name;
 			}
 			set {
-				var id = Identifier.Create (value);
-				id.AddAnnotation (BoxedTextColor.Keyword);
-				SetChildByRole (Roles.Identifier, id);
+				var id = Identifier.Create(value);
+				id.AddAnnotation(BoxedTextColor.Keyword);
+				SetChildByRole(Roles.Identifier, id);
 			}
 		}
 
 		public Identifier AttributeTargetToken {
 			get {
-				return GetChildByRole (Roles.Identifier);
+				return GetChildByRole(Roles.Identifier);
 			}
 			set {
-				SetChildByRole (Roles.Identifier, value);
+				SetChildByRole(Roles.Identifier, value);
 			}
 		}
 
 		public AstNodeCollection<Attribute> Attributes {
-			get { return base.GetChildrenByRole (Roles.Attribute); }
+			get { return base.GetChildrenByRole(Roles.Attribute); }
 		}
 
 		public CSharpTokenNode RBracketToken {
-			get { return GetChildByRole (Roles.RBracket); }
+			get { return GetChildByRole(Roles.RBracket); }
 		}
 
-		public override void AcceptVisitor (IAstVisitor visitor)
+		public override void AcceptVisitor(IAstVisitor visitor)
 		{
-			visitor.VisitAttributeSection (this);
+			visitor.VisitAttributeSection(this);
 		}
 
-		public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
 		{
-			return visitor.VisitAttributeSection (this);
+			return visitor.VisitAttributeSection(this);
 		}
 
-		public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
+		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
 		{
-			return visitor.VisitAttributeSection (this, data);
+			return visitor.VisitAttributeSection(this, data);
 		}
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
@@ -148,28 +148,28 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			this.Attributes.Add(attr);
 		}
 
-//		public static string GetAttributeTargetName(AttributeTarget attributeTarget)
-//		{
-//			switch (attributeTarget) {
-//				case AttributeTarget.None:
-//					return null;
-//				case AttributeTarget.Assembly:
-//					return "assembly";
-//				case AttributeTarget.Module:
-//					return "module";
-//				case AttributeTarget.Type:
-//					return "type";
-//				case AttributeTarget.Param:
-//					return "param";
-//				case AttributeTarget.Field:
-//					return "field";
-//				case AttributeTarget.Return:
-//					return "return";
-//				case AttributeTarget.Method:
-//					return "method";
-//				default:
-//					throw new NotSupportedException("Invalid value for AttributeTarget");
-//			}
-//		}
+		//		public static string GetAttributeTargetName(AttributeTarget attributeTarget)
+		//		{
+		//			switch (attributeTarget) {
+		//				case AttributeTarget.None:
+		//					return null;
+		//				case AttributeTarget.Assembly:
+		//					return "assembly";
+		//				case AttributeTarget.Module:
+		//					return "module";
+		//				case AttributeTarget.Type:
+		//					return "type";
+		//				case AttributeTarget.Param:
+		//					return "param";
+		//				case AttributeTarget.Field:
+		//					return "field";
+		//				case AttributeTarget.Return:
+		//					return "return";
+		//				case AttributeTarget.Method:
+		//					return "method";
+		//				default:
+		//					throw new NotSupportedException("Invalid value for AttributeTarget");
+		//			}
+		//		}
 	}
 }

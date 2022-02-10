@@ -21,7 +21,9 @@ using System.CodeDom.Compiler;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+
 using ICSharpCode.Decompiler.Tests.Helpers;
+
 using NUnit.Framework;
 
 namespace ICSharpCode.Decompiler.Tests
@@ -38,7 +40,8 @@ namespace ICSharpCode.Decompiler.Tests
 				.Where(m => m.GetCustomAttributes(typeof(TestAttribute), false).Any())
 				.Select(m => m.Name)
 				.ToArray();
-			foreach (var file in new DirectoryInfo(TestCasePath).EnumerateFiles()) {
+			foreach (var file in new DirectoryInfo(TestCasePath).EnumerateFiles())
+			{
 				if (file.Extension == ".txt" || file.Extension == ".exe" || file.Extension == ".config")
 					continue;
 				var testName = Path.GetFileNameWithoutExtension(file.Name);
@@ -249,7 +252,8 @@ namespace ICSharpCode.Decompiler.Tests
 		{
 			CompilerOptions compiler = CompilerOptions.UseDebug;
 			AssemblerOptions asm = AssemblerOptions.None;
-			if (force32Bit) {
+			if (force32Bit)
+			{
 				compiler |= CompilerOptions.Force32Bit;
 				asm |= AssemblerOptions.Force32Bit;
 			}
@@ -273,7 +277,8 @@ namespace ICSharpCode.Decompiler.Tests
 		{
 			CompilerOptions compiler = CompilerOptions.UseRoslynLatest | CompilerOptions.UseDebug;
 			AssemblerOptions asm = AssemblerOptions.None;
-			if (force32Bit) {
+			if (force32Bit)
+			{
 				compiler |= CompilerOptions.Force32Bit;
 				asm |= AssemblerOptions.Force32Bit;
 			}
@@ -358,7 +363,8 @@ namespace ICSharpCode.Decompiler.Tests
 			string testOutputFileName = testName + Tester.GetSuffix(options) + ".exe";
 			CompilerResults outputFile = null, decompiledOutputFile = null;
 
-			try {
+			try
+			{
 				outputFile = Tester.CompileCSharp(Path.Combine(TestCasePath, testFileName), options,
 					outputFileName: Path.Combine(TestCasePath, testOutputFileName));
 				string decompiledCodeFile = Tester.DecompileCSharp(outputFile.PathToAssembly, Tester.GetSettings(options));
@@ -378,12 +384,14 @@ namespace ICSharpCode.Decompiler.Tests
 </configuration>");
 				}
 				decompiledOutputFile = Tester.CompileCSharp(decompiledCodeFile, options);
-				
+
 				Tester.RunAndCompareOutput(testFileName, outputFile.PathToAssembly, decompiledOutputFile.PathToAssembly, decompiledCodeFile);
-				
+
 				Tester.RepeatOnIOError(() => File.Delete(decompiledCodeFile));
 				Tester.RepeatOnIOError(() => File.Delete(decompiledOutputFile.PathToAssembly));
-			} finally {
+			}
+			finally
+			{
 				if (outputFile != null)
 					outputFile.TempFiles.Delete();
 				if (decompiledOutputFile != null)
@@ -398,7 +406,8 @@ namespace ICSharpCode.Decompiler.Tests
 			string testOutputFileName = testName + Tester.GetSuffix(options) + ".exe";
 			CompilerResults outputFile = null, decompiledOutputFile = null;
 
-			try {
+			try
+			{
 				outputFile = Tester.CompileVB(Path.Combine(TestCasePath, testFileName), options,
 					outputFileName: Path.Combine(TestCasePath, testOutputFileName));
 				string decompiledCodeFile = Tester.DecompileCSharp(outputFile.PathToAssembly, Tester.GetSettings(options));
@@ -408,7 +417,9 @@ namespace ICSharpCode.Decompiler.Tests
 
 				Tester.RepeatOnIOError(() => File.Delete(decompiledCodeFile));
 				Tester.RepeatOnIOError(() => File.Delete(decompiledOutputFile.PathToAssembly));
-			} finally {
+			}
+			finally
+			{
 				if (outputFile != null)
 					outputFile.TempFiles.Delete();
 				if (decompiledOutputFile != null)
@@ -421,16 +432,19 @@ namespace ICSharpCode.Decompiler.Tests
 			string outputFile = null;
 			CompilerResults decompiledOutputFile = null;
 
-			try {
+			try
+			{
 				outputFile = Tester.AssembleIL(Path.Combine(TestCasePath, testFileName), asmOptions);
 				string decompiledCodeFile = Tester.DecompileCSharp(outputFile, Tester.GetSettings(options));
 				decompiledOutputFile = Tester.CompileCSharp(decompiledCodeFile, options);
-				
+
 				Tester.RunAndCompareOutput(testFileName, outputFile, decompiledOutputFile.PathToAssembly, decompiledCodeFile);
 
 				Tester.RepeatOnIOError(() => File.Delete(decompiledCodeFile));
 				Tester.RepeatOnIOError(() => File.Delete(decompiledOutputFile.PathToAssembly));
-			} finally {
+			}
+			finally
+			{
 				if (decompiledOutputFile != null)
 					decompiledOutputFile.TempFiles.Delete();
 			}

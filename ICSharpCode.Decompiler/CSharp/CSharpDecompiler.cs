@@ -19,19 +19,25 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
+
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using dnlib.DotNet;
 using ICSharpCode.Decompiler.CSharp.Transforms;
+using ICSharpCode.Decompiler.DebugInfo;
+using ICSharpCode.Decompiler.Disassembler;
+using ICSharpCode.Decompiler.Documentation;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.IL.ControlFlow;
 using ICSharpCode.Decompiler.IL.Transforms;
-using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Semantics;
+using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 using System.IO;
 using System.Text;
@@ -201,6 +207,11 @@ namespace ICSharpCode.Decompiler.CSharp
 		public IDecompilerTypeSystem TypeSystem => typeSystem;
 
 		public StringBuilder StringBuilder { get; }
+
+		/// <summary>
+		/// Gets or sets the optional provider for XML documentation strings.
+		/// </summary>
+		public IDocumentationProvider DocumentationProvider { get; set; }
 
 		/// <summary>
 		/// IL transforms.
@@ -400,11 +411,18 @@ namespace ICSharpCode.Decompiler.CSharp
 			return typeSystemAstBuilder;
 		}
 
+		IDocumentationProvider CreateDefaultDocumentationProvider()
+		{
+			//TODO: replace this with proper code
+			return new DummyDocumentationProvider();
+		}
+
 		void RunTransforms(AstNode rootNode, DecompileRun decompileRun, ITypeResolveContext decompilationContext)
 		{
 			var typeSystemAstBuilder = CreateAstBuilder(decompileRun.Settings);
 			var context = new TransformContext(typeSystem, decompileRun, decompilationContext, typeSystemAstBuilder);
-			foreach (var transform in astTransforms) {
+			foreach (var transform in astTransforms)
+			{
 				CancellationToken.ThrowIfCancellationRequested();
 				transform.Run(rootNode, context);
 			}
@@ -421,6 +439,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			var decompilationContext = new SimpleTypeResolveContext(typeSystem.MainModule);
 			var decompileRun = new DecompileRun(settings) {
+				DocumentationProvider = DocumentationProvider ?? CreateDefaultDocumentationProvider(),
 				CancellationToken = CancellationToken
 			};
 			syntaxTree = new SyntaxTree();
@@ -469,7 +488,9 @@ namespace ICSharpCode.Decompiler.CSharp
 					attrSection.AttributeTarget = "module";
 					syntaxTree.AddChild(attrSection, SyntaxTree.MemberRole);
 				}
-			} catch (Exception innerException) when (!(innerException is OperationCanceledException || innerException is DecompilerException)) {
+			}
+			catch (Exception innerException) when (!(innerException is OperationCanceledException || innerException is DecompilerException))
+			{
 				throw new DecompilerException(moduleDef, innerException, "Error decompiling module and assembly attributes of " + module.AssemblyName);
 			}
 		}
@@ -484,10 +505,14 @@ namespace ICSharpCode.Decompiler.CSharp
 					continue;
 				if (MemberIsHidden(cecilType, settings))
 					continue;
-				if(string.IsNullOrEmpty(cecilType.Namespace)) {
+				if (string.IsNullOrEmpty(cecilType.Namespace))
+				{
 					groupNode = syntaxTree;
-				} else {
-					if (currentNamespace != cecilType.Namespace) {
+				}
+				else
+				{
+					if (currentNamespace != cecilType.Namespace)
+					{
 						groupNode = new NamespaceDeclaration(cecilType.Namespace);
 						syntaxTree.AddChild(groupNode, SyntaxTree.MemberRole);
 					}
@@ -676,6 +701,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				throw new ArgumentNullException(nameof(types));
 			var decompilationContext = new SimpleTypeResolveContext(typeSystem.MainModule);
 			var decompileRun = new DecompileRun(settings) {
+				DocumentationProvider = DocumentationProvider ?? CreateDefaultDocumentationProvider(),
 				CancellationToken = CancellationToken
 			};
 			syntaxTree = new SyntaxTree();
@@ -779,7 +805,8 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		IEnumerable<EntityDeclaration> AddInterfaceImplHelpers(EntityDeclaration memberDecl, ICSharpCode.Decompiler.TypeSystem.IMethod method, TypeSystemAstBuilder astBuilder)
 		{
-			if (!memberDecl.GetChildByRole(EntityDeclaration.PrivateImplementationTypeRole).IsNull) {
+			if (!memberDecl.GetChildByRole(EntityDeclaration.PrivateImplementationTypeRole).IsNull)
+			{
 				yield break; // cannot create forwarder for existing explicit interface impl
 			}
 			if (method.IsStatic)
@@ -797,15 +824,15 @@ namespace ICSharpCode.Decompiler.CSharp
 				methodDecl.PrivateImplementationType = astBuilder.ConvertType(m.DeclaringType);
 				methodDecl.Name = m.Name;
 				methodDecl.TypeParameters.AddRange(memberDecl.GetChildrenByRole(Roles.TypeParameter)
-				                                   .Select(n => (TypeParameterDeclaration)n.Clone()));
+												   .Select(n => (TypeParameterDeclaration)n.Clone()));
 				methodDecl.Parameters.AddRange(memberDecl.GetChildrenByRole(Roles.Parameter).Select(n => n.Clone()));
 				methodDecl.Constraints.AddRange(memberDecl.GetChildrenByRole(Roles.Constraint)
-				                                .Select(n => (Constraint)n.Clone()));
+												.Select(n => (Constraint)n.Clone()));
 
 				methodDecl.Body = new BlockStatement();
 				methodDecl.Body.AddChild(new Comment(
 					"ILSpy generated this explicit interface implementation from .override directive in " + memberDecl.Name),
-				                         Roles.Comment);
+					Roles.Comment);
 
 				var member = new MemberReferenceExpression {
 					Target = new ThisReferenceExpression().WithAnnotation(methodHandle.DeclaringType),
@@ -816,9 +843,12 @@ namespace ICSharpCode.Decompiler.CSharp
 				var forwardingCall = new InvocationExpression(member,
 					methodDecl.Parameters.Select(ForwardParameter)
 				).WithAnnotation(method.OriginalMember);
-				if (m.ReturnType.IsKnownType(KnownTypeCode.Void)) {
+				if (m.ReturnType.IsKnownType(KnownTypeCode.Void))
+				{
 					methodDecl.Body.Add(new ExpressionStatement(forwardingCall));
-				} else {
+				}
+				else
+				{
 					methodDecl.Body.Add(new ReturnStatement(forwardingCall));
 				}
 				yield return methodDecl;
@@ -827,7 +857,8 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		Expression ForwardParameter(ParameterDeclaration p)
 		{
-			switch (p.ParameterModifier) {
+			switch (p.ParameterModifier)
+			{
 				case ParameterModifier.Ref:
 					return new DirectionExpression(FieldDirection.Ref, new IdentifierExpression(p.Name));
 				case ParameterModifier.Out:
@@ -901,8 +932,10 @@ namespace ICSharpCode.Decompiler.CSharp
 		void FixParameterNames(EntityDeclaration entity)
 		{
 			int i = 0;
-			foreach (var parameter in entity.GetChildrenByRole(Roles.Parameter)) {
-				if (string.IsNullOrEmpty(parameter.Name) && !parameter.Type.IsArgList()) {
+			foreach (var parameter in entity.GetChildrenByRole(Roles.Parameter))
+			{
+				if (string.IsNullOrEmpty(parameter.Name) && !parameter.Type.IsArgList())
+				{
 					// needs to be consistent with logic in ILReader.CreateILVarable(ParameterDefinition)
 					parameter.Name = "P_" + i;
 				}
@@ -1184,7 +1217,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 
 				var localSettings = settings.Clone();
-				if (IsWindowsFormsInitializeComponentMethod(method)) {
+				if (IsWindowsFormsInitializeComponentMethod(method))
+				{
 					localSettings.UseImplicitMethodGroupConversion = false;
 					localSettings.UsingDeclarations = false;
 					localSettings.AlwaysCastTargetsOfExplicitInterfaceImplementationCalls = true;
@@ -1195,7 +1229,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					CancellationToken = CancellationToken,
 					DecompileRun = decompileRun
 				};
-				foreach (var transform in ilTransforms) {
+				foreach (var transform in ilTransforms)
+				{
 					CancellationToken.ThrowIfCancellationRequested();
 					transform.Run(function, context);
 					function.CheckInvariant(ILPhase.Normal);
@@ -1222,7 +1257,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					AssignSourceLocals(function);
 
 					Comment prev = null;
-					foreach (string warning in function.Warnings) {
+					foreach (string warning in function.Warnings)
+					{
 						body.InsertChildAfter(prev, prev = new Comment(warning), Roles.Comment);
 					}
 
@@ -1295,15 +1331,18 @@ namespace ICSharpCode.Decompiler.CSharp
 		internal static bool RemoveAttribute(EntityDeclaration entityDecl, KnownAttribute attributeType)
 		{
 			bool found = false;
-			foreach (var section in entityDecl.Attributes) {
-				foreach (var attr in section.Attributes) {
+			foreach (var section in entityDecl.Attributes)
+			{
+				foreach (var attr in section.Attributes)
+				{
 					var symbol = attr.Type.GetSymbol();
 					if (symbol is ITypeDefinition td && td.FullTypeName == attributeType.GetTypeName()) {
 						attr.Remove();
 						found = true;
 					}
 				}
-				if (section.Attributes.Count == 0) {
+				if (section.Attributes.Count == 0)
+				{
 					section.Remove();
 				}
 			}
@@ -1313,8 +1352,10 @@ namespace ICSharpCode.Decompiler.CSharp
 		bool FindAttribute(EntityDeclaration entityDecl, KnownAttribute attributeType, out Syntax.Attribute attribute)
 		{
 			attribute = null;
-			foreach (var section in entityDecl.Attributes) {
-				foreach (var attr in section.Attributes) {
+			foreach (var section in entityDecl.Attributes)
+			{
+				foreach (var attr in section.Attributes)
+				{
 					var symbol = attr.Type.GetSymbol();
 					if (symbol is ITypeDefinition td && td.FullTypeName == attributeType.GetTypeName()) {
 						attribute = attr;
@@ -1738,7 +1779,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			SequencePointBuilder spb = new SequencePointBuilder();
 			syntaxTree.AcceptVisitor(spb);
 			return spb.GetSequencePoints();
-	}
+		}
 		#endregion
 	}
 

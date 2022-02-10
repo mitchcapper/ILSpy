@@ -24,9 +24,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-using System.Text;
 using System.Collections.Generic;
 using dnSpy.Contracts.Text;
+using System.Text;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
@@ -35,7 +35,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class UsingDeclaration : AstNode
 	{
-		public static readonly TokenRole UsingKeywordRole = new TokenRole ("using");
+		public static readonly TokenRole UsingKeywordRole = new TokenRole("using");
 		public static readonly Role<AstType> ImportRole = new Role<AstType>("Import", AstType.Null);
 
 		public override NodeType NodeType {
@@ -45,28 +45,32 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 
 		public CSharpTokenNode UsingToken {
-			get { return GetChildByRole (UsingKeywordRole); }
+			get { return GetChildByRole(UsingKeywordRole); }
 		}
 
 		public AstType Import {
-			get { return GetChildByRole (ImportRole); }
-			set { SetChildByRole (ImportRole, value); }
+			get { return GetChildByRole(ImportRole); }
+			set { SetChildByRole(ImportRole, value); }
 		}
 
 		public string Namespace {
-			get { return ConstructNamespace (Import); }
+			get { return ConstructNamespace(Import); }
 		}
 
-		internal static string ConstructNamespace (AstType type)
+		internal static string ConstructNamespace(AstType type)
 		{
 			var stack = new Stack<string>();
-			while (type is MemberType) {
+			while (type is MemberType)
+			{
 				var mt = (MemberType)type;
 				stack.Push(mt.MemberName);
 				type = mt.Target;
-				if (mt.IsDoubleColon) {
+				if (mt.IsDoubleColon)
+				{
 					stack.Push("::");
-				} else {
+				}
+				else
+				{
 					stack.Push(".");
 				}
 			}
@@ -80,36 +84,36 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 
 		public CSharpTokenNode SemicolonToken {
-			get { return GetChildByRole (Roles.Semicolon); }
+			get { return GetChildByRole(Roles.Semicolon); }
 		}
 
-		public UsingDeclaration ()
+		public UsingDeclaration()
 		{
 		}
 
-		public UsingDeclaration (string nameSpace)
+		public UsingDeclaration(string nameSpace)
 		{
-			AddChild (AstType.Create (nameSpace, BoxedTextColor.Namespace), ImportRole);
+			AddChild(AstType.Create(nameSpace, BoxedTextColor.Namespace), ImportRole);
 		}
 
-		public UsingDeclaration (AstType import)
+		public UsingDeclaration(AstType import)
 		{
-			AddChild (import, ImportRole);
+			AddChild(import, ImportRole);
 		}
 
-		public override void AcceptVisitor (IAstVisitor visitor)
+		public override void AcceptVisitor(IAstVisitor visitor)
 		{
-			visitor.VisitUsingDeclaration (this);
+			visitor.VisitUsingDeclaration(this);
 		}
 
-		public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
 		{
-			return visitor.VisitUsingDeclaration (this);
+			return visitor.VisitUsingDeclaration(this);
 		}
 
-		public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
+		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
 		{
-			return visitor.VisitUsingDeclaration (this, data);
+			return visitor.VisitUsingDeclaration(this, data);
 		}
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)

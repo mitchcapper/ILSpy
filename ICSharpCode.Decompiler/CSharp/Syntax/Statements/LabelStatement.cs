@@ -36,37 +36,37 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public string Label {
 			get {
-				return GetChildByRole (Roles.Identifier).Name;
+				return GetChildByRole(Roles.Identifier).Name;
 			}
 			set {
-				var id = Identifier.Create (value);
+				var id = Identifier.Create(value);
 				id.AddAnnotation(BoxedTextColor.Label);
 				SetChildByRole(Roles.Identifier, id);
 			}
 		}
 
 		public Identifier LabelToken {
-			get { return GetChildByRole (Roles.Identifier); }
-			set { SetChildByRole (Roles.Identifier, value); }
+			get { return GetChildByRole(Roles.Identifier); }
+			set { SetChildByRole(Roles.Identifier, value); }
 		}
 
 		public CSharpTokenNode ColonToken {
-			get { return GetChildByRole (Roles.Colon); }
+			get { return GetChildByRole(Roles.Colon); }
 		}
 
-		public override void AcceptVisitor (IAstVisitor visitor)
+		public override void AcceptVisitor(IAstVisitor visitor)
 		{
-			visitor.VisitLabelStatement (this);
+			visitor.VisitLabelStatement(this);
 		}
 
-		public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
 		{
-			return visitor.VisitLabelStatement (this);
+			return visitor.VisitLabelStatement(this);
 		}
 
-		public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
+		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
 		{
-			return visitor.VisitLabelStatement (this, data);
+			return visitor.VisitLabelStatement(this, data);
 		}
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)

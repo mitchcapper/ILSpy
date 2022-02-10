@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.TypeSystem.Implementation
@@ -34,9 +35,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get {
 				string ns = this.Namespace;
 				string name = this.Name;
-				if (string.IsNullOrEmpty(ns)) {
+				if (string.IsNullOrEmpty(ns))
+				{
 					return name;
-				} else {
+				}
+				else
+				{
 					return ns + "." + name;
 				}
 			}
@@ -56,7 +60,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return this.FullName; }
 		}
 
-		public abstract bool? IsReferenceType  { get; }
+		public abstract bool? IsReferenceType { get; }
 
 		public virtual bool IsByRefLike => false;
 

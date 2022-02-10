@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using dnlib.DotNet;
+
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
 
@@ -36,9 +37,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public ArrayType(ICompilation compilation, IType elementType, int dimensions = 1, Nullability nullability = Nullability.Oblivious) : base(elementType)
 		{
 			if (compilation == null)
-				throw new ArgumentNullException("compilation");
+				throw new ArgumentNullException(nameof(compilation));
 			if (dimensions <= 0)
-				throw new ArgumentOutOfRangeException("dimensions", dimensions, "dimensions must be positive");
+				throw new ArgumentOutOfRangeException(nameof(dimensions), dimensions, "dimensions must be positive");
 			this.compilation = compilation;
 			this.dimensions = dimensions;
 			this.nullability = nullability;
@@ -75,7 +76,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public override string NameSuffix {
 			get {
-				return "[" + new string(',', dimensions-1) + "]";
+				return "[" + new string(',', dimensions - 1) + "]";
 			}
 		}
 
@@ -96,7 +97,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public override string ToString()
 		{
-			switch (nullability) {
+			switch (nullability)
+			{
 				case Nullability.Nullable:
 					return elementType.ToString() + NameSuffix + "?";
 				case Nullability.NotNullable:
@@ -112,7 +114,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				IType t = compilation.FindType(KnownTypeCode.Array);
 				if (t.Kind != TypeKind.Unknown)
 					baseTypes.Add(t);
-				if (dimensions == 1 && elementType.Kind != TypeKind.Pointer) {
+				if (dimensions == 1 && elementType.Kind != TypeKind.Pointer)
+				{
 					// single-dimensional arrays implement IList<T>
 					ITypeDefinition def = compilation.FindType(KnownTypeCode.IListOfT) as ITypeDefinition;
 					if (def != null)
@@ -185,9 +188,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public ArrayTypeReference(ITypeReference elementType, int dimensions = 1)
 		{
 			if (elementType == null)
-				throw new ArgumentNullException("elementType");
+				throw new ArgumentNullException(nameof(elementType));
 			if (dimensions <= 0)
-				throw new ArgumentOutOfRangeException("dimensions", dimensions, "dimensions must be positive");
+				throw new ArgumentOutOfRangeException(nameof(dimensions), dimensions, "dimensions must be positive");
 			this.elementType = elementType;
 			this.dimensions = dimensions;
 		}

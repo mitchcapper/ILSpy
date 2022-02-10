@@ -5,17 +5,20 @@
   <Import Project="..\..\..\..\DnSpyCommon.props" />
 
   <PropertyGroup>
+    <AssemblyTitle>ICSharpCode.Decompiler</AssemblyTitle>
+
+    <Description>IL decompiler engine</Description>
+    <Company>ic#code</Company>
+    <Product>ILSpy</Product>
+    <Copyright>Copyright 2011-2022 AlphaSierraPapa for the SharpDevelop Team</Copyright>
+    <NeutralLanguage>en-US</NeutralLanguage>
+    <Version>7.2.0.0</Version>
+
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>ICSharpCode.Decompiler.snk</AssemblyOriginatorKeyFile>
-    <NoWarn>1685</NoWarn>
-
-    <AssemblyTitle>ICSharpCode.Decompiler</AssemblyTitle>
-    <Company>ic#code</Company>
-    <Description>IL decompiler engine</Description>
-    <Copyright>Copyright 2011-2018 AlphaSierraPapa for the SharpDevelop Team</Copyright>
-    <Version>7.1.0.0</Version>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <NoWarn>1701;1702;1591;1573</NoWarn>
+
     <CodeAnalysisRuleSet>ICSharpCode.Decompiler.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
 
@@ -34,6 +37,12 @@
   <PropertyGroup Condition="!$(TargetFramework.StartsWith(net4))">
     <DefineConstants>$(DefineConstants);NETCORE</DefineConstants>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="..\doc\Pattern Matching.html">
+      <Link>CSharp\Syntax\PatternMatching\Pattern Matching.html</Link>
+    </Content>
+  </ItemGroup>
 
   <ItemGroup>
     <!--Versions must match the Roslyn packages' references-->

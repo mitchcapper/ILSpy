@@ -5,15 +5,16 @@
 // Architecture: AnyCPU (32-bit preferred)
 // Runtime: .NET 4.0
 
-using Microsoft.FSharp.Collections;
-using Microsoft.FSharp.Core;
-using Microsoft.FSharp.Core.CompilerServices;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+
+using Microsoft.FSharp.Collections;
+using Microsoft.FSharp.Core;
+using Microsoft.FSharp.Core.CompilerServices;
 
 [assembly: FSharpInterfaceDataVersion(2, 0, 0)]
 [assembly: AssemblyTitle("ConsoleApplication1")]
@@ -70,16 +71,17 @@ public static class Program
 
 		public override int GenerateNext(ref IEnumerable<int> next)
 		{
-			switch (pc) {
-			default:
-				pc = 1;
-				current = 1;
-				return 1;
-			case 1:
-				pc = 2;
-				break;
-			case 2:
-				break;
+			switch (pc)
+			{
+				default:
+					pc = 1;
+					current = 1;
+					return 1;
+				case 1:
+					pc = 2;
+					break;
+				case 2:
+					break;
 			}
 			current = 0;
 			return 0;
@@ -92,12 +94,13 @@ public static class Program
 
 		public override bool get_CheckClose()
 		{
-			switch (pc) {
-			default:
-				return false;
-			case 0:
-			case 2:
-				return false;
+			switch (pc)
+			{
+				default:
+					return false;
+				case 0:
+				case 2:
+					return false;
 			}
 		}
 
@@ -133,32 +136,35 @@ public static class Program
 
 	public static int[] getArray()
 	{
-		return new int[1] {
-			1
-		};
+		return new int[1] { 1 };
 	}
 
 	[EntryPoint]
 	public static int main(string[] argv)
 	{
 		IDisposable disposable;
-		using (Program.disposable()) {
+		using (Program.disposable())
+		{
 			Console.WriteLine("Hello 1");
 			disposable = Program.disposable();
 		}
-		using (disposable) {
+		using (disposable)
+		{
 			IEnumerable<int> seq = getSeq();
-			foreach (int item in seq) {
+			foreach (int item in seq)
+			{
 				Console.WriteLine(item);
 			}
 			FSharpList<int> fSharpList = getList();
-			for (FSharpList<int> tailOrNull = fSharpList.TailOrNull; tailOrNull != null; tailOrNull = fSharpList.TailOrNull) {
+			for (FSharpList<int> tailOrNull = fSharpList.TailOrNull; tailOrNull != null; tailOrNull = fSharpList.TailOrNull)
+			{
 				int headOrDefault = fSharpList.HeadOrDefault;
 				Console.WriteLine(headOrDefault);
 				fSharpList = tailOrNull;
 			}
 			int[] array = getArray();
-			foreach (int value in array) {
+			foreach (int value in array)
+			{
 				Console.WriteLine(value);
 			}
 			return 0;

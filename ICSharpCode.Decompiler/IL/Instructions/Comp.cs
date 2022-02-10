@@ -1,4 +1,5 @@
-﻿// Copyright (c) 2014 Daniel Grunwald
+#nullable enable
+// Copyright (c) 2014 Daniel Grunwald
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -20,9 +21,9 @@ using System;
 using System.Diagnostics;
 using dnSpy.Contracts.Decompiler;
 using dnSpy.Contracts.Text;
+
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.IL
 {
@@ -45,7 +46,8 @@ namespace ICSharpCode.Decompiler.IL
 
 		public static ComparisonKind Negate(this ComparisonKind kind)
 		{
-			switch (kind) {
+			switch (kind)
+			{
 				case ComparisonKind.Equality:
 					return ComparisonKind.Inequality;
 				case ComparisonKind.Inequality:
@@ -59,13 +61,14 @@ namespace ICSharpCode.Decompiler.IL
 				case ComparisonKind.GreaterThanOrEqual:
 					return ComparisonKind.LessThan;
 				default:
-					throw new NotSupportedException();
+					throw new ArgumentOutOfRangeException();
 			}
 		}
 
 		public static BinaryOperatorType ToBinaryOperatorType(this ComparisonKind kind)
 		{
-			switch (kind) {
+			switch (kind)
+			{
 				case ComparisonKind.Equality:
 					return BinaryOperatorType.Equality;
 				case ComparisonKind.Inequality:
@@ -79,7 +82,7 @@ namespace ICSharpCode.Decompiler.IL
 				case ComparisonKind.GreaterThanOrEqual:
 					return BinaryOperatorType.GreaterThanOrEqual;
 				default:
-					throw new NotSupportedException();
+					throw new ArgumentOutOfRangeException();
 			}
 		}
 
@@ -166,10 +169,13 @@ namespace ICSharpCode.Decompiler.IL
 		internal override void CheckInvariant(ILPhase phase)
 		{
 			base.CheckInvariant(phase);
-			if (LiftingKind == ComparisonLiftingKind.None) {
+			if (LiftingKind == ComparisonLiftingKind.None)
+			{
 				Debug.Assert(Left.ResultType == InputType);
 				Debug.Assert(Right.ResultType == InputType);
-			} else {
+			}
+			else
+			{
 				Debug.Assert(Left.ResultType == InputType || Left.ResultType == StackType.O);
 				Debug.Assert(Right.ResultType == InputType || Right.ResultType == StackType.O);
 			}
@@ -178,7 +184,8 @@ namespace ICSharpCode.Decompiler.IL
 		public override void WriteTo(IDecompilerOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
-			if (options.UseLogicOperationSugar && MatchLogicNot(out var arg)) {
+			if (options.UseLogicOperationSugar && MatchLogicNot(out var arg))
+			{
 				output.Write("logic.not(", BoxedTextColor.Text);
 				arg.WriteTo(output, options);
 				output.Write(")", BoxedTextColor.Text);
@@ -187,7 +194,8 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(OpCode);
 			output.Write(".", BoxedTextColor.Text);
 			output.Write(InputType.ToString().ToLower(), BoxedTextColor.Text);
-			switch (Sign) {
+			switch (Sign)
+			{
 				case Sign.Signed:
 					output.Write(".signed", BoxedTextColor.Text);
 					break;
@@ -195,7 +203,8 @@ namespace ICSharpCode.Decompiler.IL
 					output.Write(".unsigned", BoxedTextColor.Text);
 					break;
 			}
-			switch (LiftingKind) {
+			switch (LiftingKind)
+			{
 				case ComparisonLiftingKind.CSharp:
 					output.Write(".lifted[C#]", BoxedTextColor.Text);
 					break;

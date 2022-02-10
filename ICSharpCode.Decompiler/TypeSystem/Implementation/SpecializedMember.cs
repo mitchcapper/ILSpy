@@ -22,6 +22,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using dnlib.DotNet;
+
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.TypeSystem.Implementation
@@ -40,7 +41,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		protected SpecializedMember(IMember memberDefinition)
 		{
 			if (memberDefinition == null)
-				throw new ArgumentNullException("memberDefinition");
+				throw new ArgumentNullException(nameof(memberDefinition));
 			if (memberDefinition is SpecializedMember)
 				throw new ArgumentException("Member definition cannot be specialized. Please use IMember.Specialize() instead of directly constructing SpecializedMember instances.");
 
@@ -63,9 +64,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			if (accessorDefinition == null)
 				return null;
 			var result = LazyInit.VolatileRead(ref cachingField);
-			if (result != null) {
+			if (result != null)
+			{
 				return result;
-			} else {
+			}
+			else
+			{
 				var sm = accessorDefinition.Specialize(substitution);
 				//sm.AccessorOwner = this;
 				return LazyInit.GetOrSet(ref cachingField, sm);
@@ -86,13 +90,19 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					return result;
 				IType definitionDeclaringType = baseMember.DeclaringType;
 				ITypeDefinition definitionDeclaringTypeDef = definitionDeclaringType as ITypeDefinition;
-				if (definitionDeclaringTypeDef != null && definitionDeclaringType.TypeParameterCount > 0) {
-					if (substitution.ClassTypeArguments != null && substitution.ClassTypeArguments.Count == definitionDeclaringType.TypeParameterCount) {
+				if (definitionDeclaringTypeDef != null && definitionDeclaringType.TypeParameterCount > 0)
+				{
+					if (substitution.ClassTypeArguments != null && substitution.ClassTypeArguments.Count == definitionDeclaringType.TypeParameterCount)
+					{
 						result = new ParameterizedType(definitionDeclaringTypeDef, substitution.ClassTypeArguments);
-					} else {
+					}
+					else
+					{
 						result = new ParameterizedType(definitionDeclaringTypeDef, definitionDeclaringTypeDef.TypeParameters).AcceptVisitor(substitution);
 					}
-				} else if (definitionDeclaringType != null) {
+				}
+				else if (definitionDeclaringType != null)
+				{
 					result = definitionDeclaringType.AcceptVisitor(substitution);
 				}
 				return LazyInit.GetOrSet(ref this.declaringType, result);
@@ -231,7 +241,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public override int GetHashCode()
 		{
-			unchecked {
+			unchecked
+			{
 				return 1000000007 * baseMember.GetHashCode() + 1000000009 * substitution.GetHashCode();
 			}
 		}
@@ -281,11 +292,15 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		protected IParameter[] CreateParameters(Func<IType, IType> substitution)
 		{
 			var paramDefs = ((IParameterizedMember)this.baseMember).Parameters;
-			if (paramDefs.Count == 0) {
+			if (paramDefs.Count == 0)
+			{
 				return Empty<IParameter>.Array;
-			} else {
+			}
+			else
+			{
 				var parameters = new IParameter[paramDefs.Count];
-				for (int i = 0; i < parameters.Length; i++) {
+				for (int i = 0; i < parameters.Length; i++)
+				{
 					var p = paramDefs[i];
 					IType newType = substitution(p.Type);
 					parameters[i] = new SpecializedParameter(p, newType, this);
@@ -303,8 +318,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			b.Append('.');
 			b.Append(this.Name);
 			b.Append('(');
-			for (int i = 0; i < this.Parameters.Count; i++) {
-				if (i > 0) b.Append(", ");
+			for (int i = 0; i < this.Parameters.Count; i++)
+			{
+				if (i > 0)
+					b.Append(", ");
 				b.Append(this.Parameters[i].ToString());
 			}
 			b.Append("):");

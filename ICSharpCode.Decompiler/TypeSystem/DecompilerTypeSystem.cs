@@ -19,9 +19,11 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using dnlib.DotNet;
+
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
-using dnlib.DotNet;
 
 namespace ICSharpCode.Decompiler.TypeSystem
 {

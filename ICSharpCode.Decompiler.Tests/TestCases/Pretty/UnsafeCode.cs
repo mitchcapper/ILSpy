@@ -170,7 +170,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public unsafe void PassRefParameterAsPointer(ref int p)
 		{
-			fixed (int* ptr = &p) {
+			fixed (int* ptr = &p)
+			{
 				UsePointer(ptr);
 			}
 		}
@@ -187,7 +188,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public unsafe void AddressInMultiDimensionalArray(double[,] matrix)
 		{
-			fixed (double* d = &matrix[1, 2]) {
+			fixed (double* d = &matrix[1, 2])
+			{
 				PointerReferenceExpression(d);
 				PointerReferenceExpression(d);
 			}
@@ -195,8 +197,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public unsafe void FixedStringAccess(string text)
 		{
-			fixed (char* ptr = text) {
-				for (char* ptr2 = ptr; *ptr2 == 'a'; ptr2++) {
+			fixed (char* ptr = text)
+			{
+				for (char* ptr2 = ptr; *ptr2 == 'a'; ptr2++)
+				{
 					*ptr2 = 'A';
 				}
 			}
@@ -204,7 +208,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public unsafe void FixedStringNoPointerUse(string text)
 		{
-			fixed (char* ptr = text) {
+			fixed (char* ptr = text)
+			{
 			}
 		}
 
@@ -213,21 +218,24 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		// leaving no pinned region we could detect.
 		public unsafe void FixedArrayNoPointerUse(int[] arr)
 		{
-			fixed (int* ptr = arr) {
+			fixed (int* ptr = arr)
+			{
 			}
 		}
 #endif
 
 		public unsafe void PutDoubleIntoLongArray1(long[] array, int index, double val)
 		{
-			fixed (long* ptr = array) {
+			fixed (long* ptr = array)
+			{
 				*(double*)(ptr + index) = val;
 			}
 		}
 
 		public unsafe void PutDoubleIntoLongArray2(long[] array, int index, double val)
 		{
-			fixed (long* ptr = &array[index]) {
+			fixed (long* ptr = &array[index])
+			{
 				*(double*)ptr = val;
 			}
 		}
@@ -375,7 +383,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public unsafe void PinFixedMember(ref StructWithFixedSizeMembers m)
 		{
-			fixed (int* ptr = m.Integers) {
+			fixed (int* ptr = m.Integers)
+			{
 				UsePointer(ptr);
 			}
 		}
@@ -396,7 +405,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public unsafe void FixedMultiDimArray(int[,] arr)
 		{
-			fixed (int* ptr = arr) {
+			fixed (int* ptr = arr)
+			{
 				UsePointer(ptr);
 			}
 		}
@@ -404,7 +414,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 #if CS73
 		public unsafe void FixedSpan(Span<int> span)
 		{
-			fixed (int* ptr = span) {
+			fixed (int* ptr = span)
+			{
 				UsePointer(ptr);
 			}
 		}
@@ -421,7 +432,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			char* ptr = stackalloc char[count];
 			char* ptr2 = stackalloc char[100];
-			for (int i = 0; i < count; i++) {
+			for (int i = 0; i < count; i++)
+			{
 				ptr[i] = (char)i;
 				ptr2[i] = '\0';
 			}
@@ -437,7 +449,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 #endif
 			ptr->X = count;
 			ptr[1].X = ptr->X;
-			for (int i = 2; i < 10; i++) {
+			for (int i = 2; i < 10; i++)
+			{
 				ptr[i].X = count;
 			}
 			return UsePointer(&ptr->Y);
@@ -470,13 +483,18 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		private unsafe static ResultStruct NestedFixedBlocks(byte[] array)
 		{
-			try {
-				fixed (byte* ptr = array) {
-					fixed (byte* ptr2 = Get<byte[]>()) {
+			try
+			{
+				fixed (byte* ptr = array)
+				{
+					fixed (byte* ptr2 = Get<byte[]>())
+					{
 						return new ResultStruct(ptr, ptr2);
 					}
 				}
-			} finally {
+			}
+			finally
+			{
 				Console.WriteLine("Finally");
 			}
 		}
@@ -488,17 +506,20 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		private unsafe static object Issue1386(int arraySize, bool createFirstBuffer)
 		{
-			if (createFirstBuffer) {
+			if (createFirstBuffer)
+			{
 				byte[] array = new byte[arraySize];
 				Console.WriteLine("first fixed");
-				fixed (byte* ptr = array) {
+				fixed (byte* ptr = array)
+				{
 					return CreateBuffer(array.Length, ptr);
 				}
 			}
 
 			byte[] array2 = new byte[arraySize];
 			Console.WriteLine("second fixed");
-			fixed (byte* ptr2 = array2) {
+			fixed (byte* ptr2 = array2)
+			{
 				return CreateBuffer(array2.Length, ptr2);
 			}
 		}
@@ -543,7 +564,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public unsafe void UseArrayOfPointers(int*[] arr)
 		{
-			for (int i = 0; i < arr.Length; i++) {
+			for (int i = 0; i < arr.Length; i++)
+			{
 				arr[i] = null;
 			}
 		}

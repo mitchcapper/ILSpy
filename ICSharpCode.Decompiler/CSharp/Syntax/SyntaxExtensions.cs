@@ -28,7 +28,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public static bool IsComparisonOperator(this OperatorType operatorType)
 		{
-			switch (operatorType) {
+			switch (operatorType)
+			{
 				case OperatorType.Equality:
 				case OperatorType.Inequality:
 				case OperatorType.GreaterThan:
@@ -47,8 +48,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static bool IsBitwise(this BinaryOperatorType operatorType)
 		{
 			return operatorType == BinaryOperatorType.BitwiseAnd
-				   || operatorType == BinaryOperatorType.BitwiseOr
-				   || operatorType == BinaryOperatorType.ExclusiveOr;
+				|| operatorType == BinaryOperatorType.BitwiseOr
+				|| operatorType == BinaryOperatorType.ExclusiveOr;
 		}
 
 		public static Statement GetNextStatement(this Statement statement)

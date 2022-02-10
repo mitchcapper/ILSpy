@@ -44,9 +44,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public NestedTypeReference(ITypeReference declaringTypeRef, string name, int additionalTypeParameterCount, bool? isReferenceType = null)
 		{
 			if (declaringTypeRef == null)
-				throw new ArgumentNullException("declaringTypeRef");
+				throw new ArgumentNullException(nameof(declaringTypeRef));
 			if (name == null)
-				throw new ArgumentNullException("name");
+				throw new ArgumentNullException(nameof(name));
 			this.declaringTypeRef = declaringTypeRef;
 			this.name = name;
 			this.additionalTypeParameterCount = additionalTypeParameterCount;
@@ -68,9 +68,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public IType Resolve(ITypeResolveContext context)
 		{
 			ITypeDefinition declaringType = declaringTypeRef.Resolve(context) as ITypeDefinition;
-			if (declaringType != null) {
+			if (declaringType != null)
+			{
 				int tpc = declaringType.TypeParameterCount;
-				foreach (IType type in declaringType.NestedTypes) {
+				foreach (IType type in declaringType.NestedTypes)
+				{
 					if (type.Name == name && type.TypeParameterCount == tpc + additionalTypeParameterCount)
 						return type;
 				}

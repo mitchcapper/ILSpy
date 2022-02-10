@@ -41,7 +41,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public UnknownType(string namespaceName, string name, int typeParameterCount = 0, bool? isReferenceType = null)
 		{
 			if (name == null)
-				throw new ArgumentNullException("name");
+				throw new ArgumentNullException(nameof(name));
 			this.namespaceKnown = namespaceName != null;
 			this.fullTypeName = new TopLevelTypeName(namespaceName ?? string.Empty, name, typeParameterCount);
 			this.isReferenceType = isReferenceType;
@@ -54,11 +54,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public UnknownType(FullTypeName fullTypeName, bool? isReferenceType = null)
 		{
 			this.isReferenceType = isReferenceType;
-			if (fullTypeName.Name == null) {
+			if (fullTypeName.Name == null)
+			{
 				Debug.Assert(fullTypeName == default(FullTypeName));
 				this.namespaceKnown = false;
 				this.fullTypeName = new TopLevelTypeName(string.Empty, "?", 0);
-			} else {
+			}
+			else
+			{
 				this.namespaceKnown = true;
 				this.fullTypeName = fullTypeName;
 			}
@@ -71,7 +74,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		IType ITypeReference.Resolve(ITypeResolveContext context)
 		{
 			if (context == null)
-				throw new ArgumentNullException("context");
+				throw new ArgumentNullException(nameof(context));
 			return this;
 		}
 

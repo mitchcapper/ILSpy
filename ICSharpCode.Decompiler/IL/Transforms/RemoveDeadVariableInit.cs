@@ -18,6 +18,7 @@
 
 using System.Collections.Generic;
 using System.Linq;
+
 using ICSharpCode.Decompiler.FlowAnalysis;
 using ICSharpCode.Decompiler.TypeSystem;
 
@@ -80,14 +81,18 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 
 			// Try to infer IType of stack slots that are of StackType.Ref:
-			foreach (var v in function.Variables) {
-				if (v.Kind == VariableKind.StackSlot && v.StackType == StackType.Ref && v.AddressCount == 0) {
+			foreach (var v in function.Variables)
+			{
+				if (v.Kind == VariableKind.StackSlot && v.StackType == StackType.Ref && v.AddressCount == 0)
+				{
 					IType newType = null;
 					// Multiple store are possible in case of (c ? ref a : ref b) += 1, for example.
-					foreach (var stloc in v.StoreInstructions.OfType<StLoc>()) {
+					foreach (var stloc in v.StoreInstructions.OfType<StLoc>())
+					{
 						var inferredType = stloc.Value.InferType(context.TypeSystem);
 						// cancel, if types of values do not match exactly
-						if (newType != null && !newType.Equals(inferredType)) {
+						if (newType != null && !newType.Equals(inferredType))
+						{
 							newType = SpecialType.UnknownType;
 							break;
 						}

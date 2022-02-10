@@ -75,7 +75,8 @@ namespace ICSharpCode.Decompiler.IL
 
 		protected sealed override ILInstruction GetChild(int index)
 		{
-			switch (index - Init.Count) {
+			switch (index - Init.Count)
+			{
 				case 0:
 					return this.pattern;
 				case 1:
@@ -89,7 +90,8 @@ namespace ICSharpCode.Decompiler.IL
 
 		protected sealed override void SetChild(int index, ILInstruction value)
 		{
-			switch (index - Init.Count) {
+			switch (index - Init.Count)
+			{
 				case 0:
 					this.Pattern = (MatchInstruction)value;
 					break;
@@ -107,7 +109,8 @@ namespace ICSharpCode.Decompiler.IL
 
 		protected sealed override SlotInfo GetChildSlot(int index)
 		{
-			switch (index - Init.Count) {
+			switch (index - Init.Count)
+			{
 				case 0:
 					return PatternSlot;
 				case 1:
@@ -132,7 +135,8 @@ namespace ICSharpCode.Decompiler.IL
 		protected override InstructionFlags ComputeFlags()
 		{
 			var flags = InstructionFlags.None;
-			foreach (var inst in Init) {
+			foreach (var inst in Init)
+			{
 				flags |= inst.Flags;
 			}
 			flags |= pattern.Flags | conversions.Flags | assignments.Flags;
@@ -164,7 +168,8 @@ namespace ICSharpCode.Decompiler.IL
 			output.IncreaseIndent();
 			output.WriteLine("init:", BoxedTextColor.Text);
 			output.IncreaseIndent();
-			foreach (var inst in this.Init) {
+			foreach (var inst in this.Init)
+			{
 				inst.WriteTo(output, options);
 				output.WriteLine();
 			}
@@ -190,7 +195,8 @@ namespace ICSharpCode.Decompiler.IL
 			if (!inst.MatchStLoc(out variable, out var value))
 				return false;
 			ILInstruction input;
-			switch (value) {
+			switch (value)
+			{
 				case Conv conv:
 					input = conv.Argument;
 					break;
@@ -207,16 +213,23 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			expectedType = null;
 			value = null;
-			switch (inst) {
+			switch (inst)
+			{
 				case CallInstruction call:
 					if (call.Method.AccessorKind != dnlib.DotNet.MethodSemanticsAttributes.Setter)
 						return false;
-					for (int i = 0; i < call.Arguments.Count - 1; i++) {
+					for (int i = 0; i < call.Arguments.Count - 1; i++)
+					{
 						ILInstruction arg = call.Arguments[i];
-						if (arg.Flags == InstructionFlags.None) {
+						if (arg.Flags == InstructionFlags.None)
+						{
 							// OK - we accept integer literals, etc.
-						} else if (arg.MatchLdLoc(out var v)) {
-						} else {
+						}
+						else if (arg.MatchLdLoc(out var v))
+						{
+						}
+						else
+						{
 							return false;
 						}
 					}
@@ -231,10 +244,15 @@ namespace ICSharpCode.Decompiler.IL
 					var target = stobj.Target;
 					while (target.MatchLdFlda(out var nestedTarget, out _))
 						target = nestedTarget;
-					if (target.Flags == InstructionFlags.None) {
+					if (target.Flags == InstructionFlags.None)
+					{
 						// OK - we accept integer literals, etc.
-					} else if (target.MatchLdLoc(out var v)) {
-					} else {
+					}
+					else if (target.MatchLdLoc(out var v))
+					{
+					}
+					else
+					{
 						return false;
 					}
 					if (stobj.Target.InferType(typeSystem) is ByReferenceType brt)
@@ -254,14 +272,16 @@ namespace ICSharpCode.Decompiler.IL
 			var patternVariables = new HashSet<ILVariable>();
 			var conversionVariables = new HashSet<ILVariable>();
 
-			foreach (StLoc init in this.Init) {
+			foreach (StLoc init in this.Init)
+			{
 				Debug.Assert(init.Variable.IsSingleDefinition && init.Variable.LoadCount == 1);
 				Debug.Assert(init.Variable.LoadInstructions[0].IsDescendantOf(assignments));
 			}
 
 			ValidatePattern(pattern);
 
-			foreach (var inst in this.conversions.Instructions) {
+			foreach (var inst in this.conversions.Instructions)
+			{
 				if (!IsConversionStLoc(inst, out var variable, out var inputVariable))
 					Debug.Fail("inst is not a conversion stloc!");
 				Debug.Assert(variable.IsSingleDefinition && variable.LoadCount == 1);
@@ -271,7 +291,8 @@ namespace ICSharpCode.Decompiler.IL
 			}
 			Debug.Assert(this.conversions.FinalInstruction is Nop);
 
-			foreach (var inst in assignments.Instructions) {
+			foreach (var inst in assignments.Instructions)
+			{
 				if (!(IsAssignment(inst, typeSystem: null, out _, out var value) && value.MatchLdLoc(out var inputVariable)))
 					throw new InvalidOperationException("inst is not an assignment!");
 				Debug.Assert(patternVariables.Contains(inputVariable) || conversionVariables.Contains(inputVariable));
@@ -283,13 +304,17 @@ namespace ICSharpCode.Decompiler.IL
 				Debug.Assert(inst.IsDeconstructCall || inst.IsDeconstructTuple);
 				Debug.Assert(!inst.CheckNotNull && !inst.CheckType);
 				Debug.Assert(!inst.HasDesignator);
-				foreach (var subPattern in inst.SubPatterns.Cast<MatchInstruction>()) {
-					if (subPattern.IsVar) {
+				foreach (var subPattern in inst.SubPatterns.Cast<MatchInstruction>())
+				{
+					if (subPattern.IsVar)
+					{
 						Debug.Assert(subPattern.Variable.IsSingleDefinition && subPattern.Variable.LoadCount <= 1);
 						if (subPattern.Variable.LoadCount == 1)
 							Debug.Assert(subPattern.Variable.LoadInstructions[0].IsDescendantOf(this));
 						patternVariables.Add(subPattern.Variable);
-					} else {
+					}
+					else
+					{
 						ValidatePattern(subPattern);
 					}
 				}

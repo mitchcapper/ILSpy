@@ -36,7 +36,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public IType FindType(KnownTypeCode typeCode)
 		{
 			IType type = LazyInit.VolatileRead(ref knownTypes[(int)typeCode]);
-			if (type != null) {
+			if (type != null)
+			{
 				return type;
 			}
 			return LazyInit.GetOrSet(ref knownTypes[(int)typeCode], SearchType(typeCode));
@@ -48,7 +49,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			if (typeRef == null)
 				return SpecialType.UnknownType;
 			var typeName = new TopLevelTypeName(typeRef.Namespace, typeRef.Name, typeRef.TypeParameterCount);
-			foreach (IModule asm in compilation.Modules) {
+			foreach (IModule asm in compilation.Modules)
+			{
 				var typeDef = asm.GetTypeDefinition(typeName);
 				if (typeDef != null)
 					return typeDef;

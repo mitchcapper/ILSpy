@@ -25,6 +25,8 @@
 // THE SOFTWARE.
 
 using System.Collections.Generic;
+
+using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
@@ -84,7 +86,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			internal set;
 		}
 
-		public SyntaxTree ()
+		public SyntaxTree()
 		{
 		}
 
@@ -96,17 +98,20 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </returns>
 		public IEnumerable<EntityDeclaration> GetTypes(bool includeInnerTypes = false)
 		{
-			Stack<AstNode> nodeStack = new Stack<AstNode> ();
+			Stack<AstNode> nodeStack = new Stack<AstNode>();
 			nodeStack.Push(this);
-			while (nodeStack.Count > 0) {
+			while (nodeStack.Count > 0)
+			{
 				var curNode = nodeStack.Pop();
-				if (curNode is TypeDeclaration || curNode is DelegateDeclaration) {
+				if (curNode is TypeDeclaration || curNode is DelegateDeclaration)
+				{
 					yield return (EntityDeclaration)curNode;
 				}
-				foreach (var child in curNode.Children) {
+				foreach (var child in curNode.Children)
+				{
 					if (!(child is Statement || child is Expression) &&
-					    (child.Role != Roles.TypeMemberRole || ((child is TypeDeclaration || child is DelegateDeclaration) && includeInnerTypes)))
-						nodeStack.Push (child);
+						(child.Role != Roles.TypeMemberRole || ((child is TypeDeclaration || child is DelegateDeclaration) && includeInnerTypes)))
+						nodeStack.Push(child);
 				}
 			}
 		}
@@ -118,19 +123,19 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return o != null && this.Members.DoMatch(o.Members, match);
 		}
 
-		public override void AcceptVisitor (IAstVisitor visitor)
+		public override void AcceptVisitor(IAstVisitor visitor)
 		{
-			visitor.VisitSyntaxTree (this);
+			visitor.VisitSyntaxTree(this);
 		}
 
-		public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
 		{
-			return visitor.VisitSyntaxTree (this);
+			return visitor.VisitSyntaxTree(this);
 		}
 
-		public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
+		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
 		{
-			return visitor.VisitSyntaxTree (this, data);
+			return visitor.VisitSyntaxTree(this, data);
 		}
 	}
 }

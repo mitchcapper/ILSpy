@@ -27,7 +27,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	{
 		internal static IField Create(IField fieldDefinition, TypeParameterSubstitution substitution)
 		{
-			if (TypeParameterSubstitution.Identity.Equals(substitution) || fieldDefinition.DeclaringType.TypeParameterCount == 0) {
+			if (TypeParameterSubstitution.Identity.Equals(substitution) || fieldDefinition.DeclaringType.TypeParameterCount == 0)
+			{
 				return fieldDefinition;
 			}
 			if (substitution.MethodTypeArguments != null && substitution.MethodTypeArguments.Count > 0)
@@ -67,7 +68,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return fieldDefinition.IsConst; }
 		}
 
-		public object GetConstantValue(bool throwOnInvalidMetadata) {
+		public object GetConstantValue(bool throwOnInvalidMetadata)
+		{
 			return fieldDefinition.GetConstantValue(throwOnInvalidMetadata);
 		}
 	}

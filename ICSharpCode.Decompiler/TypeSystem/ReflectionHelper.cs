@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 
@@ -31,12 +32,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <summary>
 		/// A reflection class used to represent <c>null</c>.
 		/// </summary>
-		public sealed class Null {}
+		public sealed class Null { }
 
 		/// <summary>
 		/// A reflection class used to represent <c>dynamic</c>.
 		/// </summary>
-		public sealed class Dynamic {}
+		public sealed class Dynamic { }
 
 		/// <summary>
 		/// A reflection class used to represent <c>nint</c>.
@@ -51,7 +52,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <summary>
 		/// A reflection class used to represent an unbound type argument.
 		/// </summary>
-		public sealed class UnboundTypeArgument {}
+		public sealed class UnboundTypeArgument { }
 
 		#region ICompilation.FindType
 		/// <summary>
@@ -97,12 +98,14 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if (type == null)
 				return SpecialType.UnknownType;
-			if (type.IsGenericType && !type.IsGenericTypeDefinition) {
+			if (type.IsGenericType && !type.IsGenericTypeDefinition)
+			{
 				ITypeReference def = ToTypeReference(type.GetGenericTypeDefinition());
 				Type[] arguments = type.GetGenericArguments();
 				ITypeReference[] args = new ITypeReference[arguments.Length];
 				bool allUnbound = true;
-				for (int i = 0; i < arguments.Length; i++) {
+				for (int i = 0; i < arguments.Length; i++)
+				{
 					args[i] = ToTypeReference(arguments[i]);
 					allUnbound &= args[i].Equals(SpecialType.UnboundTypeArgument);
 				}
@@ -110,19 +113,32 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					return def;
 				else
 					return new ParameterizedTypeReference(def, args);
-			} else if (type.IsArray) {
+			}
+			else if (type.IsArray)
+			{
 				return new ArrayTypeReference(ToTypeReference(type.GetElementType()), type.GetArrayRank());
-			} else if (type.IsPointer) {
+			}
+			else if (type.IsPointer)
+			{
 				return new PointerTypeReference(ToTypeReference(type.GetElementType()));
-			} else if (type.IsByRef) {
+			}
+			else if (type.IsByRef)
+			{
 				return new ByReferenceTypeReference(ToTypeReference(type.GetElementType()));
-			} else if (type.IsGenericParameter) {
-				if (type.DeclaringMethod != null) {
+			}
+			else if (type.IsGenericParameter)
+			{
+				if (type.DeclaringMethod != null)
+				{
 					return TypeParameterReference.Create(SymbolKind.Method, type.GenericParameterPosition);
-				} else {
+				}
+				else
+				{
 					return TypeParameterReference.Create(SymbolKind.TypeDefinition, type.GenericParameterPosition);
 				}
-			} else if (type.DeclaringType != null) {
+			}
+			else if (type.DeclaringType != null)
+			{
 				if (type == typeof(Dynamic))
 					return SpecialType.Dynamic;
 				else if (type == typeof(NInt))
@@ -137,7 +153,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				int typeParameterCount;
 				string name = SplitTypeParameterCountFromReflectionName(type.Name, out typeParameterCount);
 				return new NestedTypeReference(baseTypeRef, name, typeParameterCount);
-			} else {
+			}
+			else
+			{
 				IModuleReference assemblyReference = new DefaultAssemblyReference(type.Assembly.FullName);
 				int typeParameterCount;
 				string name = SplitTypeParameterCountFromReflectionName(type.Name, out typeParameterCount);
@@ -154,9 +172,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public static string SplitTypeParameterCountFromReflectionName(string reflectionName)
 		{
 			int pos = reflectionName.LastIndexOf('`');
-			if (pos < 0) {
+			if (pos < 0)
+			{
 				return reflectionName;
-			} else {
+			}
+			else
+			{
 				return reflectionName.Substring(0, pos);
 			}
 		}
@@ -168,10 +189,13 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public static string SplitTypeParameterCountFromReflectionName(string reflectionName, out int typeParameterCount)
 		{
 			int pos = reflectionName.LastIndexOf('`');
-			if (pos < 0) {
+			if (pos < 0)
+			{
 				typeParameterCount = 0;
 				return reflectionName;
-			} else {
+			}
+			else
+			{
 				string typeCount = reflectionName.Substring(pos + 1);
 				if (int.TryParse(typeCount, out typeParameterCount))
 					return reflectionName.Substring(0, pos);
@@ -205,7 +229,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		public static TypeCode GetTypeCode(this IType type)
 		{
-			if (type is ITypeDefinition def) {
+			ITypeDefinition def = type as ITypeDefinition;
+			if (def != null)
+			{
 				KnownTypeCode typeCode = def.KnownTypeCode;
 				if (typeCode <= KnownTypeCode.String)
 					return (TypeCode)typeCode;

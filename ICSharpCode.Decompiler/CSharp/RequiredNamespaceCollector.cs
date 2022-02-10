@@ -4,6 +4,8 @@ using System.Collections.Immutable;
 using System.Linq;
 using dnlib.DotNet;
 using dnlib.DotNet.Emit;
+
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using IField = ICSharpCode.Decompiler.TypeSystem.IField;
@@ -22,9 +24,11 @@ namespace ICSharpCode.Decompiler.CSharp
 		public RequiredNamespaceCollector(HashSet<string> namespaces)
 		{
 			this.namespaces = namespaces;
-			for (int i = 0; i < KnownTypeReference.KnownTypeCodeCount; i++) {
+			for (int i = 0; i < KnownTypeReference.KnownTypeCodeCount; i++)
+			{
 				var ktr = KnownTypeReference.Get((KnownTypeCode)i);
-				if (ktr == null) continue;
+				if (ktr == null)
+					continue;
 				namespaces.Add(ktr.Namespace);
 			}
 		}
@@ -32,6 +36,11 @@ namespace ICSharpCode.Decompiler.CSharp
 		public static void CollectAttributeNamespaces(MetadataModule module, HashSet<string> namespaces)
 		{
 			var collector = new RequiredNamespaceCollector(namespaces);
+
+			foreach (var type in module.TypeDefinitions)
+			{
+				collector.CollectNamespaces(type, module, (CodeMappingInfo)null);
+			}
 			collector.HandleAttributes(module.GetAssemblyAttributes());
 			collector.HandleAttributes(module.GetModuleAttributes());
 		}
@@ -66,27 +75,33 @@ namespace ICSharpCode.Decompiler.CSharp
 					HandleAttributes(td.GetAttributes());
 					HandleTypeParameters(td.TypeParameters);
 
-					foreach (var baseType in td.DirectBaseTypes) {
+					foreach (var baseType in td.DirectBaseTypes)
+					{
 						CollectNamespacesForTypeReference(baseType);
 					}
 
-					foreach (var nestedType in td.NestedTypes) {
+					foreach (var nestedType in td.NestedTypes)
+					{
 						CollectNamespaces(nestedType, module, mappingInfo);
 					}
 
-					foreach (var field in td.Fields) {
+					foreach (var field in td.Fields)
+					{
 						CollectNamespaces(field, module, mappingInfo);
 					}
 
-					foreach (var property in td.Properties) {
+					foreach (var property in td.Properties)
+					{
 						CollectNamespaces(property, module, mappingInfo);
 					}
 
-					foreach (var @event in td.Events) {
+					foreach (var @event in td.Events)
+					{
 						CollectNamespaces(@event, module, mappingInfo);
 					}
 
-					foreach (var method in td.Methods) {
+					foreach (var method in td.Methods)
+					{
 						CollectNamespaces(method, module, mappingInfo);
 					}
 					break;
@@ -101,7 +116,8 @@ namespace ICSharpCode.Decompiler.CSharp
 						HandleAttributes(partMethod.GetAttributes());
 						HandleAttributes(partMethod.GetReturnTypeAttributes());
 						CollectNamespacesForTypeReference(partMethod.ReturnType);
-						foreach (var param in partMethod.Parameters) {
+						foreach (var param in partMethod.Parameters)
+						{
 							HandleAttributes(param.GetAttributes());
 							CollectNamespacesForTypeReference(param.Type);
 						}
@@ -137,7 +153,8 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			if (!visitedTypes.Add(type))
 				return;
-			switch (type) {
+			switch (type)
+			{
 				case ParameterizedType parameterizedType:
 					namespaces.Add(parameterizedType.Namespace);
 					CollectNamespacesForTypeReference(parameterizedType.GenericType);
@@ -148,7 +165,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					CollectNamespacesForTypeReference(typeWithElementType.ElementType);
 					break;
 				case TupleType tupleType:
-					foreach (var elementType in tupleType.ElementTypes) {
+					foreach (var elementType in tupleType.ElementTypes)
+					{
 						CollectNamespacesForTypeReference(elementType);
 					}
 					break;
@@ -163,25 +181,30 @@ namespace ICSharpCode.Decompiler.CSharp
 					namespaces.Add(type.Namespace);
 					break;
 			}
-			foreach (var baseType in type.GetAllBaseTypes()) {
+			foreach (var baseType in type.GetAllBaseTypes())
+			{
 				namespaces.Add(baseType.Namespace);
 			}
 		}
 
 		public static void CollectNamespaces(IMDTokenProvider entity, MetadataModule module, HashSet<string> namespaces)
 		{
-			if (entity is null) return;
+			if (entity is null)
+				return;
 			CollectNamespaces(module.ResolveEntity(entity, genericContext), module, namespaces);
 		}
 
 		void HandleAttributes(IEnumerable<IAttribute> attributes)
 		{
-			foreach (var attr in attributes) {
+			foreach (var attr in attributes)
+			{
 				namespaces.Add(attr.AttributeType.Namespace);
-				foreach (var arg in attr.FixedArguments) {
+				foreach (var arg in attr.FixedArguments)
+				{
 					HandleAttributeValue(arg.Type, arg.Value);
 				}
-				foreach (var arg in attr.NamedArguments) {
+				foreach (var arg in attr.NamedArguments)
+				{
 					HandleAttributeValue(arg.Type, arg.Value);
 				}
 			}
@@ -192,8 +215,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			CollectNamespacesForTypeReference(type);
 			if (value is IType typeofType)
 				CollectNamespacesForTypeReference(typeofType);
-			if (value is ImmutableArray<CustomAttributeTypedArgument<IType>> arr) {
-				foreach (var element in arr) {
+			if (value is ImmutableArray<CustomAttributeTypedArgument<IType>> arr)
+			{
+				foreach (var element in arr)
+				{
 					HandleAttributeValue(element.Type, element.Value);
 				}
 			}
@@ -201,10 +226,12 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		void HandleTypeParameters(IEnumerable<ITypeParameter> typeParameters)
 		{
-			foreach (var typeParam in typeParameters) {
+			foreach (var typeParam in typeParameters)
+			{
 				HandleAttributes(typeParam.GetAttributes());
 
-				foreach (var constraint in typeParam.DirectBaseTypes) {
+				foreach (var constraint in typeParam.DirectBaseTypes)
+				{
 					CollectNamespacesForTypeReference(constraint);
 				}
 			}
@@ -292,7 +319,8 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		void CollectNamespacesForMemberReference(IMember member)
 		{
-			switch (member) {
+			switch (member)
+			{
 				case IField field:
 					CollectNamespacesForTypeReference(field.DeclaringType);
 					CollectNamespacesForTypeReference(field.ReturnType);

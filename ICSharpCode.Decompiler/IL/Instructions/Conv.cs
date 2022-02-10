@@ -1,4 +1,5 @@
-﻿// Copyright (c) 2014 Daniel Grunwald
+#nullable enable
+// Copyright (c) 2014 Daniel Grunwald
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -19,6 +20,7 @@
 using System.Diagnostics;
 using dnSpy.Contracts.Decompiler;
 using dnSpy.Contracts.Text;
+
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL
@@ -182,12 +184,14 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		static ConversionKind GetConversionKind(PrimitiveType targetType, StackType inputType, Sign inputSign)
 		{
-			switch (targetType) {
+			switch (targetType)
+			{
 				case PrimitiveType.I1:
 				case PrimitiveType.I2:
 				case PrimitiveType.U1:
 				case PrimitiveType.U2:
-					switch (inputType) {
+					switch (inputType)
+					{
 						case StackType.I4:
 						case StackType.I8:
 						case StackType.I:
@@ -200,7 +204,8 @@ namespace ICSharpCode.Decompiler.IL
 					}
 				case PrimitiveType.I4:
 				case PrimitiveType.U4:
-					switch (inputType) {
+					switch (inputType)
+					{
 						case StackType.I4:
 							return ConversionKind.Nop;
 						case StackType.I:
@@ -214,7 +219,8 @@ namespace ICSharpCode.Decompiler.IL
 					}
 				case PrimitiveType.I8:
 				case PrimitiveType.U8:
-					switch (inputType) {
+					switch (inputType)
+					{
 						case StackType.I4:
 						case StackType.I:
 							if (inputSign == Sign.None)
@@ -234,7 +240,8 @@ namespace ICSharpCode.Decompiler.IL
 					}
 				case PrimitiveType.I:
 				case PrimitiveType.U:
-					switch (inputType) {
+					switch (inputType)
+					{
 						case StackType.I4:
 							if (inputSign == Sign.None)
 								return targetType == PrimitiveType.I ? ConversionKind.SignExtend : ConversionKind.ZeroExtend;
@@ -254,7 +261,8 @@ namespace ICSharpCode.Decompiler.IL
 							return ConversionKind.Invalid;
 					}
 				case PrimitiveType.R4:
-					switch (inputType) {
+					switch (inputType)
+					{
 						case StackType.I4:
 						case StackType.I:
 						case StackType.I8:
@@ -268,7 +276,8 @@ namespace ICSharpCode.Decompiler.IL
 					}
 				case PrimitiveType.R:
 				case PrimitiveType.R8:
-					switch (inputType) {
+					switch (inputType)
+					{
 						case StackType.I4:
 						case StackType.I:
 						case StackType.I8:
@@ -283,7 +292,8 @@ namespace ICSharpCode.Decompiler.IL
 				case PrimitiveType.Ref:
 					// There's no "conv.ref" in IL, but IL allows these conversions implicitly,
 					// whereas we represent them explicitly in the ILAst.
-					switch (inputType) {
+					switch (inputType)
+					{
 						case StackType.I4:
 						case StackType.I:
 						case StackType.I8:
@@ -310,15 +320,20 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			WriteILRange(output, options);
 			output.Write(OpCode);
-			if (CheckForOverflow) {
+			if (CheckForOverflow)
+			{
 				output.Write(".ovf", BoxedTextColor.Text);
 			}
-			if (InputSign == Sign.Unsigned) {
+			if (InputSign == Sign.Unsigned)
+			{
 				output.Write(".unsigned", BoxedTextColor.Text);
-			} else if (InputSign == Sign.Signed) {
+			}
+			else if (InputSign == Sign.Signed)
+			{
 				output.Write(".signed", BoxedTextColor.Text);
 			}
-			if (IsLifted) {
+			if (IsLifted)
+			{
 				output.Write(".lifted", BoxedTextColor.Text);
 			}
 			output.Write(" ", BoxedTextColor.Text);
@@ -326,7 +341,8 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write("->", BoxedTextColor.Text);
 			output.Write(TargetType);
 			output.Write(" ", BoxedTextColor.Text);
-			switch (Kind) {
+			switch (Kind)
+			{
 				case ConversionKind.SignExtend:
 					output.Write("<sign extend>", BoxedTextColor.Text);
 					break;

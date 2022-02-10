@@ -1,4 +1,5 @@
-﻿// Copyright (c) 2014 Daniel Grunwald
+#nullable enable
+// Copyright (c) 2014 Daniel Grunwald
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -21,6 +22,7 @@ using System.Diagnostics;
 using dnSpy.Contracts.Decompiler;
 using dnSpy.Contracts.Text;
 using ICSharpCode.Decompiler.Disassembler;
+
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL
@@ -29,7 +31,8 @@ namespace ICSharpCode.Decompiler.IL
 	{
 		public static CallInstruction Create(OpCode opCode, IMethod method)
 		{
-			switch (opCode) {
+			switch (opCode)
+			{
 				case OpCode.Call:
 					return new Call(method);
 				case OpCode.CallVirt:
@@ -52,7 +55,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// Gets/Sets the type specified in the 'constrained.' prefix.
 		/// Returns null if no 'constrained.' prefix exists for this call.
 		/// </summary>
-		public IType ConstrainedTo;
+		public IType? ConstrainedTo;
 
 		/// <summary>
 		/// Gets whether the IL stack was empty at the point of this call.
@@ -62,8 +65,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		protected CallInstruction(OpCode opCode, IMethod method) : base(opCode)
 		{
-			Debug.Assert(method != null);
-			this.Method = method;
+			this.Method = method ?? throw new ArgumentNullException(nameof(method));
 			this.Arguments = new InstructionCollection<ILInstruction>(this, 0);
 		}
 
@@ -78,10 +80,11 @@ namespace ICSharpCode.Decompiler.IL
 		/// Gets the parameter for the argument with the specified index.
 		/// Returns null for the <c>this</c> parameter.
 		/// </summary>
-		public IParameter GetParameter(int argumentIndex)
+		public IParameter? GetParameter(int argumentIndex)
 		{
 			int firstParamIndex = (Method.IsStatic || OpCode == OpCode.NewObj) ? 0 : 1;
-			if (argumentIndex < firstParamIndex) {
+			if (argumentIndex < firstParamIndex)
+			{
 				return null; // asking for 'this' parameter
 			}
 			return Method.Parameters[argumentIndex - firstParamIndex];
@@ -107,7 +110,8 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			if (type.Kind == TypeKind.TypeParameter)
 				return StackType.Ref;
-			switch (type.IsReferenceType) {
+			switch (type.IsReferenceType)
+			{
 				case true:
 					return StackType.O;
 				case false:
@@ -122,11 +126,13 @@ namespace ICSharpCode.Decompiler.IL
 			base.CheckInvariant(phase);
 			int firstArgument = (OpCode != OpCode.NewObj && !Method.IsStatic) ? 1 : 0;
 			Debug.Assert(Method.Parameters.Count + firstArgument == Arguments.Count);
-			if (firstArgument == 1) {
+			if (firstArgument == 1)
+			{
 				if (!(Arguments[0].ResultType == ExpectedTypeForThisPointer(ConstrainedTo ?? Method.DeclaringType)))
 					Debug.Fail($"Stack type mismatch in 'this' argument in call to {Method.Name}()");
 			}
-			for (int i = 0; i < Method.Parameters.Count; ++i) {
+			for (int i = 0; i < Method.Parameters.Count; ++i)
+			{
 				if (!(Arguments[firstArgument + i].ResultType == Method.Parameters[i].Type.GetStackType()))
 					Debug.Fail($"Stack type mismatch in parameter {i} in call to {Method.Name}()");
 			}
@@ -135,7 +141,8 @@ namespace ICSharpCode.Decompiler.IL
 		public override void WriteTo(IDecompilerOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
-			if (ConstrainedTo != null) {
+			if (ConstrainedTo != null)
+			{
 				output.Write("constrained[", BoxedTextColor.Text);
 				ConstrainedTo.WriteTo(output, ILNameSyntax.ShortTypeName);
 				output.Write("].", BoxedTextColor.Text);
@@ -146,7 +153,8 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(" ", BoxedTextColor.Text);
 			Method.WriteTo(output);
 			output.Write("(", BoxedTextColor.Text);
-			for (int i = 0; i < Arguments.Count; i++) {
+			for (int i = 0; i < Arguments.Count; i++)
+			{
 				if (i > 0)
 					output.Write(", ", BoxedTextColor.Text);
 				Arguments[i].WriteTo(output, options);
@@ -154,9 +162,9 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(")", BoxedTextColor.Text);
 		}
 
-		protected internal sealed override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		protected internal sealed override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
-			CallInstruction o = other as CallInstruction;
+			CallInstruction? o = other as CallInstruction;
 			return o != null && this.OpCode == o.OpCode && this.Method.Equals(o.Method) && this.IsTail == o.IsTail
 				&& object.Equals(this.ConstrainedTo, o.ConstrainedTo)
 				&& Patterns.ListMatch.DoMatch(this.Arguments, o.Arguments, ref match);

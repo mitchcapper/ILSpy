@@ -19,6 +19,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.Semantics
@@ -45,7 +46,8 @@ namespace ICSharpCode.Decompiler.Semantics
 			this.isVirtualCall = member.IsOverridable && !(thisRR != null && thisRR.CausesNonVirtualInvocation);
 
 			IField field = member as IField;
-			if (field != null) {
+			if (field != null)
+			{
 				isConstant = field.IsConst;
 				if (isConstant)
 					constantValue = field.GetConstantValue();
@@ -59,7 +61,8 @@ namespace ICSharpCode.Decompiler.Semantics
 			this.member = member;
 			this.isVirtualCall = isVirtualCall;
 			IField field = member as IField;
-			if (field != null) {
+			if (field != null)
+			{
 				isConstant = field.IsConst;
 				if (isConstant)
 					constantValue = field.GetConstantValue();
@@ -68,12 +71,13 @@ namespace ICSharpCode.Decompiler.Semantics
 
 		static IType ComputeType(IMember member)
 		{
-			switch (member.SymbolKind) {
+			switch (member.SymbolKind)
+			{
 				case SymbolKind.Constructor:
 					return member.DeclaringType ?? SpecialType.UnknownType;
 				case SymbolKind.Field:
 					//if (((IField)member).IsFixed)
-					// 	return new PointerType(member.ReturnType);
+					//	return new PointerType(member.ReturnType);
 					break;
 			}
 			if (member.ReturnType.Kind == TypeKind.ByReference)

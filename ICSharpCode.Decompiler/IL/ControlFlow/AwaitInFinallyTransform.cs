@@ -18,6 +18,7 @@
 
 using System.Collections.Generic;
 using System.Linq;
+
 using ICSharpCode.Decompiler.FlowAnalysis;
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -33,7 +34,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			HashSet<BlockContainer> changedContainers = new HashSet<BlockContainer>();
 
 			// analyze all try-catch statements in the function
-			foreach (var tryCatch in function.Descendants.OfType<TryCatch>().ToArray()) {
+			foreach (var tryCatch in function.Descendants.OfType<TryCatch>().ToArray())
+			{
 				if (!(tryCatch.Parent?.Parent is BlockContainer container))
 					continue;
 				// 	} catch exceptionVariable : 02000078 System.Object when (ldc.i4 1) BlockContainer {

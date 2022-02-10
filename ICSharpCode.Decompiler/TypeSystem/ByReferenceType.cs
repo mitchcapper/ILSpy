@@ -18,6 +18,7 @@
 
 using System;
 using dnlib.DotNet;
+
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 
 namespace ICSharpCode.Decompiler.TypeSystem
@@ -79,7 +80,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public ByReferenceTypeReference(ITypeReference elementType)
 		{
 			if (elementType == null)
-				throw new ArgumentNullException("elementType");
+				throw new ArgumentNullException(nameof(elementType));
 			this.elementType = elementType;
 		}
 

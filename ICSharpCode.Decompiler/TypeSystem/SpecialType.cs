@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 
 namespace ICSharpCode.Decompiler.TypeSystem
@@ -94,11 +95,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		IType ITypeReference.Resolve(ITypeResolveContext context)
 		{
 			if (context == null)
-				throw new ArgumentNullException("context");
+				throw new ArgumentNullException(nameof(context));
 			return this;
 		}
 
-		#pragma warning disable 809
+#pragma warning disable 809
 		[Obsolete("Please compare special types using the kind property instead.")]
 		public override bool Equals(IType other)
 		{

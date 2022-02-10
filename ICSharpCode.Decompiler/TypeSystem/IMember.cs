@@ -16,7 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
+#nullable enable
+
 using System.Collections.Generic;
 
 namespace ICSharpCode.Decompiler.TypeSystem
@@ -38,6 +39,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// This property never returns <c>null</c>.
 		/// </summary>
 		IType ReturnType { get; }
+
+		/// <summary>
+		/// Gets/Sets the declaring type (incl. type arguments, if any).
+		/// If this is not a specialized member, the value returned is equal to <see cref="IEntity.DeclaringTypeDefinition"/>.
+		/// </summary>
+		new IType DeclaringType { get; }
 
 		/// <summary>
 		/// Gets the interface members explicitly implemented by this member.
@@ -97,6 +104,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <summary>
 		/// Gets whether the members are considered equal when applying the specified type normalization.
 		/// </summary>
-		bool Equals(IMember obj, TypeVisitor typeNormalization);
+		bool Equals(IMember? obj, TypeVisitor typeNormalization);
 	}
 }

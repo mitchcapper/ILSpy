@@ -28,7 +28,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	{
 		internal static IProperty Create(IProperty propertyDefinition, TypeParameterSubstitution substitution)
 		{
-			if (TypeParameterSubstitution.Identity.Equals(substitution) || propertyDefinition.DeclaringType.TypeParameterCount == 0) {
+			if (TypeParameterSubstitution.Identity.Equals(substitution) || propertyDefinition.DeclaringType.TypeParameterCount == 0)
+			{
 				return propertyDefinition;
 			}
 			if (substitution.MethodTypeArguments != null && substitution.MethodTypeArguments.Count > 0)

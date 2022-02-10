@@ -170,7 +170,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 						case "DecimalConstantAttribute":
 							return (options & TypeSystemOptions.DecimalConstants) != 0 && (target == SymbolKind.Field || target == SymbolKind.Parameter);
 						case "IsReadOnlyAttribute":
-							switch (target) {
+							switch (target)
+							{
 								case SymbolKind.TypeDefinition:
 								case SymbolKind.Parameter:
 									return (options & TypeSystemOptions.ReadOnlyStructsAndParameters) != 0;
@@ -205,8 +206,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		static bool IsMethodLike(SymbolKind kind)
 		{
-			return kind switch
-			{
+			return kind switch {
 				SymbolKind.Method => true,
 				SymbolKind.Operator => true,
 				SymbolKind.Constructor => true,

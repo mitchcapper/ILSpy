@@ -45,24 +45,28 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		MultipleLines
 	}
 
-	public enum Wrapping {
+	public enum Wrapping
+	{
 		DoNotWrap,
 		WrapAlways,
 		WrapIfTooLong
 	}
 
-	public enum NewLinePlacement {
+	public enum NewLinePlacement
+	{
 		DoNotCare,
 		NewLine,
 		SameLine
 	}
 
-	public enum UsingPlacement {
+	public enum UsingPlacement
+	{
 		TopOfFile,
 		InsideNamespace
 	}
 
-	public enum EmptyLineFormatting {
+	public enum EmptyLineFormatting
+	{
 		DoNotChange,
 		Indent,
 		DoNotIndent
@@ -80,7 +84,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			set;
 		}
 
-		public CSharpFormattingOptions Clone ()
+		public CSharpFormattingOptions Clone()
 		{
 			//return (CSharpFormattingOptions)MemberwiseClone ();
 			// DON'T use MemberwiseClone() since we want to return a CSharpFormattingOptions, not any
@@ -159,10 +163,9 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			set;
 		}
 
-		public PropertyFormatting AutoPropertyFormatting { // tested
-			get;
-			set;
-		}
+
+
+		public PropertyFormatting AutoPropertyFormatting { get; set; }
 
 		public PropertyFormatting SimplePropertyFormatting { // tested
 			get;
@@ -345,6 +348,11 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		#endregion
 
 		#region Spaces
+		public bool SpaceBetweenParameterAttributeSections {
+			get;
+			set;
+		}
+
 		// Methods
 		public bool SpaceBeforeMethodDeclarationParentheses { // tested
 			get;
@@ -722,6 +730,16 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		}
 
 		public bool SpaceAfterConditionalOperatorSeparator { // tested
+			get;
+			set;
+		}
+
+		public bool SpaceBeforeAnonymousMethodParentheses {
+			get;
+			set;
+		}
+
+		public bool SpaceWithinAnonymousMethodParentheses {
 			get;
 			set;
 		}

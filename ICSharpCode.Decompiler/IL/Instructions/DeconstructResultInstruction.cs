@@ -1,4 +1,5 @@
-﻿// Copyright (c) 2020 Siegfried Pammer
+#nullable enable
+// Copyright (c) 2020 Siegfried Pammer
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -19,6 +20,7 @@
 using System.Diagnostics;
 using dnSpy.Contracts.Decompiler;
 using dnSpy.Contracts.Text;
+
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL
@@ -48,9 +50,10 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(")", BoxedTextColor.Text);
 		}
 
-		MatchInstruction FindMatch()
+		MatchInstruction? FindMatch()
 		{
-			for (ILInstruction inst = this; inst != null; inst = inst.Parent) {
+			for (ILInstruction? inst = this; inst != null; inst = inst.Parent)
+			{
 				if (inst.Parent is MatchInstruction match && inst != match.TestedOperand)
 					return match;
 			}
@@ -60,10 +63,10 @@ namespace ICSharpCode.Decompiler.IL
 		void AdditionalInvariants()
 		{
 			var matchInst = FindMatch();
-			Debug.Assert(matchInst != null && (matchInst.IsDeconstructCall || matchInst.IsDeconstructTuple));
-			Debug.Assert(Argument.MatchLdLoc(matchInst.Variable));
+			DebugAssert(matchInst != null && (matchInst.IsDeconstructCall || matchInst.IsDeconstructTuple));
+			DebugAssert(Argument.MatchLdLoc(matchInst.Variable));
 			var outParamType = matchInst.GetDeconstructResultType(this.Index);
-			Debug.Assert(outParamType.GetStackType() == ResultType);
+			DebugAssert(outParamType.GetStackType() == ResultType);
 		}
 	}
 }

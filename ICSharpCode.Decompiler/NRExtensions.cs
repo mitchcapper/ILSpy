@@ -17,6 +17,8 @@
 // DEALINGS IN THE SOFTWARE.
 using System;
 using System.Collections.Generic;
+
+using ICSharpCode.Decompiler.Documentation;
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler
@@ -25,7 +27,11 @@ namespace ICSharpCode.Decompiler
 	{
 		public static bool IsCompilerGenerated(this IEntity entity)
 		{
-			return entity != null && entity.HasAttribute(KnownAttribute.CompilerGenerated);
+			if (entity != null)
+			{
+				return entity.HasAttribute(KnownAttribute.CompilerGenerated);
+			}
+			return false;
 		}
 
 		public static bool IsCompilerGeneratedOrIsInCompilerGeneratedClass(this IEntity entity)
@@ -51,7 +57,9 @@ namespace ICSharpCode.Decompiler
 		{
 			if (type == null)
 				return false;
-			if (string.IsNullOrEmpty(type.Namespace) && type.HasGeneratedName() && (type.Name.Contains("AnonType") || type.Name.Contains("AnonymousType"))) {
+			if (string.IsNullOrEmpty(type.Namespace) && type.HasGeneratedName()
+				&& (type.Name.Contains("AnonType") || type.Name.Contains("AnonymousType")))
+			{
 				ITypeDefinition td = type.GetDefinition();
 				return td != null && td.IsCompilerGenerated();
 			}

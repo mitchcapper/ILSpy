@@ -117,32 +117,32 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public CommentReference[] References { get; set; }
 
-		public Comment (string content, CommentType type = CommentType.SingleLine)
+		public Comment(string content, CommentType type = CommentType.SingleLine)
 		{
 			this.CommentType = type;
 			this.Content = content;
 		}
 
-		public Comment (CommentType commentType, TextLocation startLocation, TextLocation endLocation)
+		public Comment(CommentType commentType, TextLocation startLocation, TextLocation endLocation)
 		{
 			this.CommentType = commentType;
 			this.startLocation = startLocation;
 			this.endLocation = endLocation;
 		}
 
-		public override void AcceptVisitor (IAstVisitor visitor)
+		public override void AcceptVisitor(IAstVisitor visitor)
 		{
-			visitor.VisitComment (this);
+			visitor.VisitComment(this);
 		}
 
-		public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
 		{
-			return visitor.VisitComment (this);
+			return visitor.VisitComment(this);
 		}
 
-		public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
+		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
 		{
-			return visitor.VisitComment (this, data);
+			return visitor.VisitComment(this, data);
 		}
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)

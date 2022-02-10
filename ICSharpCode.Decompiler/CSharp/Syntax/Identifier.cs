@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	public class Identifier : AstNode
 	{
-		public new static readonly Identifier Null = new NullIdentifier ();
+		public new static readonly Identifier Null = new NullIdentifier();
 		sealed class NullIdentifier : Identifier
 		{
 			public override bool IsNull {
@@ -39,17 +39,17 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				}
 			}
 
-			public override void AcceptVisitor (IAstVisitor visitor)
+			public override void AcceptVisitor(IAstVisitor visitor)
 			{
 				visitor.VisitNullNode(this);
 			}
 
-			public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+			public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
 			{
 				return visitor.VisitNullNode(this);
 			}
 
-			public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
+			public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
 			{
 				return visitor.VisitNullNode(this, data);
 			}
@@ -71,7 +71,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return this.name; }
 			set {
 				if (value == null)
-					throw new ArgumentNullException("value");
+					throw new ArgumentNullException(nameof(value));
 				ThrowIfFrozen();
 				this.name = value;
 			}
@@ -107,61 +107,61 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public override TextLocation EndLocation {
 			get {
-				return new TextLocation (StartLocation.Line, StartLocation.Column + (Name ?? "").Length + (IsVerbatim ? 1 : 0));
+				return new TextLocation(StartLocation.Line, StartLocation.Column + (Name ?? "").Length + (IsVerbatim ? 1 : 0));
 			}
 		}
 
-		Identifier ()
+		Identifier()
 		{
 			this.name = string.Empty;
 		}
 
-		protected Identifier (string name, TextLocation location)
+		protected Identifier(string name, TextLocation location)
 		{
 			if (name == null)
-				throw new ArgumentNullException("name");
+				throw new ArgumentNullException(nameof(name));
 			this.Name = name;
 			this.startLocation = location;
 		}
 
-		public static Identifier Create (string name)
+		public static Identifier Create(string name)
 		{
-			return Create (name, TextLocation.Empty);
+			return Create(name, TextLocation.Empty);
 		}
 
-		public static Identifier Create (string name, TextLocation location)
+		public static Identifier Create(string name, TextLocation location)
 		{
 			if (name == null)
 				return Identifier.Null;
 			if (name.Length > 0 && name[0] == '@')
-				return new Identifier (name.Substring (1), new TextLocation (location.Line, location.Column + 1)) { IsVerbatim = true };
+				return new Identifier(name.Substring(1), new TextLocation(location.Line, location.Column + 1)) { IsVerbatim = true };
 			else
-				return new Identifier (name, location);
+				return new Identifier(name, location);
 		}
 
-		public static Identifier Create (string name, TextLocation location, bool isVerbatim)
+		public static Identifier Create(string name, TextLocation location, bool isVerbatim)
 		{
 			if (name == null)
 				return Identifier.Null;
 
 			if (isVerbatim)
-				return new Identifier (name, location) { IsVerbatim = true };
-			return new Identifier (name, location);
+				return new Identifier(name, location) { IsVerbatim = true };
+			return new Identifier(name, location);
 		}
 
-		public override void AcceptVisitor (IAstVisitor visitor)
+		public override void AcceptVisitor(IAstVisitor visitor)
 		{
-			visitor.VisitIdentifier (this);
+			visitor.VisitIdentifier(this);
 		}
 
-		public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
 		{
-			return visitor.VisitIdentifier (this);
+			return visitor.VisitIdentifier(this);
 		}
 
-		public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
+		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
 		{
-			return visitor.VisitIdentifier (this, data);
+			return visitor.VisitIdentifier(this, data);
 		}
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)

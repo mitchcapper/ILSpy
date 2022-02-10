@@ -1,5 +1,6 @@
-﻿// Copyright (c) 2016 Daniel Grunwald
-//
+﻿#nullable enable
+// Copyright (c) 2016 Daniel Grunwald
+// 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
 // without restriction, including without limitation the rights to use, copy, modify, merge,
@@ -46,7 +47,8 @@ namespace ICSharpCode.Decompiler.IL
 
 		public bool Add(ILVariable item)
 		{
-			if (item.Function != null) {
+			if (item.Function != null)
+			{
 				if (item.Function == scope)
 					return false;
 				else
@@ -65,7 +67,8 @@ namespace ICSharpCode.Decompiler.IL
 
 		public void Clear()
 		{
-			foreach (var v in list) {
+			foreach (var v in list)
+			{
 				v.Function = null;
 			}
 			list.Clear();
@@ -126,7 +129,7 @@ namespace ICSharpCode.Decompiler.IL
 				{
 					// However, remove unused this-parameters of delegates, expression trees, etc.
 					// These will be replaced with the top-level function's this-parameter.
-					if (v.Index == -1 && v.Function.Kind != ILFunctionKind.TopLevelFunction)
+					if (v.Index == -1 && v.Function!.Kind != ILFunctionKind.TopLevelFunction)
 						return true;
 					return false;
 				}

@@ -1,4 +1,5 @@
-﻿// Copyright (c) 2017 Siegfried Pammer
+#nullable enable
+// Copyright (c) 2017 Siegfried Pammer
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -47,10 +48,12 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			WriteILRange(output, options);
 			output.Write("using", BoxedTextColor.Text);
-			if (IsAsync) {
+			if (IsAsync)
+			{
 				output.Write(".async", BoxedTextColor.Text);
 			}
-			if (IsRefStruct) {
+			if (IsRefStruct)
+			{
 				output.Write(".ref", BoxedTextColor.Text);
 			}
 			output.Write(" (", BoxedTextColor.Text);

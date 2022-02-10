@@ -1,4 +1,5 @@
-﻿// Copyright (c) 2014 Daniel Grunwald
+#nullable enable
+// Copyright (c) 2014 Daniel Grunwald
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -32,7 +33,7 @@ namespace ICSharpCode.Decompiler.IL
 	partial class Branch : SimpleInstruction, IBranchOrLeaveInstruction
 	{
 		readonly int targetILOffset;
-		Block targetBlock;
+		Block? targetBlock;
 
 		public Branch(int targetILOffset) : base(OpCode.Branch)
 		{
@@ -50,7 +51,11 @@ namespace ICSharpCode.Decompiler.IL
 		}
 
 		public Block TargetBlock {
-			get { return targetBlock; }
+			get {
+				// HACK: We treat TargetBlock as non-nullable publicly, because it's only null inside
+				// the ILReader, and becomes non-null once the BlockBuilder has run.
+				return targetBlock!;
+			}
 			set {
 				if (targetBlock != null && IsConnected)
 					targetBlock.IncomingEdgeCount--;
@@ -64,7 +69,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// Gets the BlockContainer that contains the target block.
 		/// </summary>
 		public BlockContainer TargetContainer {
-			get { return (BlockContainer)targetBlock?.Parent; }
+			get { return (BlockContainer)targetBlock?.Parent!; }
 		}
 
 		protected override void Connected()
@@ -94,9 +99,10 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		internal static bool GetExecutesFinallyBlock(ILInstruction inst, BlockContainer container)
+		internal static bool GetExecutesFinallyBlock(ILInstruction? inst, BlockContainer? container)
 		{
-			for (; inst != container; inst = inst.Parent) {
+			for (; inst != container && inst != null; inst = inst.Parent)
+			{
 				if (inst.Parent is TryFinally && inst.SlotInfo == TryFinally.TryBlockSlot)
 					return true;
 			}
@@ -106,10 +112,11 @@ namespace ICSharpCode.Decompiler.IL
 		internal override void CheckInvariant(ILPhase phase)
 		{
 			base.CheckInvariant(phase);
-			if (phase > ILPhase.InILReader) {
-				Debug.Assert(targetBlock.Parent is BlockContainer);
-				Debug.Assert(this.IsDescendantOf(targetBlock.Parent));
-				Debug.Assert(targetBlock.Parent.Children[targetBlock.ChildIndex] == targetBlock);
+			if (phase > ILPhase.InILReader)
+			{
+				Debug.Assert(targetBlock?.Parent is BlockContainer);
+				Debug.Assert(this.IsDescendantOf(targetBlock!.Parent!));
+				Debug.Assert(targetBlock!.Parent!.Children[targetBlock.ChildIndex] == targetBlock);
 			}
 		}
 

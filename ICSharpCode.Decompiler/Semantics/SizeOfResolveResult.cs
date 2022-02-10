@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.Semantics
@@ -28,16 +29,16 @@ namespace ICSharpCode.Decompiler.Semantics
 	{
 		readonly IType referencedType;
 		readonly int? constantValue;
-		
+
 		public SizeOfResolveResult(IType int32, IType referencedType, int? constantValue)
 			: base(int32)
 		{
 			if (referencedType == null)
-				throw new ArgumentNullException("referencedType");
+				throw new ArgumentNullException(nameof(referencedType));
 			this.referencedType = referencedType;
 			this.constantValue = constantValue;
 		}
-		
+
 		/// <summary>
 		/// The type referenced by the 'sizeof'.
 		/// </summary>

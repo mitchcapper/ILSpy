@@ -1,4 +1,5 @@
-﻿// Copyright (c) 2014 Daniel Grunwald
+#nullable enable
+// Copyright (c) 2014 Daniel Grunwald
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -23,6 +24,8 @@ using dnSpy.Contracts.Decompiler;
 using dnSpy.Contracts.Text;
 using ICSharpCode.Decompiler.Util;
 
+using ICSharpCode.Decompiler.Util;
+
 namespace ICSharpCode.Decompiler.IL
 {
 	public abstract class TryInstruction : ILInstruction
@@ -34,7 +37,8 @@ namespace ICSharpCode.Decompiler.IL
 			this.TryBlock = tryBlock;
 		}
 
-		ILInstruction tryBlock;
+		ILInstruction tryBlock = null!;
+
 		public ILInstruction TryBlock {
 			get { return this.tryBlock; }
 			set {
@@ -73,7 +77,8 @@ namespace ICSharpCode.Decompiler.IL
 			WriteILRange(output, options);
 			output.Write(".try ", BoxedTextColor.Text);
 			TryBlock.WriteTo(output, options);
-			foreach (var handler in Handlers) {
+			foreach (var handler in Handlers)
+			{
 				output.Write(" ", BoxedTextColor.Text);
 				handler.WriteTo(output, options);
 			}
@@ -144,7 +149,7 @@ namespace ICSharpCode.Decompiler.IL
 			base.CheckInvariant(phase);
 			Debug.Assert(Parent is TryCatch);
 			Debug.Assert(filter.ResultType == StackType.I4);
-			Debug.Assert(this.IsDescendantOf(variable.Function));
+			Debug.Assert(this.IsDescendantOf(variable.Function!));
 		}
 
 		public override StackType ResultType {
@@ -167,7 +172,8 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			WriteILRange(output, options);
 			output.Write("catch ", BoxedTextColor.Text);
-			if (variable != null) {
+			if (variable != null)
+			{
 				output.Write(variable.Name, variable, DecompilerReferenceFlags.Definition, BoxedTextColor.Text);
 				output.Write(" : ", BoxedTextColor.Text);
 				Disassembler.DisassemblerHelpers.WriteOperand(output, variable.Type);
@@ -201,7 +207,7 @@ namespace ICSharpCode.Decompiler.IL
 			this.FinallyBlock = finallyBlock;
 		}
 
-		ILInstruction finallyBlock;
+		ILInstruction finallyBlock = null!;
 		public ILInstruction FinallyBlock {
 			get { return this.finallyBlock; }
 			set {
@@ -249,7 +255,8 @@ namespace ICSharpCode.Decompiler.IL
 
 		protected override ILInstruction GetChild(int index)
 		{
-			switch (index) {
+			switch (index)
+			{
 				case 0:
 					return TryBlock;
 				case 1:
@@ -261,7 +268,8 @@ namespace ICSharpCode.Decompiler.IL
 
 		protected override void SetChild(int index, ILInstruction value)
 		{
-			switch (index) {
+			switch (index)
+			{
 				case 0:
 					TryBlock = value;
 					break;
@@ -275,7 +283,8 @@ namespace ICSharpCode.Decompiler.IL
 
 		protected override SlotInfo GetChildSlot(int index)
 		{
-			switch (index) {
+			switch (index)
+			{
 				case 0:
 					return TryBlockSlot;
 				case 1:
@@ -295,7 +304,7 @@ namespace ICSharpCode.Decompiler.IL
 			this.FaultBlock = faultBlock;
 		}
 
-		ILInstruction faultBlock;
+		ILInstruction faultBlock = null!;
 		public ILInstruction FaultBlock {
 			get { return this.faultBlock; }
 			set {
@@ -341,7 +350,8 @@ namespace ICSharpCode.Decompiler.IL
 
 		protected override ILInstruction GetChild(int index)
 		{
-			switch (index) {
+			switch (index)
+			{
 				case 0:
 					return TryBlock;
 				case 1:
@@ -353,7 +363,8 @@ namespace ICSharpCode.Decompiler.IL
 
 		protected override void SetChild(int index, ILInstruction value)
 		{
-			switch (index) {
+			switch (index)
+			{
 				case 0:
 					TryBlock = value;
 					break;
@@ -367,7 +378,8 @@ namespace ICSharpCode.Decompiler.IL
 
 		protected override SlotInfo GetChildSlot(int index)
 		{
-			switch (index) {
+			switch (index)
+			{
 				case 0:
 					return TryBlockSlot;
 				case 1:

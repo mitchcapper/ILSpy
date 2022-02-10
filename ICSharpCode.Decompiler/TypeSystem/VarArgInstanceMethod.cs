@@ -22,6 +22,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 
 namespace ICSharpCode.Decompiler.TypeSystem
@@ -40,7 +41,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			var paramList = new List<IParameter>(baseMethod.Parameters);
 			Debug.Assert(paramList.Last().Type.Kind == TypeKind.ArgList);
 			paramList.RemoveAt(paramList.Count - 1);
-			foreach (IType varArg in varArgTypes) {
+			foreach (IType varArg in varArgTypes)
+			{
 				paramList.Add(new DefaultParameter(varArg, name: string.Empty, owner: this));
 			}
 			this.parameters = paramList.ToArray();
@@ -77,24 +79,28 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			StringBuilder b = new StringBuilder("[");
 			b.Append(this.SymbolKind);
-			if (this.DeclaringType != null) {
+			if (this.DeclaringType != null)
+			{
 				b.Append(this.DeclaringType.ReflectionName);
 				b.Append('.');
 			}
 			b.Append(this.Name);
-			if (this.TypeParameters.Count > 0) {
+			if (this.TypeParameters.Count > 0)
+			{
 				b.Append("``");
 				b.Append(this.TypeParameters.Count);
 			}
 			b.Append('(');
-			for (int i = 0; i < this.Parameters.Count; i++) {
+			for (int i = 0; i < this.Parameters.Count; i++)
+			{
 				if (i > 0)
 					b.Append(", ");
 				if (i == this.RegularParameterCount)
 					b.Append("..., ");
 				b.Append(this.Parameters[i].Type.ReflectionName);
 			}
-			if (this.Parameters.Count == this.RegularParameterCount) {
+			if (this.Parameters.Count == this.RegularParameterCount)
+			{
 				b.Append(", ...");
 			}
 			b.Append("):");

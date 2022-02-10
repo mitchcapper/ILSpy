@@ -28,7 +28,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public static IEvent Create(IEvent ev, TypeParameterSubstitution substitution)
 		{
 			if (TypeParameterSubstitution.Identity.Equals(substitution)
-				|| ev.DeclaringType.TypeParameterCount == 0) {
+				|| ev.DeclaringType.TypeParameterCount == 0)
+			{
 				return ev;
 			}
 			if (substitution.MethodTypeArguments != null && substitution.MethodTypeArguments.Count > 0)

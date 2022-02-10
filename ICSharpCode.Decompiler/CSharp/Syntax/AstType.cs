@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+
 using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -30,7 +31,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public abstract class AstType : AstNode
 	{
 		#region Null
-		public new static readonly AstType Null = new NullAstType ();
+		public new static readonly AstType Null = new NullAstType();
 
 		sealed class NullAstType : AstType
 		{
@@ -40,17 +41,17 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				}
 			}
 
-			public override void AcceptVisitor (IAstVisitor visitor)
+			public override void AcceptVisitor(IAstVisitor visitor)
 			{
 				visitor.VisitNullNode(this);
 			}
 
-			public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+			public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
 			{
 				return visitor.VisitNullNode(this);
 			}
 
-			public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
+			public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
 			{
 				return visitor.VisitNullNode(this, data);
 			}
@@ -86,19 +87,19 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				get { return NodeType.Pattern; }
 			}
 
-			public override void AcceptVisitor (IAstVisitor visitor)
+			public override void AcceptVisitor(IAstVisitor visitor)
 			{
-				visitor.VisitPatternPlaceholder (this, child);
+				visitor.VisitPatternPlaceholder(this, child);
 			}
 
-			public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+			public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
 			{
-				return visitor.VisitPatternPlaceholder (this, child);
+				return visitor.VisitPatternPlaceholder(this, child);
 			}
 
 			public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
 			{
-				return visitor.VisitPatternPlaceholder (this, child, data);
+				return visitor.VisitPatternPlaceholder(this, child, data);
 			}
 
 			public override ITypeReference ToTypeReference(NameLookupMode lookupMode, InterningProvider interningProvider)
@@ -157,9 +158,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			while (outermostType.Parent is AstType)
 				outermostType = (AstType)outermostType.Parent;
 
-			if (outermostType.Parent is UsingDeclaration || outermostType.Parent is UsingAliasDeclaration) {
+			if (outermostType.Parent is UsingDeclaration || outermostType.Parent is UsingAliasDeclaration)
+			{
 				return NameLookupMode.TypeInUsingDeclaration;
-			} else if (outermostType.Role == Roles.BaseType) {
+			}
+			else if (outermostType.Role == Roles.BaseType)
+			{
 				// Use BaseTypeReference for a type's base type, and for a constraint on a type.
 				// Do not use it for a constraint on a method.
 				if (outermostType.Parent is TypeDeclaration || (outermostType.Parent is Constraint && outermostType.Parent.Parent is TypeDeclaration))
@@ -234,7 +238,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			AstType type = new SimpleType(parts[0]);
 			if (tokenKind is not null)
 				type.AddAnnotation(tokenKind);
-			for (int i = 1; i < parts.Length; i++) {
+			for (int i = 1; i < parts.Length; i++)
+			{
 				type = new MemberType(type, parts[i]);
 				if (tokenKind is not null)
 					type.AddAnnotation(tokenKind);

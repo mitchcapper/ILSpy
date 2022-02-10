@@ -1,10 +1,12 @@
-﻿using Microsoft.VisualBasic;
-using Microsoft.VisualBasic.CompilerServices;
-using System;
+﻿using System;
 using System.ComponentModel;
 using System.IO;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+
+using Microsoft.VisualBasic;
+using Microsoft.VisualBasic.CompilerServices;
+
 [assembly: Embedded]
 [assembly: AssemblyInformationalVersion("1.0.0")]
 [assembly: AssemblyConfiguration("Debug")]
@@ -41,10 +43,7 @@ namespace Issue1325
 				throw new NotImplementedException();
 			}
 		}
-		public string Unparameterized {
-			get;
-			set;
-		}
+		public string Unparameterized { get; set; }
 	}
 }
 namespace Microsoft.VisualBasic

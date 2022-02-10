@@ -299,7 +299,8 @@ namespace ICSharpCode.Decompiler
 
 		public override void WriteComment(CommentType commentType, string content, CommentReference[] refs)
 		{
-			switch (commentType) {
+			switch (commentType)
+			{
 				case CommentType.SingleLine:
 					output.Write("//", BoxedTextColor.Comment);
 					Write(content, refs);

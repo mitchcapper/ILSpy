@@ -1,4 +1,5 @@
-﻿// Copyright (c) 2014 Daniel Grunwald
+﻿#nullable enable
+// Copyright (c) 2014 Daniel Grunwald
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -20,6 +21,7 @@ using System;
 using System.Diagnostics;
 using dnSpy.Contracts.Decompiler;
 using dnSpy.Contracts.Text;
+
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL
@@ -100,16 +102,21 @@ namespace ICSharpCode.Decompiler.IL
 			// Based on Table 2: Binary Numeric Operations
 			// also works for Table 5: Integer Operations
 			// and for Table 7: Overflow Arithmetic Operations
-			if (left == right || op == BinaryNumericOperator.ShiftLeft || op == BinaryNumericOperator.ShiftRight) {
+			if (left == right || op == BinaryNumericOperator.ShiftLeft || op == BinaryNumericOperator.ShiftRight)
+			{
 				// Shift op codes use Table 6
 				return left;
 			}
-			if (left == StackType.Ref || right == StackType.Ref) {
-				if (left == StackType.Ref && right == StackType.Ref) {
+			if (left == StackType.Ref || right == StackType.Ref)
+			{
+				if (left == StackType.Ref && right == StackType.Ref)
+				{
 					// sub(&, &) = I
 					Debug.Assert(op == BinaryNumericOperator.Sub);
 					return StackType.I;
-				} else {
+				}
+				else
+				{
 					// add/sub with I or I4 and &
 					Debug.Assert(op == BinaryNumericOperator.Add || op == BinaryNumericOperator.Sub);
 					return StackType.Ref;
@@ -127,7 +134,8 @@ namespace ICSharpCode.Decompiler.IL
 		internal override void CheckInvariant(ILPhase phase)
 		{
 			base.CheckInvariant(phase);
-			if (!IsLifted) {
+			if (!IsLifted)
+			{
 				Debug.Assert(LeftInputType == Left.ResultType);
 				Debug.Assert(RightInputType == Right.ResultType);
 			}
@@ -151,7 +159,8 @@ namespace ICSharpCode.Decompiler.IL
 
 		internal static string GetOperatorName(BinaryNumericOperator @operator)
 		{
-			switch (@operator) {
+			switch (@operator)
+			{
 				case BinaryNumericOperator.Add:
 					return "add";
 				case BinaryNumericOperator.Sub:
@@ -182,17 +191,22 @@ namespace ICSharpCode.Decompiler.IL
 			WriteILRange(output, options);
 			output.Write(OpCode);
 			output.Write("." + GetOperatorName(Operator), BoxedTextColor.Text);
-			if (CheckForOverflow) {
+			if (CheckForOverflow)
+			{
 				output.Write(".ovf", BoxedTextColor.Text);
 			}
-			if (Sign == Sign.Unsigned) {
+			if (Sign == Sign.Unsigned)
+			{
 				output.Write(".unsigned", BoxedTextColor.Text);
-			} else if (Sign == Sign.Signed) {
+			}
+			else if (Sign == Sign.Signed)
+			{
 				output.Write(".signed", BoxedTextColor.Text);
 			}
 			output.Write(".", BoxedTextColor.Text);
 			output.Write(resultType.ToString().ToLowerInvariant(), BoxedTextColor.Text);
-			if (IsLifted) {
+			if (IsLifted)
+			{
 				output.Write(".lifted", BoxedTextColor.Text);
 			}
 			output.Write("(", BoxedTextColor.Text);

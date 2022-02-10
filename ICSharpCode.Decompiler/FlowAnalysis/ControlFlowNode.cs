@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.FlowAnalysis
@@ -112,7 +113,8 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		{
 			// TODO: this can be made O(1) by numbering the dominator tree
 			ControlFlowNode tmp = node;
-			while (tmp != null) {
+			while (tmp != null)
+			{
 				if (tmp == this)
 					return true;
 				tmp = tmp.ImmediateDominator;
