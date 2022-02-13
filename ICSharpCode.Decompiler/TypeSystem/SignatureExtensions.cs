@@ -15,7 +15,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 			switch (sig) {
 				case CorLibTypeSig corLibTypeSig:
-					return module.Compilation.FindType(corLibTypeSig.ElementType.ToKnownTypeCode());
+					return corLibTypeSig.TypeDefOrRef.DecodeSignature(module, context, IsValueType(corLibTypeSig));
 				case GenericMVar mVar:
 					// TODO: store OriginalMember
 					return context.GetMethodTypeParameter((int)mVar.Number);
@@ -79,10 +79,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			if (typeDefOrRef is TypeSpec spec) {
 				return spec.TypeSig.DecodeSignature(module, context);
 			}
-			CorLibTypeSig corLibTypeSig = typeDefOrRef.Module?.CorLibTypes.GetCorLibTypeSig(typeDefOrRef);
-			if (corLibTypeSig != null) {
-				return corLibTypeSig.DecodeSignature(module, context);
-			}
 
 			if (typeDefOrRef is TypeDef def) {
 				return module.GetDefinition(def);
@@ -93,12 +89,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 						return tsType;
 
 					var resolved = typeRef.Resolve();
-					if (resolved != null && module.Compilation.GetOrAddModule(resolved.Module) is MetadataModule mod) {
-						var mdType = mod.GetDefinitionInternal(resolved);
-						mdType.OriginalMember = typeRef;
-						tsType = mdType;
-					}
-					else {
+					if (resolved != null && module.Compilation.GetOrAddModule(resolved.Module) is MetadataModule mod)
+						tsType = mod.GetDefinitionInternal(resolved).WithOriginalMember(typeRef);
+					else
+					{
 						Console.WriteLine("Failed to resolve TypeRef: {0}", typeRef);
 						bool? isReferenceType;
 						if (isVT != ThreeState.Unknown)
@@ -113,6 +107,34 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 
 			throw new InvalidOperationException();
+		}
+
+		private static ThreeState IsValueType(CorLibTypeSig corlib) {
+			switch (corlib.ElementType) {
+				case ElementType.Void:
+				case ElementType.Boolean:
+				case ElementType.Char:
+				case ElementType.I1:
+				case ElementType.U1:
+				case ElementType.I2:
+				case ElementType.U2:
+				case ElementType.I4:
+				case ElementType.U4:
+				case ElementType.I8:
+				case ElementType.U8:
+				case ElementType.R4:
+				case ElementType.R8:
+				case ElementType.TypedByRef:
+				case ElementType.I:
+				case ElementType.U:
+				case ElementType.R:
+					return ThreeState.True;
+				case ElementType.String:
+				case ElementType.Object:
+					return ThreeState.False;
+				default:
+					return ThreeState.Unknown;
+			}
 		}
 	}
 }

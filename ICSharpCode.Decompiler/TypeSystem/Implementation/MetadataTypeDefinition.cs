@@ -275,9 +275,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		dnlib.DotNet.IType IType.MetadataToken => handle;
 
-		IMDTokenProvider IEntity.OriginalMember => OriginalMember;
+		IMDTokenProvider IEntity.OriginalMember => handle;
 
-		public dnlib.DotNet.IType OriginalMember { get; internal set; }
+		public dnlib.DotNet.IType OriginalMember => handle;
 
 		IMDTokenProvider IEntity.MetadataToken => handle;
 		public TypeDef MetadataToken => handle;
@@ -390,9 +390,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public override bool Equals(object obj)
 		{
-			if (obj is MetadataTypeDefinition td) {
-				return handle == td.handle && module.PEFile == td.module.PEFile;
-			}
+			if (obj is not MetadataTypeDefinition f)
+				f = (obj as MetadataTypeDefinitionWithOriginalMember)?.backing;
+			if (f is not null)
+				return handle == f.handle && module.PEFile == f.module.PEFile;
 			return false;
 		}
 
@@ -590,5 +591,153 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return opEquality & opInequality & clone;
 		}
 		#endregion
+
+		internal ITypeDefinition WithOriginalMember(dnlib.DotNet.IType originalMember)
+		{
+			return new MetadataTypeDefinitionWithOriginalMember(this, originalMember);
+		}
+
+		private sealed class MetadataTypeDefinitionWithOriginalMember : ITypeDefinition
+		{
+			internal readonly MetadataTypeDefinition backing;
+			public readonly dnlib.DotNet.IType originalMember;
+
+			public MetadataTypeDefinitionWithOriginalMember(MetadataTypeDefinition mdType, dnlib.DotNet.IType originalMember)
+			{
+				this.backing = mdType;
+				this.originalMember = originalMember;
+			}
+
+			public string FullName => backing.FullName;
+
+			public SymbolKind SymbolKind => backing.SymbolKind;
+
+			public dnlib.DotNet.IType OriginalMember => originalMember;
+
+			IMDTokenProvider IEntity.OriginalMember => originalMember;
+
+			public string Name => backing.Name;
+
+			public ITypeDefinition DeclaringTypeDefinition => backing.DeclaringTypeDefinition;
+
+			public string ReflectionName => backing.ReflectionName;
+
+			public string Namespace => backing.Namespace;
+
+			public override bool Equals(object obj)
+			{
+				if (obj is not MetadataTypeDefinition f)
+					f = (obj as MetadataTypeDefinitionWithOriginalMember)?.backing;
+				if (f is not null)
+					return backing.handle == f.handle && backing.module.PEFile == f.module.PEFile;
+				return false;
+			}
+
+			public override int GetHashCode()
+			{
+				return 0x11dda32b ^ backing.module.PEFile.GetHashCode() ^ backing.handle.GetHashCode();
+			}
+
+			bool IEquatable<IType>.Equals(IType other) => Equals(other);
+
+			public TypeKind Kind => backing.Kind;
+
+			public bool? IsReferenceType => backing.IsReferenceType;
+
+			public bool IsByRefLike => backing.IsByRefLike;
+
+			public Nullability Nullability => Nullability.Oblivious;
+
+			public IType ChangeNullability(Nullability nullability)
+			{
+				if (nullability == Nullability.Oblivious)
+					return this;
+				return new NullabilityAnnotatedType(this, nullability);
+			}
+
+			public ITypeDefinition GetDefinition() => this;
+
+			public IReadOnlyList<ITypeDefinition> NestedTypes => backing.NestedTypes;
+
+			public IReadOnlyList<IMember> Members => backing.Members;
+
+			public IEnumerable<IField> Fields => backing.Fields;
+
+			public IEnumerable<IMethod> Methods => backing.Methods;
+
+			public IEnumerable<IProperty> Properties => backing.Properties;
+
+			public IEnumerable<IEvent> Events => backing.Events;
+
+			public KnownTypeCode KnownTypeCode => backing.KnownTypeCode;
+
+			public IType EnumUnderlyingType => backing.EnumUnderlyingType;
+
+			public bool IsReadOnly => backing.IsReadOnly;
+
+			public FullTypeName FullTypeName => backing.FullTypeName;
+
+			public IType DeclaringType => backing.DeclaringType;
+
+			public bool HasExtensionMethods => backing.HasExtensionMethods;
+
+			public Nullability NullableContext => backing.NullableContext;
+
+			public bool IsRecord => backing.IsRecord;
+
+			public IModule ParentModule => backing.ParentModule;
+
+			public IEnumerable<IAttribute> GetAttributes() => backing.GetAttributes();
+
+			public Accessibility Accessibility => backing.Accessibility;
+
+			public bool IsStatic => backing.IsStatic;
+
+			public bool IsAbstract => backing.IsAbstract;
+
+			public bool IsSealed => backing.IsSealed;
+
+			public int TypeParameterCount => backing.TypeParameterCount;
+
+			public IReadOnlyList<ITypeParameter> TypeParameters => backing.TypeParameters;
+
+			IReadOnlyList<IType> IType.TypeArguments => TypeParameters;
+
+			public IType AcceptVisitor(TypeVisitor visitor) => visitor.VisitTypeDefinition(this);
+
+			public IType VisitChildren(TypeVisitor visitor) => this;
+
+			public IEnumerable<IType> DirectBaseTypes => backing.DirectBaseTypes;
+
+			public TypeParameterSubstitution GetSubstitution() => TypeParameterSubstitution.Identity;
+
+			public IEnumerable<IType> GetNestedTypes(Predicate<ITypeDefinition> filter = null, GetMemberOptions options = GetMemberOptions.None) => backing.GetNestedTypes(filter, options);
+
+			public IEnumerable<IType> GetNestedTypes(IReadOnlyList<IType> typeArguments, Predicate<ITypeDefinition> filter = null, GetMemberOptions options = GetMemberOptions.None) => backing.GetNestedTypes(typeArguments, filter, options);
+
+			public IEnumerable<IMethod> GetConstructors(Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.IgnoreInheritedMembers) => backing.GetConstructors(filter, options);
+
+			public IEnumerable<IMethod> GetMethods(Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.None) => backing.GetMethods(filter, options);
+
+			public IEnumerable<IMethod> GetMethods(IReadOnlyList<IType> typeArguments, Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.None) => backing.GetMethods(typeArguments, filter, options);
+
+			public IEnumerable<IProperty> GetProperties(Predicate<IProperty> filter = null, GetMemberOptions options = GetMemberOptions.None) => backing.GetProperties(filter, options);
+
+			public IEnumerable<IField> GetFields(Predicate<IField> filter = null, GetMemberOptions options = GetMemberOptions.None) => backing.GetFields(filter, options);
+
+			public IEnumerable<IEvent> GetEvents(Predicate<IEvent> filter = null, GetMemberOptions options = GetMemberOptions.None) => backing.GetEvents(filter, options);
+
+			public IEnumerable<IMember> GetMembers(Predicate<IMember> filter = null, GetMemberOptions options = GetMemberOptions.None) => backing.GetMembers(filter, options);
+
+			public IEnumerable<IMethod> GetAccessors(Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.None) => backing.GetAccessors(filter, options);
+
+			public TypeDef MetadataToken => backing.MetadataToken;
+
+			dnlib.DotNet.IType IType.MetadataToken => backing.MetadataToken;
+
+			IMDTokenProvider IEntity.MetadataToken => backing.MetadataToken;
+
+			public ICompilation Compilation => backing.Compilation;
+		}
 	}
 }

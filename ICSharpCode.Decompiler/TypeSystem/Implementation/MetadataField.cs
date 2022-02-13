@@ -60,7 +60,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public dnlib.DotNet.IField MetadataToken => handle;
 
-		public IMDTokenProvider OriginalMember { get; internal set; }
+		public IMDTokenProvider OriginalMember => handle;
 
 		public override string ToString()
 		{
@@ -203,9 +203,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public override bool Equals(object obj)
 		{
-			if (obj is MetadataField f) {
+			if (obj is not MetadataField f)
+				f = (obj as MetadataFieldWithOriginalMember)?.backing;
+			if (f is not null)
 				return handle == f.handle && module.PEFile == f.module.PEFile;
-			}
 			return false;
 		}
 
@@ -227,6 +228,117 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		IMember IMember.Specialize(TypeParameterSubstitution substitution)
 		{
 			return Specialize(substitution);
+		}
+
+		internal IField WithOriginalMember(IMDTokenProvider originalMember)
+		{
+			return new MetadataFieldWithOriginalMember(this, originalMember);
+		}
+
+		private sealed class MetadataFieldWithOriginalMember : IField
+		{
+			internal readonly MetadataField backing;
+
+			public MetadataFieldWithOriginalMember(MetadataField mdField, IMDTokenProvider originalMember)
+			{
+				this.backing = mdField;
+				this.OriginalMember = originalMember;
+			}
+
+			public SymbolKind SymbolKind => SymbolKind.Field;
+
+			public string FullName => backing.FullName;
+
+			public IField Specialize(TypeParameterSubstitution substitution)
+			{
+				return SpecializedField.Create(this, substitution);
+			}
+
+			public dnlib.DotNet.IField MetadataToken => backing.MetadataToken;
+
+			IMDTokenProvider IEntity.MetadataToken => backing.MetadataToken;
+
+			public IMDTokenProvider OriginalMember { get; }
+
+			public string Name => backing.Name;
+
+			public bool IsReadOnly => backing.IsReadOnly;
+
+			public bool IsVolatile => backing.IsVolatile;
+
+			public IType Type => backing.Type;
+
+			public bool IsConst => backing.IsConst;
+
+			public object GetConstantValue(bool throwOnInvalidMetadata = false)
+			{
+				return backing.GetConstantValue(throwOnInvalidMetadata);
+			}
+
+			public ITypeDefinition DeclaringTypeDefinition => backing.DeclaringTypeDefinition;
+
+			public IMember MemberDefinition => this;
+
+			public IType ReturnType => backing.Type;
+
+			public IType DeclaringType => backing.DeclaringType;
+
+			public IEnumerable<IMember> ExplicitlyImplementedInterfaceMembers => EmptyList<IMember>.Instance;
+
+			public bool IsExplicitInterfaceImplementation => false;
+
+			public bool IsVirtual => false;
+
+			public bool IsOverride => false;
+
+			public bool IsOverridable => false;
+
+			public TypeParameterSubstitution Substitution => TypeParameterSubstitution.Identity;
+
+			IMember IMember.Specialize(TypeParameterSubstitution substitution)
+			{
+				return SpecializedField.Create(this, substitution);
+			}
+
+			public override bool Equals(object obj)
+			{
+				if (obj is not MetadataField f)
+					f = (obj as MetadataFieldWithOriginalMember)?.backing;
+				if (f is not null)
+					return backing.handle == f.handle && backing.module.PEFile == f.module.PEFile;
+				return false;
+			}
+
+			public override int GetHashCode()
+			{
+				return 0x11dda32b ^ backing.module.PEFile.GetHashCode() ^ backing.handle.GetHashCode();
+			}
+
+			public bool Equals(IMember obj, TypeVisitor typeNormalization)
+			{
+				return Equals(obj);
+			}
+
+			public IModule ParentModule => backing.ParentModule;
+
+			public IEnumerable<IAttribute> GetAttributes()
+			{
+				return backing.GetAttributes();
+			}
+
+			public Accessibility Accessibility => backing.Accessibility;
+
+			public bool IsStatic => backing.IsStatic;
+
+			public bool IsAbstract => false;
+
+			public bool IsSealed => false;
+
+			public string ReflectionName => backing.ReflectionName;
+
+			public string Namespace => backing.Namespace;
+
+			public ICompilation Compilation => backing.Compilation;
 		}
 	}
 }

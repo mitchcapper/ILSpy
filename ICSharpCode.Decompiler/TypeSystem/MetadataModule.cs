@@ -196,14 +196,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if (handle == null)
 				return null;
-			if (typeDefDict == null)
-				return new MetadataTypeDefinition(this, handle);
 			lock (typeDefDict) {
 				if (typeDefDict.TryGetValue(handle, out var tsType))
 					return tsType;
-				tsType = new MetadataTypeDefinition(this, handle) {
-					OriginalMember = handle
-				};
+				tsType = new MetadataTypeDefinition(this, handle);
 				return typeDefDict[handle] = tsType;
 			}
 		}
@@ -217,14 +213,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if (handle == null)
 				return null;
-			if (fieldDefDict == null)
-				return new MetadataField(this, handle);
 			lock (fieldDefDict) {
 				if (fieldDefDict.TryGetValue(handle, out var tsField))
 					return tsField;
-				tsField = new MetadataField(this, handle) {
-					OriginalMember = handle
-				};
+				tsField = new MetadataField(this, handle);
 				return fieldDefDict[handle] = tsField;
 			}
 		}
@@ -238,14 +230,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if (handle == null)
 				return null;
-			if (methodDefDict == null)
-				return new MetadataMethod(this, handle);
 			lock (methodDefDict) {
 				if (methodDefDict.TryGetValue(handle, out var tsMethod))
 					return tsMethod;
-				tsMethod = new MetadataMethod(this, handle) {
-					OriginalMember = handle
-				};
+				tsMethod = new MetadataMethod(this, handle);
 				return methodDefDict[handle] = tsMethod;
 			}
 		}
@@ -254,8 +242,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if (handle == null)
 				return null;
-			if (propertyDefDict == null)
-				return new MetadataProperty(this, handle);
 			lock (propertyDefDict) {
 				if (propertyDefDict.TryGetValue(handle, out var tsProperty))
 					return tsProperty;
@@ -268,8 +254,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if (handle == null)
 				return null;
-			if (eventDefDict == null)
-				return new MetadataEvent(this, handle);
 			lock (eventDefDict) {
 				if (eventDefDict.TryGetValue(handle, out var tsEvent))
 					return tsEvent;
@@ -397,7 +381,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			IMethod method;
 			GenericContext vaRAgCtx;
 			if (memberRef.Class is MethodDef methodDef) {
-				method = GetDefinition(methodDef);
+				method = GetDefinitionInternal(methodDef).WithOriginalMember(memberRef);
 				vaRAgCtx = context;
 			}
 			else {
@@ -411,11 +395,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				vaRAgCtx = new GenericContext(declaringTypeDefinition?.TypeParameters);
 
 				var resolved = memberRef.ResolveMethod();
-				if (resolved is not null && Compilation.GetOrAddModule(resolved.Module) is MetadataModule mod) {
-					var mdMethod = mod.GetDefinitionInternal(resolved);
-					mdMethod.OriginalMember = memberRef;
-					method = mdMethod;
-				} else {
+				if (resolved is not null && Compilation.GetOrAddModule(resolved.Module) is MetadataModule mod)
+					method = mod.GetDefinitionInternal(resolved).WithOriginalMember(memberRef);
+				else
+				{
 					var symbolKind = memberRef.Name == ".ctor" || memberRef.Name == ".cctor"
 						? SymbolKind.Constructor
 						: SymbolKind.Method;
@@ -517,11 +500,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 			IField tsField;
 			var resolved = memberRef.ResolveField();
-			if (resolved is not null && Compilation.GetOrAddModule(resolved.Module) is MetadataModule mod) {
-				var mdField = mod.GetDefinitionInternal(resolved);
-				mdField.OriginalMember = memberRef;
-				tsField = mdField;
-			} else {
+			if (resolved is not null && Compilation.GetOrAddModule(resolved.Module) is MetadataModule mod)
+				tsField = mod.GetDefinitionInternal(resolved).WithOriginalMember(memberRef);
+			else
+			{
 				tsField = new MetadataUnresolvedField(this, memberRef) {
 					DeclaringType = declaringType
 				};

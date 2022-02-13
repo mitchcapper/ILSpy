@@ -135,7 +135,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		IMDTokenProvider IEntity.MetadataToken => handle;
 
-		public IMDTokenProvider OriginalMember { get; internal set; }
+		public IMDTokenProvider OriginalMember => handle;
 
 		public dnlib.DotNet.IMethod MetadataToken => handle;
 
@@ -384,9 +384,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public override bool Equals(object obj)
 		{
-			if (obj is MetadataMethod m) {
+			if (obj is not MetadataMethod m)
+				m = (obj as MetadataMethodWithOriginalMember)?.backing;
+			if (m is not null)
 				return handle == m.handle && module.PEFile == m.module.PEFile;
-			}
 			return false;
 		}
 
@@ -408,6 +409,141 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		IMember IMember.Specialize(TypeParameterSubstitution substitution)
 		{
 			return SpecializedMethod.Create(this, substitution);
+		}
+
+		internal IMethod WithOriginalMember(IMDTokenProvider originalMember)
+		{
+			return new MetadataMethodWithOriginalMember(this, originalMember);
+		}
+
+		private sealed class MetadataMethodWithOriginalMember : IMethod
+		{
+			internal readonly MetadataMethod backing;
+
+			public MetadataMethodWithOriginalMember(MetadataMethod mdMethod, IMDTokenProvider originalMember)
+			{
+				this.backing = mdMethod;
+				this.OriginalMember = originalMember;
+			}
+
+			public SymbolKind SymbolKind => backing.SymbolKind;
+
+			public string FullName => backing.FullName;
+
+			public IMethod Specialize(TypeParameterSubstitution substitution)
+			{
+				return SpecializedMethod.Create(this, substitution);
+			}
+
+			public dnlib.DotNet.IMethod MetadataToken => backing.MetadataToken;
+
+			IMDTokenProvider IEntity.MetadataToken => backing.MetadataToken;
+
+			public IMDTokenProvider OriginalMember { get; }
+
+			public string Name => backing.Name;
+
+			public ITypeDefinition DeclaringTypeDefinition => backing.DeclaringTypeDefinition;
+
+			public IMember MemberDefinition => this;
+
+			public IType ReturnType => backing.ReturnType;
+
+			public IType DeclaringType => backing.DeclaringType;
+
+			public IEnumerable<IMember> ExplicitlyImplementedInterfaceMembers => backing.ExplicitlyImplementedInterfaceMembers;
+
+			public bool IsExplicitInterfaceImplementation => backing.IsExplicitInterfaceImplementation;
+
+			public bool IsVirtual => backing.IsVirtual;
+
+			public bool IsOverride => backing.IsOverride;
+
+			public bool IsOverridable => backing.IsOverridable;
+
+			public TypeParameterSubstitution Substitution => TypeParameterSubstitution.Identity;
+
+			public IEnumerable<IAttribute> GetReturnTypeAttributes()
+			{
+				return backing.GetReturnTypeAttributes();
+			}
+
+			public bool ReturnTypeIsRefReadOnly => backing.ReturnTypeIsRefReadOnly;
+
+			public bool IsInitOnly => backing.IsInitOnly;
+
+			public bool ThisIsRefReadOnly => backing.ThisIsRefReadOnly;
+
+			public IReadOnlyList<ITypeParameter> TypeParameters => backing.TypeParameters;
+
+			public IReadOnlyList<IType> TypeArguments => backing.TypeParameters;
+
+			public bool IsExtensionMethod => backing.IsExtensionMethod;
+
+			public bool IsLocalFunction => false;
+
+			public bool IsConstructor => backing.IsConstructor;
+
+			public bool IsDestructor => backing.IsDestructor;
+
+			public bool IsOperator => backing.IsOperator;
+
+			public bool HasBody => backing.HasBody;
+
+			public bool IsAccessor => backing.IsAccessor;
+
+			public IMember AccessorOwner => backing.AccessorOwner;
+
+			public MethodSemanticsAttributes AccessorKind => backing.AccessorKind;
+
+			public IMethod ReducedFrom => null;
+
+			IMember IMember.Specialize(TypeParameterSubstitution substitution)
+			{
+				return SpecializedMethod.Create(this, substitution);
+			}
+
+			public override bool Equals(object obj)
+			{
+				if (obj is not MetadataMethod f)
+					f = (obj as MetadataMethodWithOriginalMember)?.backing;
+				if (f is not null)
+					return backing.handle == f.handle && backing.module.PEFile == f.module.PEFile;
+				return false;
+			}
+
+			public override int GetHashCode()
+			{
+				return 0x11dda32b ^ backing.module.PEFile.GetHashCode() ^ backing.handle.GetHashCode();
+			}
+
+			public bool Equals(IMember obj, TypeVisitor typeNormalization)
+			{
+				return Equals(obj);
+			}
+
+			public IModule ParentModule => backing.ParentModule;
+
+			public IEnumerable<IAttribute> GetAttributes()
+			{
+				return backing.GetAttributes();
+			}
+
+			public Accessibility Accessibility => backing.Accessibility;
+
+			public bool IsStatic => backing.IsStatic;
+
+			public bool IsAbstract => backing.IsAbstract;
+
+			public bool IsSealed => backing.IsSealed;
+
+			public string ReflectionName => backing.ReflectionName;
+
+			public string Namespace => backing.Namespace;
+
+			public ICompilation Compilation => backing.Compilation;
+
+			public IReadOnlyList<IParameter> Parameters => backing.Parameters;
 		}
 	}
 }
