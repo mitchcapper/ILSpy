@@ -57,10 +57,26 @@ namespace ICSharpCode.Decompiler.CSharp
 			collector.HandleAttributes(module.GetAssemblyAttributes());
 		}
 
+		public static void CollectNamespacesOnlyType(ITypeDefinition entity, HashSet<string> namespaces)
+		{
+			var collector = new RequiredNamespaceCollector(namespaces);
+			collector.CollectNamespacesOnlyType(entity);
+		}
+
 		public static void CollectNamespaces(IEntity entity, MetadataModule module, HashSet<string> namespaces)
 		{
 			var collector = new RequiredNamespaceCollector(namespaces);
 			collector.CollectNamespaces(entity, module);
+		}
+
+		void CollectNamespacesOnlyType(ITypeDefinition entity)
+		{
+			if (entity == null)
+				return;
+
+			namespaces.Add(entity.Namespace);
+			HandleAttributes(entity.GetAttributes());
+			HandleTypeParameters(entity.TypeParameters);
 		}
 
 		void CollectNamespaces(IEntity entity, MetadataModule module, CodeMappingInfo mappingInfo = null)

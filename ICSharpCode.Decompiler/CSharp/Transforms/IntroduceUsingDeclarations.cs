@@ -58,7 +58,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				var insertionPoint = rootNode.Children.LastOrDefault(n => n is PreProcessorDirective p && p.Type == PreProcessorDirectiveType.Define);
 
 				// Now add using declarations for those namespaces:
-				foreach (NamespaceRef ns in requiredImports.ImportedNamespaces.OrderByDescending(n => n.Namespace))
+				foreach (NamespaceRef ns in GetNamespacesInReverseOrder(context, requiredImports.ImportedNamespaces))
 				{
 					Debug.Assert(context.RequiredNamespacesSuperset.Contains(ns.Namespace), $"Should not insert using declaration for namespace that is missing from the superset: {ns}");
 					// we go backwards (OrderByDescending) through the list of namespaces because we insert them backwards
@@ -365,5 +365,40 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			public override bool Equals(object obj) => obj is NamespaceRef && Equals((NamespaceRef)obj);
 			public override int GetHashCode() => StringComparer.Ordinal.GetHashCode(Namespace);
 		}
+
+		List<NamespaceRef> GetNamespacesInReverseOrder(TransformContext context, HashSet<NamespaceRef> importedNamespaces)
+		{
+			var namespaceRefList = new List<NamespaceRef>();
+			foreach (var s in importedNamespaces)
+				namespaceRefList.Add(s);
+
+			if (context.Settings.SortSystemUsingStatementsFirst)
+				namespaceRefList.Sort(ReverseSortSystemUsingStatementsFirstComparer.Instance);
+			else
+				namespaceRefList.Sort(ReverseSortNamespacesAlphabeticallyComparer.Instance);
+
+			return namespaceRefList;
+		}
+
+		sealed class ReverseSortSystemUsingStatementsFirstComparer : IComparer<NamespaceRef> {
+			public static readonly ReverseSortSystemUsingStatementsFirstComparer Instance = new ReverseSortSystemUsingStatementsFirstComparer();
+			public int Compare(NamespaceRef x, NamespaceRef y) {
+				bool sx = x.Namespace == "System" || x.Namespace.StartsWith("System.");
+				bool sy = y.Namespace == "System" || y.Namespace.StartsWith("System.");
+				if (sx && sy)
+					return StringComparer.OrdinalIgnoreCase.Compare(y.Namespace, x.Namespace);
+				if (sx && !sy)
+					return 1;
+				if (!sx && sy)
+					return -1;
+				return StringComparer.OrdinalIgnoreCase.Compare(y.Namespace, x.Namespace);
+			}
+		}
+
+		sealed class ReverseSortNamespacesAlphabeticallyComparer : IComparer<NamespaceRef> {
+			public static readonly ReverseSortNamespacesAlphabeticallyComparer Instance = new ReverseSortNamespacesAlphabeticallyComparer();
+			public int Compare(NamespaceRef x, NamespaceRef y) => StringComparer.OrdinalIgnoreCase.Compare(y.Namespace, x.Namespace);
+		}
+
 	}
 }

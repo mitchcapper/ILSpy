@@ -1861,7 +1861,7 @@ namespace ICSharpCode.Decompiler
 
 		/// <summary>
 		/// Gets/sets whether namespaces and namespace-like identifiers should be split at '.'
-		/// and each part should produce a new level of nesting in the output directory structure. 
+		/// and each part should produce a new level of nesting in the output directory structure.
 		/// </summary>
 		[Category("DecompilerSettings.ProjectExport")]
 		[Description("DecompilerSettings.UseNestedDirectoriesForNamespaces")]
@@ -1914,6 +1914,114 @@ namespace ICSharpCode.Decompiler
 				}
 			}
 		}
+
+		bool showTokenAndRvaComments = true;
+
+		/// <summary>
+		/// Gets/sets whether to show tokens of types/methods/etc and the RVA / file offset in comments
+		/// </summary>
+		public bool ShowTokenAndRvaComments {
+			get { return showTokenAndRvaComments; }
+			set {
+				if (showTokenAndRvaComments != value) {
+					showTokenAndRvaComments = value;
+					OnPropertyChanged(nameof(ShowTokenAndRvaComments));
+				}
+			}
+		}
+
+		bool sortMembers = false;
+
+		/// <summary>
+		/// Gets/sets whether to sort members
+		/// </summary>
+		public bool SortMembers {
+			get { return sortMembers; }
+			set {
+				if (sortMembers != value) {
+					sortMembers = value;
+					OnPropertyChanged(nameof(SortMembers));
+				}
+			}
+		}
+
+		public bool ForceShowAllMembers {
+			get { return forceShowAllMembers; }
+			set {
+				if (forceShowAllMembers != value) {
+					forceShowAllMembers = value;
+					OnPropertyChanged(nameof(ForceShowAllMembers));
+				}
+			}
+		}
+		bool forceShowAllMembers = false;
+
+		public bool SortSystemUsingStatementsFirst {
+			get { return sortSystemUsingStatementsFirst; }
+			set {
+				if (sortSystemUsingStatementsFirst != value) {
+					sortSystemUsingStatementsFirst = value;
+					OnPropertyChanged(nameof(SortSystemUsingStatementsFirst));
+				}
+			}
+		}
+		bool sortSystemUsingStatementsFirst = true;
+
+		public int MaxStringLength {
+			get { return maxStringLength; }
+			set {
+				if (maxStringLength != value) {
+					maxStringLength = value;
+					OnPropertyChanged(nameof(MaxStringLength));
+				}
+			}
+		}
+		int maxStringLength = ConstMaxStringLength;
+		public const int ConstMaxStringLength = 20000;
+
+		public bool SortCustomAttributes {
+			get { return sortCustomAttributes; }
+			set {
+				if (sortCustomAttributes != value) {
+					sortCustomAttributes = value;
+					OnPropertyChanged(nameof(SortCustomAttributes));
+				}
+			}
+		}
+		bool sortCustomAttributes = false;
+
+		public bool UseSourceCodeOrder {
+			get { return useSourceCodeOrder; }
+			set {
+				if (useSourceCodeOrder != value) {
+					useSourceCodeOrder = value;
+					OnPropertyChanged(nameof(UseSourceCodeOrder));
+				}
+			}
+		}
+		bool useSourceCodeOrder = true;
+
+		public bool OneCustomAttributePerLine {
+			get { return oneCustomAttributePerLine; }
+			set {
+				if (oneCustomAttributePerLine != value) {
+					oneCustomAttributePerLine = value;
+					OnPropertyChanged(nameof(OneCustomAttributePerLine));
+				}
+			}
+		}
+		bool oneCustomAttributePerLine = true;
+
+		public bool HexadecimalNumbers {
+			get { return hexadecimalNumbers; }
+			set {
+				if (hexadecimalNumbers != value) {
+					hexadecimalNumbers = value;
+					OnPropertyChanged(nameof(HexadecimalNumbers));
+				}
+			}
+		}
+		bool hexadecimalNumbers = false;
 
 		CSharpFormattingOptions csharpFormattingOptions;
 

@@ -4,9 +4,9 @@ using System.Text;
 namespace ICSharpCode.Decompiler.CSharp
 {
 	public struct CommentReference {
-		public int Length;
-		public object Reference;
-		public bool IsLocal;
+		public readonly int Length;
+		public readonly object Reference;
+		public readonly bool IsLocal;
 
 		public CommentReference(int len, object @ref, bool isLocal = false) {
 			this.Length = len;
@@ -16,8 +16,8 @@ namespace ICSharpCode.Decompiler.CSharp
 	}
 
 	public sealed class CommentReferencesCreator {
-		readonly List<CommentReference> refs = new List<CommentReference>();
-		readonly StringBuilder sb = new StringBuilder();
+		readonly List<CommentReference> refs;
+		readonly StringBuilder sb;
 
 		public CommentReference[] CommentReferences {
 			get { return refs.ToArray(); }
@@ -25,6 +25,12 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		public string Text {
 			get { return sb.ToString(); }
+		}
+
+		public CommentReferencesCreator(StringBuilder sb) {
+			this.refs = new List<CommentReference>();
+			this.sb = sb;
+			this.sb.Clear();
 		}
 
 		public void AddText(string text) {
