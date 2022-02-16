@@ -256,11 +256,12 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		static readonly ForStatement forOnArrayPattern = new ForStatement {
 			Initializers = {
+				new NamedNode("initializer",
 				new ExpressionStatement(
 				new AssignmentExpression(
 					new NamedNode("indexVariable", new IdentifierExpression(Pattern.AnyString)),
 					new PrimitiveExpression(0)
-				))
+				)))
 			},
 			Condition = new BinaryOperatorExpression(
 				new IdentifierExpressionBackreference("indexVariable"),
@@ -268,18 +269,20 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				new MemberReferenceExpression(new NamedNode("arrayVariable", new IdentifierExpression(Pattern.AnyString)), "Length")
 			),
 			Iterators = {
+				new NamedNode("increment",
 				new ExpressionStatement(
 				new AssignmentExpression(
 					new IdentifierExpressionBackreference("indexVariable"),
 					new BinaryOperatorExpression(new IdentifierExpressionBackreference("indexVariable"), BinaryOperatorType.Add, new PrimitiveExpression(1))
-				))
+				)))
 			},
 			EmbeddedStatement = new BlockStatement {
 				Statements = {
+					new NamedNode("variable",
 					new ExpressionStatement(new AssignmentExpression(
 						new NamedNode("itemVariable", new IdentifierExpression(Pattern.AnyString)),
 						new IndexerExpression(new IdentifierExpressionBackreference("arrayVariable"), new IdentifierExpressionBackreference("indexVariable"))
-					)),
+					))),
 					new Repeat(new AnyNode("statements"))
 				}
 			}
@@ -366,6 +369,17 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				InExpression = m.Get<IdentifierExpression>("arrayVariable").Single().Detach(),
 				EmbeddedStatement = body
 			};
+
+			var forBlock = (BlockStatement)forStatement.EmbeddedStatement;
+
+			body.HiddenStart = forBlock.HiddenStart;
+			body.HiddenEnd = forBlock.HiddenEnd;
+
+			foreachStmt.HiddenMoveNextNode = m.Get<ExpressionStatement>("increment").Single();
+			foreachStmt.HiddenGetCurrentNode = m.Get<ExpressionStatement>("variable").Single();
+			foreachStmt.HiddenGetEnumeratorNode = m.Get<ExpressionStatement>("initializer").Single();;
+			foreachStmt.HiddenInitializer = null; //TODO:
+
 			foreachStmt.CopyAnnotationsFrom(forStatement);
 			itemVariable.Kind = IL.VariableKind.ForeachLocal;
 			// Add the variable annotation for highlighting (TokenTextWriter expects it directly on the ForeachStatement).
@@ -535,6 +549,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				InExpression = m.Get<IdentifierExpression>("collection").Single().Detach(),
 				EmbeddedStatement = body
 			};
+			// TODO: populate all the 'Hidden*' properties of ForeachStatement.
 			foreach (var statement in statementsToDelete)
 				statement.Detach();
 			//foreachStmt.CopyAnnotationsFrom(forStatement);
@@ -1012,6 +1027,25 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			ed.Variables.Add(new VariableInitializer(eventSymbol, ev.Name));
 			ed.CopyAnnotationsFrom(ev);
 
+			// Keep the token comments
+			foreach (var child in ev.Children.Reverse().ToArray()) {
+				var cmt = child as Comment;
+				if (cmt != null) {
+					ed.InsertChildAfter(null, cmt.Detach(), Roles.Comment);
+					continue;
+				}
+
+				var acc = child as Accessor;
+				if (acc != null) {
+					foreach (var accChild in acc.Children.Reverse().ToArray()) {
+						var accCmt = accChild as Comment;
+						if (accCmt != null)
+							ed.InsertChildAfter(null, accCmt.Detach(), Roles.Comment);
+					}
+					continue;
+				}
+			}
+
 			if (ev.GetSymbol() is IEvent eventDef)
 			{
 				IField field = eventDef.DeclaringType.GetFields(f => f.Name == ev.Name, GetMemberOptions.IgnoreInheritedMembers).SingleOrDefault();
@@ -1065,8 +1099,18 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				dd.CopyAnnotationsFrom(methodDef);
 				dd.Modifiers = methodDef.Modifiers & ~(Modifiers.Protected | Modifiers.Override);
 				dd.Body = m.Get<BlockStatement>("body").Single().Detach();
-				dd.Name = currentTypeDefinition?.Name;
+				if (currentTypeDefinition is null)
+					dd.NameToken = Identifier.Null;
+				else
+					dd.NameToken = Identifier.Create(currentTypeDefinition.Name).WithAnnotation(currentTypeDefinition.MetadataToken);
 				methodDef.ReplaceWith(dd);
+				foreach (var child in methodDef.Children.Reverse().ToArray()) {
+					var cmt = child as Comment;
+					if (cmt != null) {
+						cmt.Detach();
+						dd.InsertChildAfter(null, cmt, Roles.Comment);
+					}
+				}
 				return dd;
 			}
 			return null;

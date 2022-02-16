@@ -543,6 +543,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					VariableKind.Local, disposeType,
 					AssignVariableNames.GenerateVariableName(currentFunction, disposeType)
 				);
+				// TODO: MemberRef annotation
 				Expression disposeInvocation = new InvocationExpression(new MemberReferenceExpression(exprBuilder.ConvertVariable(disposeVariable).Expression, disposeTypeMethodName));
 				if (inst.IsAsync)
 				{
@@ -770,6 +771,11 @@ namespace ICSharpCode.Decompiler.CSharp
 			};
 			foreachStmt.AddAnnotation(new ForeachAnnotation(inst.ResourceExpression, conditionInst, singleGetter));
 			foreachStmt.CopyAnnotationsFrom(whileLoop);
+
+			foreachStmt.HiddenMoveNextNode = whileLoop.Condition;
+			foreachStmt.HiddenGetCurrentNode = exprBuilder.Translate(singleGetter.Parent);
+			foreachStmt.HiddenGetEnumeratorNode = resource; // TODO: verify
+
 			// If there was an optional return statement, return it as well.
 			// If there were labels or any other statements in the whileLoopBlock, move them after the foreach
 			// loop.

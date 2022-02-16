@@ -442,8 +442,8 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		internal bool RemoveIfRedundant;
 
-		public dnlib.DotNet.Parameter OriginalParameter;
-		public dnlib.DotNet.Emit.Local OriginalVariable;
+		public dnlib.DotNet.Parameter? OriginalParameter;
+		public dnlib.DotNet.Emit.Local? OriginalVariable;
 
 		public ILVariable(VariableKind kind, IType type, int? index = null)
 		{

@@ -102,6 +102,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				/*
 			case "System.Reflection.FieldInfo.GetFieldFromHandle":
 				// TODO : This is dead code because LdTokenAnnotation is not added anywhere:
+				// TODO: Reimplement as the dnSpy version of the decompiler does emit LdTokenAnnotation annotation
 				if (arguments.Length == 1) {
 					MemberReferenceExpression mre = arguments[0] as MemberReferenceExpression;
 					if (mre != null && mre.MemberName == "FieldHandle" && mre.Target.Annotation<LdTokenAnnotation>() != null) {
@@ -425,6 +426,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			base.VisitCastExpression(castExpression);
 			// Handle methodof
+			// TODO: this does not seem to work properly.
 			Match m = getMethodOrConstructorFromHandlePattern.Match(castExpression);
 			if (m.Success)
 			{

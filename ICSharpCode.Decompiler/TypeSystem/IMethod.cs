@@ -107,6 +107,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		new IMethod Specialize(TypeParameterSubstitution substitution);
 
-		new dnlib.DotNet.IMethod MetadataToken { get; }
+		new dnlib.DotNet.IMethod? MetadataToken { get; }
 	}
 }

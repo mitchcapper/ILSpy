@@ -323,49 +323,6 @@ namespace ICSharpCode.Decompiler
 			return null;
 		}
 
-		public static TypeSystem.KnownTypeCode ToKnownTypeCode(this ElementType typeCode)
-		{
-			switch (typeCode) {
-				case ElementType.Boolean:
-					return TypeSystem.KnownTypeCode.Boolean;
-				case ElementType.U1:
-					return TypeSystem.KnownTypeCode.Byte;
-				case ElementType.I1:
-					return TypeSystem.KnownTypeCode.SByte;
-				case ElementType.Char:
-					return TypeSystem.KnownTypeCode.Char;
-				case ElementType.I2:
-					return TypeSystem.KnownTypeCode.Int16;
-				case ElementType.U2:
-					return TypeSystem.KnownTypeCode.UInt16;
-				case ElementType.I4:
-					return TypeSystem.KnownTypeCode.Int32;
-				case ElementType.U4:
-					return TypeSystem.KnownTypeCode.UInt32;
-				case ElementType.I8:
-					return TypeSystem.KnownTypeCode.Int64;
-				case ElementType.U8:
-					return TypeSystem.KnownTypeCode.UInt64;
-				case ElementType.R4:
-					return TypeSystem.KnownTypeCode.Single;
-				case ElementType.R8:
-					return TypeSystem.KnownTypeCode.Double;
-				case ElementType.I:
-					return TypeSystem.KnownTypeCode.IntPtr;
-				case ElementType.U:
-					return TypeSystem.KnownTypeCode.UIntPtr;
-				case ElementType.Object:
-					return TypeSystem.KnownTypeCode.Object;
-				case ElementType.String:
-					return TypeSystem.KnownTypeCode.String;
-				case ElementType.TypedByRef:
-					return TypeSystem.KnownTypeCode.TypedReference;
-				case ElementType.Void:
-					return TypeSystem.KnownTypeCode.Void;
-				default:
-					return TypeSystem.KnownTypeCode.None;
-			}
-		}
 		public static ImageSectionHeader GetContainingSection(this ModuleDef mod, RVA rva) {
 			if (mod is not ModuleDefMD mdMod)
 				return null;

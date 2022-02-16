@@ -36,12 +36,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	{
 		TransformContext context;
 		CSharpResolver resolver;
-		CSharpConversions conversions;
 
 		public void Run(AstNode rootNode, TransformContext context)
 		{
 			this.context = context;
-			this.conversions = CSharpConversions.Get(context.TypeSystem);
 			InitializeContext(rootNode.Annotation<UsingScope>());
 			rootNode.AcceptVisitor(this);
 		}

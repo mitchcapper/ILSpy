@@ -213,7 +213,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			Expression expr;
 			if (variable.Kind == VariableKind.Parameter && variable.Index < 0)
-				expr = new ThisReferenceExpression().WithAnnotation(currentFunction.DnlibMethod.DeclaringType);
+				expr = new ThisReferenceExpression().WithAnnotation(currentFunction.DnlibMethod?.DeclaringType);
 			else
 			{
 				var ide = IdentifierExpression.Create(variable.Name, GetParameterColor(variable)).WithAnnotation(variable);
@@ -663,6 +663,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		protected internal override TranslatedExpression VisitLdTypeToken(LdTypeToken inst, TranslationContext context)
 		{
+			// TODO: MemberRef annotation
 			var typeofExpr = new TypeOfExpression(ConvertType(inst.Type))
 				.WithRR(new TypeOfResolveResult(compilation.FindType(KnownTypeCode.Type), inst.Type));
 			return new MemberReferenceExpression(typeofExpr, "TypeHandle")
@@ -699,6 +700,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				return base.VisitLdMemberToken(inst, context);
 			}
 
+			// TODO: MemberRef annotation
 			return new MemberReferenceExpression {
 					Target = new InvocationExpression(IdentifierExpression.Create(loadName, BoxedTextColor.Keyword),
 						referencedEntity).WithAnnotation(new LdTokenAnnotation()),
@@ -1413,6 +1415,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		internal TranslatedExpression CallUnsafeIntrinsic(string name, Expression[] arguments, IType returnType, ILInstruction inst = null, IEnumerable<IType> typeArguments = null)
 		{
+			// TODO: MemberRef annotation
 			var target = new MemberReferenceExpression {
 				Target = new TypeReferenceExpression(astBuilder.ConvertType(compilation.FindType(KnownTypeCode.Unsafe))),
 				MemberName = name
@@ -2519,6 +2522,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						invokeMethod,
 						EmptyList<ResolveResult>.Instance);
 				}
+				// TODO: MemberRef annotation
 				return new InvocationExpression(new MemberReferenceExpression(invocationTarget, "Invoke"))
 					.WithILInstruction(container)
 					.WithRR(rr);
@@ -2982,6 +2986,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					// tupleType.ElementTypes are more accurate w.r.t. nullability/dynamic than inst.Field.Type
 					var rr = new MemberResolveResult(translatedTarget.ResolveResult, inst.Field,
 						returnTypeOverride: tupleType.ElementTypes[position - 1]);
+					// TODO: MemberRef annotation
 					expr = new MemberReferenceExpression(translatedTarget, elementName)
 						.WithRR(rr).WithILInstruction(inst);
 				}
@@ -3183,6 +3188,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		protected internal override TranslatedExpression VisitRefAnyType(RefAnyType inst, TranslationContext context)
 		{
+			// TODO: MemberRef annotation
 			return new MemberReferenceExpression(new UndocumentedExpression {
 				UndocumentedExpressionType = UndocumentedExpressionType.RefType,
 				Arguments = { Translate(inst.Argument).Expression.Detach() }
@@ -3358,9 +3364,10 @@ namespace ICSharpCode.Decompiler.CSharp
 						{
 							var value = Translate(info.Values.Single(), typeHint: memberRR.Type)
 								.ConvertTo(memberRR.Type, this, allowImplicitConversion: true);
-							var named = new NamedExpression().WithAnnotation(lastElement.Member.OriginalMember);
-							named.NameToken = Identifier.Create(lastElement.Member.Name).WithAnnotation(lastElement.Member.OriginalMember);
-							named.Expression = value;
+							var named = new NamedExpression {
+								NameToken = Identifier.Create(lastElement.Member.Name).WithAnnotation(lastElement.Member.OriginalMember),
+								Expression = value
+							}.WithAnnotation(lastElement.Member.OriginalMember);
 							var assignment = named
 											 .WithILInstruction(inst).WithRR(memberRR);
 							elementsStack.Peek().Add(assignment);

@@ -1462,13 +1462,13 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		{
 			StartNode(interpolation);
 
-			writer.WriteToken(Interpolation.LBrace, "{", BoxedTextColor.Punctuation);
+			writer.WriteTokenPunctuation(Interpolation.LBrace, "{");
 			interpolation.Expression.AcceptVisitor(this);
 			if (interpolation.Suffix != null) {
 				WriteToken(Roles.Colon, BoxedTextColor.Operator);
 				writer.WriteInterpolatedText(interpolation.Suffix);
 			}
-			writer.WriteToken(Interpolation.RBrace, "}", BoxedTextColor.Punctuation);
+			writer.WriteTokenPunctuation(Interpolation.RBrace, "}");
 
 			EndNode(interpolation);
 		}
@@ -2084,12 +2084,12 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			}
 			int? start, end;
 			var braceHelper = OpenBrace(style, flags, out start, out end);
-			// if (blockStatement.HiddenStart != null)
-			// {
-			// 	this.DebugStart(blockStatement, start);
-			// 	this.DebugHidden(blockStatement.HiddenStart);
-			// 	this.DebugEnd(blockStatement, end, true);
-			// }
+			if (blockStatement.HiddenStart != null)
+			{
+				this.DebugStart(blockStatement, start);
+				this.DebugHidden(blockStatement.HiddenStart);
+				this.DebugEnd(blockStatement, end, true);
+			}
 			int count = 0;
 			foreach (var node in blockStatement.Statements) {
 				if (count-- <= 0) {
@@ -2103,12 +2103,12 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			lastBlockStatementEndOffset = writer.GetLocation() ?? 0;
 			if (builder != null)
 				builder.EndPosition = end;
-			// if (blockStatement.HiddenEnd != null)
-			// {
-			// 	this.DebugStart(blockStatement, start);
-			// 	this.DebugHidden(blockStatement.HiddenEnd);
-			// 	this.DebugEnd(blockStatement, end, true);
-			// }
+			if (blockStatement.HiddenEnd != null)
+			{
+				this.DebugStart(blockStatement, start);
+				this.DebugHidden(blockStatement.HiddenEnd);
+				this.DebugEnd(blockStatement, end, true);
+			}
 		}
 		int lastBlockStatementEndOffset;
 
@@ -2208,7 +2208,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			if (foreachStatement.IsAsync)
 				WriteKeyword(ForeachStatement.AwaitRole);
 			WriteKeywordReference(ForeachStatement.ForeachKeywordRole, currentLoopReference);
-			//DebugHidden(foreachStatement.HiddenInitializer);
+			DebugHidden(foreachStatement.HiddenInitializer);
 			DebugEnd(foreachStatement, false);
 			Space(policy.SpaceBeforeForeachParentheses);
 			var braceHelper = BraceHelper.LeftParen(this, CodeBracesRangeFlags.Parentheses);
@@ -2217,17 +2217,17 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			foreachStatement.VariableType.AcceptVisitor(this);
 			Space();
 			foreachStatement.VariableDesignation.AcceptVisitor(this);
-			//DebugHidden(foreachStatement.HiddenGetCurrentNode);
+			DebugHidden(foreachStatement.HiddenGetCurrentNode);
 			DebugEnd(foreachStatement, false);
 			Space();
 			DebugStart(foreachStatement);
 			WriteKeyword(ForeachStatement.InKeywordRole);
-			//DebugHidden(foreachStatement.HiddenMoveNextNode);
+			DebugHidden(foreachStatement.HiddenMoveNextNode);
 			DebugEnd(foreachStatement, false);
 			Space();
 			DebugStart(foreachStatement);
 			foreachStatement.InExpression.AcceptVisitor(this);
-			//DebugHidden(foreachStatement.HiddenGetEnumeratorNode);
+			DebugHidden(foreachStatement.HiddenGetEnumeratorNode);
 			DebugEnd(foreachStatement, false);
 			Space(policy.SpacesWithinForeachParentheses);
 			braceHelper.RightParen();
@@ -2436,11 +2436,11 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			}
 			int? start, end;
 			CloseBrace(policy.StatementBraceStyle, braceHelper, out start, out end, false);
-			// if (switchStatement.HiddenEnd != null) {
-			// 	DebugStart(switchStatement, start);
-			// 	DebugHidden(switchStatement.HiddenEnd);
-			// 	DebugEnd(switchStatement, end);
-			// }
+			if (switchStatement.HiddenEnd != null) {
+				DebugStart(switchStatement, start);
+				DebugHidden(switchStatement.HiddenEnd);
+				DebugEnd(switchStatement, end);
+			}
 			currentSwitchReference = oldRef;
 			currentBreakReference = oldBreakRef;
 			NewLine();

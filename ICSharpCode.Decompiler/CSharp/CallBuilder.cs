@@ -438,7 +438,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				targetExpr = new MemberReferenceExpression {
 					Target = target.Expression,
 					MemberNameToken = Identifier.Create(methodName).WithAnnotation(method.OriginalMember)
-				};
+				}.WithAnnotation(method.OriginalMember);
 				typeArgumentList = ((MemberReferenceExpression)targetExpr).TypeArguments;
 
 				// HACK : convert this.Dispose() to ((IDisposable)this).Dispose(), if Dispose is an explicitly implemented interface method.
@@ -451,13 +451,15 @@ namespace ICSharpCode.Decompiler.CSharp
 					targetExpr = new MemberReferenceExpression {
 						Target = castExpression,
 						MemberNameToken = Identifier.Create(methodName).WithAnnotation(method.OriginalMember)
-					};
+					}.WithAnnotation(method.OriginalMember);
 					typeArgumentList = ((MemberReferenceExpression)targetExpr).TypeArguments;
 				}
 			}
 			else
 			{
-				targetExpr = new IdentifierExpression { IdentifierToken = Identifier.Create(methodName).WithAnnotation(method.OriginalMember) };
+				targetExpr = new IdentifierExpression
+						{ IdentifierToken = Identifier.Create(methodName).WithAnnotation(method.OriginalMember) }
+					.WithAnnotation(method.OriginalMember);
 				typeArgumentList = ((IdentifierExpression)targetExpr).TypeArguments;
 			}
 
@@ -1466,10 +1468,11 @@ namespace ICSharpCode.Decompiler.CSharp
 				{
 					for (int i = 0; i < argumentList.Length; i++)
 					{
+						var expectedParam = argumentList.ExpectedParameters[i];
 						atce.Initializers.Add(
 							new NamedExpression {
-								Name = argumentList.ExpectedParameters[i].Name,
-								Expression = argumentList.Arguments[i].ConvertTo(argumentList.ExpectedParameters[i].Type, expressionBuilder)
+								NameToken = Identifier.Create(expectedParam.Name).WithAnnotation(expectedParam.MDParameter),
+								Expression = argumentList.Arguments[i].ConvertTo(expectedParam.Type, expressionBuilder)
 							});
 					}
 				}

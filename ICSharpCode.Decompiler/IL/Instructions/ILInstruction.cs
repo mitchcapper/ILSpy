@@ -390,14 +390,12 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override string ToString()
 		{
-			//TODO: NYI
-			throw new NotSupportedException();
-			// var output = new PlainTextOutput();
-			// WriteTo(output, new ILAstWritingOptions());
-			// if (!ILRange.IsEmpty) {
-			// 	output.Write(" at IL_" + ILRange.Start.ToString("x4"));
-			// }
-			// return output.ToString();
+			var output = new StringBuilderDecompilerOutput();
+			WriteTo(output, new ILAstWritingOptions());
+			if (!ILRange.IsEmpty) {
+				output.Write(" at IL_" + ILRange.Start.ToString("x4"));
+			}
+			return output.ToString();
 		}
 
 		/// <summary>

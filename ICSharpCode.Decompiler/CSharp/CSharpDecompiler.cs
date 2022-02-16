@@ -468,8 +468,8 @@ namespace ICSharpCode.Decompiler.CSharp
 		void DoDecompileAssemblyAttributes(AssemblyDef assemblyDef, DecompileRun decompileRun, ITypeResolveContext decompilationContext, SyntaxTree syntaxTree)
 		{
 			try {
+				var astBuilder = CreateAstBuilder(decompileRun.Settings);
 				foreach (var a in typeSystem.MainModule.GetAssemblyAttributes()) {
-					var astBuilder = CreateAstBuilder(decompileRun.Settings);
 					var attrSection = new AttributeSection(astBuilder.ConvertAttribute(a));
 					attrSection.AttributeTarget = "assembly";
 					syntaxTree.AddChild(attrSection, SyntaxTree.MemberRole);
@@ -482,8 +482,8 @@ namespace ICSharpCode.Decompiler.CSharp
 		void DoDecompileModuleAttributes(ModuleDef moduleDef, DecompileRun decompileRun, ITypeResolveContext decompilationContext, SyntaxTree syntaxTree)
 		{
 			try {
+				var astBuilder = CreateAstBuilder(decompileRun.Settings);
 				foreach (var a in typeSystem.MainModule.GetModuleAttributes()) {
-					var astBuilder = CreateAstBuilder(decompileRun.Settings);
 					var attrSection = new AttributeSection(astBuilder.ConvertAttribute(a));
 					attrSection.AttributeTarget = "module";
 					syntaxTree.AddChild(attrSection, SyntaxTree.MemberRole);
