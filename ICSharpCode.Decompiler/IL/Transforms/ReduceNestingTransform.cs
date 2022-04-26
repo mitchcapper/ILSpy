@@ -296,7 +296,7 @@ namespace ICSharpCode.Decompiler.IL
 
 			// find the default section, and ensure it has only one incoming edge
 			var switchInst = (SwitchInstruction)switchContainer.EntryPoint.Instructions.Single();
-			var defaultSection = switchInst.Sections.MaxBy(s => s.Labels.Count());
+			var defaultSection = ICSharpCode.Decompiler.Util.CollectionExtensions.MaxBy( switchInst.Sections, s => s.Labels.Count());
 			if (!defaultSection.Body.MatchBranch(out var defaultBlock) || defaultBlock.IncomingEdgeCount != 1)
 				return false;
 			if (defaultBlock.Parent != switchContainer)

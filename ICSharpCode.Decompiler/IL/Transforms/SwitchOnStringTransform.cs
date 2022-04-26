@@ -1009,7 +1009,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 
 			var stringValues = new List<(string Value, ILInstruction TargetBlockOrLeave)>();
-			SwitchSection defaultSection = switchInst.Sections.MaxBy(s => s.Labels.Count());
+			SwitchSection defaultSection = ICSharpCode.Decompiler.Util.CollectionExtensions.MaxBy(switchInst.Sections,s => s.Labels.Count());
 			if (!(defaultSection.Body.MatchBranch(out Block exitOrDefaultBlock) || defaultSection.Body.MatchLeave(out _)))
 				return false;
 			foreach (var section in switchInst.Sections)
